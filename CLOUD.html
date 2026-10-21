@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KAMPALA BUSINESS - Cloud</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
+body{background:#0f172a;color:#fff;min-height:100vh}
+.header{background:linear-gradient(135deg,#1e40af,#7c3aed);padding:18px;text-align:center}
+.header h1{font-size:22px}.header p{font-size:12px;opacity:.9;margin-top:4px}
+.container{max-width:480px;margin:0 auto;padding:16px}
+.card{background:#1e293b;border-radius:16px;padding:16px;margin-bottom:16px;border:1px solid #334155}
+.card h3{font-size:14px;color:#60a5fa;margin-bottom:12px}
+.input-group{display:flex;gap:8px;margin-bottom:10px}
+input{flex:1;background:#0f172a;border:1px solid #334155;color:#fff;padding:12px;border-radius:10px}
+.btn{background:linear-gradient(135deg,#2563eb,#7c3aed);border:none;color:#fff;padding:12px;border-radius:10px;font-weight:600;width:100%;cursor:pointer}
+.stat{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.stat div{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:14px;text-align:center}
+.stat h2{font-size:22px;color:#22c55e}.stat p{font-size:11px;color:#94a3b8}
+.item{background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between}
+.icon-btn{width:32px;height:32px;border-radius:8px;border:none;cursor:pointer;margin-left:4px}
+.cloud-badge{background:#22c55e;color:#000;font-size:10px;padding:4px 8px;border-radius:20px;font-weight:700}
+.sync{font-size:11px;color:#22c55e;text-align:center;margin:8px 0}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>KAMPALA BUSINESS 💼 <span class="cloud-badge">● CLOUD LIVE</span></h1>
+<p>kampala-business • Real-time cloud sync</p>
+<div class="sync" id="syncStatus">☁️ Connecting to cloud...</div>
+</div>
+<div class="container">
+<div class="stat"><div><h2 id="totalStock">0</h2><p>TOTAL STOCK</p></div><div><h2 id="totalValue">0</h2><p>TOTAL VALUE (UGX)</p></div></div>
+<div class="card"><h3>➕ Add Product</h3>
+<div class="input-group"><input id="pName" placeholder="Product name"></div>
+<div class="input-group"><input id="pQty" type="number" placeholder="Qty"><input id="pPrice" type="number" placeholder="Price UGX"></div>
+<button class="btn" id="saveBtn" onclick="saveProduct()">💾 Save to Cloud</button></div>
+<div class="card"><h3>📦 My Stock (Cloud)</h3><input id="search" placeholder="Search..." oninput="render()" style="width:100%;margin-bottom:12px"><div id="list"></div></div>
+</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, setDoc, doc, deleteDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+const firebaseConfig = { apiKey: "AIzaSyDq-F-6FrXKY5Xjy9VqKTQuG-1qSN8QCLQ", authDomain: "kampala-business.firebaseapp.com", projectId: "kampala-business", storageBucket: "kampala-business.firebasestorage.app", messagingSenderId: "942834725537", appId: "1:942834725537:web:4c746311a7de8b267b0e9" };
+const app = initializeApp(firebaseConfig); const db = getFirestore(app); const colRef = collection(db, "products");
+let products = []; let editId = null;
+onSnapshot(colRef, (snap)=>{ products = []; snap.forEach(d=>{ products.push({id:d.id, ...d.data()}) }); document.getElementById('syncStatus').textContent = "☁️ Cloud Synced • " + products.length + " items • Live"; render(); });
+window.saveProduct = async ()=>{ const name=document.getElementById('pName').value.trim(); const qty=parseFloat(document.getElementById('pQty').value)||0; const price=parseFloat(document.getElementById('pPrice').value)||0; if(!name)return alert("Enter name"); const btn=document.getElementById('saveBtn'); btn.textContent="Saving..."; try{ if(editId){ await setDoc(doc(db,"products",editId), {name,qty,price,updated:serverTimestamp()}, {merge:true}); editId=null; } else{ await addDoc(colRef, {name,qty,price,created:serverTimestamp()}); } document.getElementById('pName').value=""; document.getElementById('pQty').value=""; document.getElementById('pPrice').value=""; btn.textContent="💾 Save to Cloud"; }catch(e){ alert(e.message); btn.textContent="💾 Save to Cloud"; } };
+window.editProduct = (id)=>{ const p=products.find(x=>x.id===id); document.getElementById('pName').value=p.name; document.getElementById('pQty').value=p.qty; document.getElementById('pPrice').value=p.price; editId=id; document.getElementById('saveBtn').textContent="✏️ Update in Cloud"; window.scrollTo({top:0,behavior:'smooth'}); };
+window.deleteProduct = async (id)=>{ if(!confirm("Delete?"))return; await deleteDoc(doc(db,"products",id)); };
+window.render = ()=>{ const q=document.getElementById('search').value.toLowerCase(); const list=document.getElementById('list'); let filtered=products.filter(p=>p.name.toLowerCase().includes(q)); let totalStock=0,totalVal=0; products.forEach(p=>{ totalStock+=Number(p.qty)||0; totalVal+=(Number(p.qty)||0)*(Number(p.price)||0); }); document.getElementById('totalStock').textContent=totalStock; document.getElementById('totalValue').textContent=totalVal.toLocaleString(); if(filtered.length===0){ list.innerHTML="<p style='text-align:center;color:#64748b;padding:20px'>No products yet. Add above ☝️</p>"; return; } list.innerHTML=filtered.map(p=>`<div class="item"><div><b>${p.name}</b><br><small style="color:#94a3b8">${p.qty} pcs × ${Number(p.price).toLocaleString()} = ${(p.qty*p.price).toLocaleString()} UGX</small></div><div><button class="icon-btn" style="background:#1e3a5f;color:#60a5fa" onclick="editProduct('${p.id}')">✏️</button><button class="icon-btn" style="background:#4a1a1a;color:#f87171" onclick="deleteProduct('${p.id}')">🗑️</button></div></div>`).join(''); };
+</script>
+</body>
+</html>
