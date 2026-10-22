@@ -33,7 +33,7 @@ export default function App() {
 
   if(view === "account" && currentUser) {
     return (
-      <div style={{ background: "#000", minHeight: "100vh", color: "white", fontFamily: "system-ui", width: "100%", margin: 0 }}>
+      <div style={{ background: "#000", minHeight: "100vh", color: "white", fontFamily: "system-ui" }}>
         <div style={{ background: "#0f0f0f", padding: "10px 12px", borderBottom: "1px solid #222" }}>
           <div style={{ width: "30px", height: "30px", background: "white", borderRadius: "50%", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", fontSize: "12px" }}>KB</div>
         </div>
@@ -111,15 +111,35 @@ export default function App() {
         ))}
       </div>
 
-      {/* BOTTOM - THREE BUTTONS IN MIDDLE - YOUR REQUEST */}
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0a0a0a", borderTop: "1px solid #222", display: "flex", justifyContent: "center", padding: "6px 12px", zIndex: 20, alignItems: "center", width: "100vw", boxSizing: "border-box" }}>
-        <div style={{ display: "flex", gap: "30px", alignItems: "center", justifyContent: "center" }}>
-          <div onClick={()=>{setView("feed"); setActiveTab("For You"); window.scrollTo(0,0)}} style={{ textAlign: "center", color: "white" }}><div style={{ fontSize: "20px" }}>🏠</div><div style={{ fontSize: "9px", fontWeight: "bold" }}>Home</div></div>
-          <div onClick={()=>setShowUpload(!showUpload)} style={{ textAlign: "center" }}><div style={{ background: "white", color: "black", width: "42px", height: "28px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", fontWeight: "bold" }}>+</div><div style={{ fontSize: "9px", color: "white", marginTop: "2px" }}>Post</div></div>
-          <div style={{ textAlign: "center", color: "#777" }}><div style={{ fontSize: "20px" }}>💬</div><div style={{ fontSize: "9px" }}>Chat</div></div>
+      {/* BOTTOM - HOME LEFT CORNER, LIVE POST CHAT MIDDLE - YOUR REQUEST */}
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0a0a0a", borderTop: "1px solid #222", display: "flex", justifyContent: "space-between", padding: "6px 12px", zIndex: 20, alignItems: "center", width: "100vw", boxSizing: "border-box" }}>
+        
+        {/* LEFT DOWN CORNER - HOME */}
+        <div onClick={()=>{setView("feed"); setActiveTab("For You"); window.scrollTo(0,0)}} style={{ textAlign: "center", color: "white", cursor: "pointer" }}>
+          <div style={{ fontSize: "20px" }}>🏠</div>
+          <div style={{ fontSize: "9px", fontWeight: "bold" }}>Home</div>
         </div>
-        {/* User still right corner */}
-        <div onClick={()=>currentUser ? setView("account") : setAuthMode('login')} style={{ position: "absolute", right: "12px", background: currentUser ? "white" : "#1c1c1c", color: currentUser ? "black" : "white", padding: "6px 14px", borderRadius: "20px", fontSize: "11px", fontWeight: "bold", border: "1px solid #333" }}>{currentUser ? currentUser.name.split(" ")[0] : "User"}</div>
+
+        {/* MIDDLE - THREE BUTTONS: LIVE POST CHAT */}
+        <div style={{ display: "flex", gap: "28px", alignItems: "center", justifyContent: "center", position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
+          <div style={{ textAlign: "center", color: "#ff3333" }}>
+            <div style={{ fontSize: "20px" }}>🔴</div>
+            <div style={{ fontSize: "9px", fontWeight: "bold", color: "white" }}>Live</div>
+          </div>
+          <div onClick={()=>setShowUpload(!showUpload)} style={{ textAlign: "center" }}>
+            <div style={{ background: "white", color: "black", width: "40px", height: "26px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", fontWeight: "bold" }}>+</div>
+            <div style={{ fontSize: "9px", color: "white", marginTop: "2px" }}>Post</div>
+          </div>
+          <div style={{ textAlign: "center", color: "#777" }}>
+            <div style={{ fontSize: "20px" }}>💬</div>
+            <div style={{ fontSize: "9px" }}>Chat</div>
+          </div>
+        </div>
+
+        {/* RIGHT CORNER - USER */}
+        <div onClick={()=>currentUser ? setView("account") : setAuthMode('login')} style={{ background: currentUser ? "white" : "#1c1c1c", color: currentUser ? "black" : "white", padding: "6px 14px", borderRadius: "20px", fontSize: "11px", fontWeight: "bold", border: "1px solid #333" }}>
+          {currentUser ? currentUser.name.split(" ")[0] : "User"}
+        </div>
       </div>
     </div>
   );
