@@ -343,10 +343,10 @@ export default function App() {
           <div onClick={()=>setShowUpload(true)} style={{ textAlign: "center" }}>
             <div style={{ background: "white", color: "black", width: "44px", height: "28px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", fontWeight: "bold" }}>+</div>
           </div>
-          <div onClick={()=>setMuted(!muted)} style={{ textAlign: "center", color: "#777" }}>
-            <div style={{ fontSize: "18px" }}>{muted ? "🔇" : "🔊"}</div>
-            <div style={{ fontSize: "9px" }}>{muted ? "Mute" : "Sound"}</div>
-          </div>
+         <div onClick={()=>setActiveTab("Chat")} style={{ textAlign: "center", color: activeTab==="Chat" ? "white" : "#777" }}>
+  <div style={{ fontSize: "18px" }}>💬</div>
+  <div style={{ fontSize: "9px", fontWeight: "bold", color: "white" }}>Chat</div>
+</div>
         </div>
         <div onClick={()=>currentUser ? setView("account") : setAuthMode('login')} style={{ background: currentUser ? "white" : "#1c1c1c", color: currentUser ? "black" : "white", padding: "6px 14px", borderRadius: "20px", fontSize: "11px", fontWeight: "bold", border: "1px solid #333", flexShrink: 0 }}>
           {currentUser ? currentUser.name.split(" ")[0] : "User"}
