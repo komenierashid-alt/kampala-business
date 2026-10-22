@@ -37,9 +37,9 @@ export default function App() {
 
   if(view === "account" && currentUser) {
     return (
-      <div style={{ background: "#000", minHeight: "100vh", color: "white", fontFamily: "system-ui", width: "100%", overflowX: "hidden" }}>
-        <style>{`html,body{margin:0;padding:0;background:#000;overflow-x:hidden;width:100%;}::-webkit-scrollbar{display:none;} *{box-sizing:border-box;}`}</style>
-        <div style={{ background: "#0f0f0f", padding: "10px 12px", borderBottom: "1px solid #222", width: "100%" }}>
+      <div style={{ background: "#000", minHeight: "100vh", color: "white", fontFamily: "system-ui", margin: 0, padding: 0, width: "100%", border: "none", outline: "none" }}>
+        <style>{`html,body{margin:0 !important;padding:0 !important;background:#000 !important;border:none !important;outline:none !important;width:100% !important;overflow-x:hidden !important;} *{box-sizing:border-box; border:none; }`}</style>
+        <div style={{ background: "#000", padding: "10px 12px", width: "100%", border: "none" }}>
           <div style={{ width: "30px", height: "30px", background: "white", borderRadius: "50%", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", fontSize: "12px" }}>KB</div>
         </div>
         <div style={{ padding: "20px", textAlign: "center" }}>
@@ -52,16 +52,22 @@ export default function App() {
   }
 
   return (
-    <div style={{ background: "#000", minHeight: "100vh", color: "white", paddingBottom: "70px", fontFamily: "system-ui", width: "100%", overflowX: "hidden", position: "relative" }}>
-      <style>{`html,body{margin:0;padding:0;background:#000;overflow-x:hidden;width:100%;max-width:100%;}::-webkit-scrollbar{display:none; width:0; height:0;} *{box-sizing:border-box; scrollbar-width:none; -ms-overflow-style:none;} body{overflow-x:hidden !important;}`}</style>
+    <div style={{ background: "#000", minHeight: "100vh", color: "white", paddingBottom: "70px", fontFamily: "system-ui", margin: 0, padding: 0, width: "100%", border: "none", outline: "none", boxShadow: "none" }}>
+      <style>{`
+        html,body{margin:0 !important;padding:0 !important;background:#000 !important;border:none !important;outline:none !important;width:100% !important;overflow-x:hidden !important;}
+        *{box-sizing:border-box; border-left:none !important; border-right:none !important; }
+        #root{width:100% !important; margin:0 !important; padding:0 !important; border:none !important;}
+        ::-webkit-scrollbar{display:none;}
+      `}</style>
       
-      <div style={{ background: "#0f0f0f", padding: "10px 12px", borderBottom: "1px solid #1a1a1a", width: "100%" }}>
+      {/* TOP KB - NO LINES */}
+      <div style={{ background: "#000", padding: "10px 12px", width: "100%", border: "none" }}>
         <div style={{ width: "30px", height: "30px", background: "white", borderRadius: "50%", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", fontSize: "12px" }}>KB</div>
       </div>
 
-      <div style={{ display: "flex", gap: "6px", padding: "10px 12px", overflowX: "auto", width: "100%" }}>
+      <div style={{ display: "flex", gap: "6px", padding: "10px 12px", overflowX: "auto", width: "100%", border: "none" }}>
         {["For You", "Live", "Following", "Music", "Movies", "History"].map(tab => (
-          <div key={tab} onClick={()=>{ setActiveTab(tab); if(tab==="History") setShowHistory(true); else setShowHistory(false); }} style={{ background: activeTab===tab ? "white" : "#1c1c1c", color: activeTab===tab ? "black" : "#888", padding: "6px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: activeTab===tab ? "700" : "400", whiteSpace: "nowrap", flexShrink: 0 }}>{tab}</div>
+          <div key={tab} onClick={()=>{ setActiveTab(tab); if(tab==="History") setShowHistory(true); else setShowHistory(false); }} style={{ background: activeTab===tab ? "white" : "#1c1c1c", color: activeTab===tab ? "black" : "#888", padding: "6px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: activeTab===tab ? "700" : "400", whiteSpace: "nowrap", flexShrink: 0, border: "none" }}>{tab}</div>
         ))}
       </div>
 
@@ -94,47 +100,45 @@ export default function App() {
         </div>
       )}
 
-      {/* POSTS - NEW LAYOUT: CONTENT CENTER, ALL ICONS AT BOTTOM WHERE YOU ARROWED */}
-      <div style={{ padding: "0 10px", display: "flex", flexDirection: "column", gap: "10px", width: "100%" }}>
+      {/* POSTS - BACK LIKE BEFORE - NO SIDE LINES */}
+      <div style={{ padding: "0", display: "flex", flexDirection: "column", gap: "0", width: "100%", border: "none" }}>
         {posts.map(p => (
-          <div key={p.id} style={{ background: "#121212", borderRadius: "14px", padding: "12px", border: "1px solid #1c1c1c", width: "100%", minHeight: "160px", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-            <div style={{ fontSize: "16px", textAlign: "center", paddingTop: "20px", wordBreak: "break-word" }}>{p.title || "hi"}</div>
-            
-            {/* BOTTOM AREA - WHERE YOUR ARROWS POINT - ICONS AT BOTTOM */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: "30px" }}>
-              
-              {/* BOTTOM LEFT CORNER - KATONGOLE RASHID + KR */}
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <div style={{ position: "relative" }}>
-                  <div style={{ width: "38px", height: "38px", borderRadius: "50%", background: "white", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "11px", border: "2px solid #333" }}>KR</div>
-                  <div onClick={()=>toggleFollow(p.id)} style={{ position: "absolute", bottom: "-4px", right: "-4px", background: following[p.id] ? "#333" : "#1877f2", color: "white", width: "14px", height: "14px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", fontWeight: "bold", border: "1px solid #121212", cursor: "pointer" }}>{following[p.id] ? "✓" : "+"}</div>
-                </div>
-                <div style={{ fontWeight: "800", fontSize: "12px", display: "flex", alignItems: "center", gap: "4px" }}>
-                  {p.author} <span style={{ background: "#1d9bf0", width: "10px", height: "10px", borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "6px" }}>✓</span>
-                </div>
+          <div key={p.id} style={{ background: "#000", padding: "16px 12px", width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", border: "none", borderBottom: "1px solid #111", minHeight: "180px" }}>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+              <div style={{ fontSize: "15px", textAlign: "left" }}>{p.title || "hi"}</div>
+              <div style={{ marginTop: "30px", display: "flex", alignItems: "center", gap: "6px", fontWeight: "700", fontSize: "13px" }}>
+                <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "white", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "10px" }}>KR</div>
+                {p.author} 
+                <span style={{ background: "#1d9bf0", width: "12px", height: "12px", borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "7px" }}>✓</span>
               </div>
-
-              {/* BOTTOM RIGHT CORNER - ALL ACTION ICONS HORIZONTAL - WHERE YOUR ARROWS POINT */}
-              <div style={{ display: "flex", gap: "14px", alignItems: "center" }}>
-                <div onClick={()=>handleLike(p.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1px", cursor: "pointer" }}>
-                  <div style={{ fontSize: "18px" }}>❤️</div>
-                  <div style={{ fontSize: "8px", color: "#aaa" }}>{p.likes||1}</div>
+            </div>
+            
+            {/* RIGHT SIDE VERTICAL - LIKE BEFORE */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "14px", marginLeft: "12px", flexShrink: 0 }}>
+              <div style={{ position: "relative" }}>
+                <div style={{ width: "46px", height: "46px", borderRadius: "50%", background: "white", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "13px", border: "2px solid #333" }}>KR</div>
+                <div onClick={()=>toggleFollow(p.id)} style={{ position: "absolute", bottom: "-6px", left: "50%", transform: "translateX(-50%)", background: following[p.id] ? "#333" : "#ff2d55", color: "white", width: "18px", height: "18px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "bold", border: "2px solid #000", cursor: "pointer" }}>{following[p.id] ? "✓" : "+"}</div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px", alignItems: "center" }}>
+                <div onClick={()=>handleLike(p.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", cursor: "pointer" }}>
+                  <div style={{ fontSize: "24px" }}>❤️</div>
+                  <div style={{ fontSize: "11px", color: "#fff", fontWeight: "600" }}>{p.likes||1}</div>
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1px" }}>
-                  <div style={{ fontSize: "18px" }}>💬</div>
-                  <div style={{ fontSize: "8px", color: "#aaa" }}>0</div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
+                  <div style={{ fontSize: "22px" }}>💬</div>
+                  <div style={{ fontSize: "11px", color: "#fff" }}>0</div>
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1px" }}>
-                  <div style={{ fontSize: "18px" }}>↗️</div>
-                  <div style={{ fontSize: "8px", color: "#aaa" }}>Share</div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
+                  <div style={{ fontSize: "22px" }}>🔖</div>
+                  <div style={{ fontSize: "10px", color: "#aaa" }}>Share</div>
                 </div>
-                <div onClick={()=>toggleFire(p.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1px", cursor: "pointer", background: fireActive[p.id] ? "#ff450022" : "transparent", padding: "2px 5px", borderRadius: "8px", border: fireActive[p.id] ? "1px solid #ff4500" : "1px solid transparent" }}>
-                  <div style={{ fontSize: "18px", filter: fireActive[p.id] ? "drop-shadow(0 0 4px #ff4500)" : "none" }}>🔥</div>
-                  <div style={{ fontSize: "8px", color: fireActive[p.id] ? "#ff6a00" : "#aaa" }}>Fire</div>
+                <div onClick={()=>toggleFire(p.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", cursor: "pointer" }}>
+                  <div style={{ fontSize: "24px", filter: fireActive[p.id] ? "drop-shadow(0 0 6px #ff4500)" : "none" }}>🔥</div>
+                  <div style={{ fontSize: "10px", color: fireActive[p.id] ? "#ff6a00" : "#fff" }}>{fireActive[p.id] ? "Fired!" : "Fire"}</div>
                 </div>
-                <div onClick={()=>setShowHistory(true)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1px", cursor: "pointer" }}>
-                  <div style={{ fontSize: "18px" }}>🕒</div>
-                  <div style={{ fontSize: "8px", color: "#aaa" }}>History</div>
+                <div onClick={()=>setShowHistory(true)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", cursor: "pointer" }}>
+                  <div style={{ fontSize: "22px" }}>🕒</div>
+                  <div style={{ fontSize: "10px", color: "#aaa" }}>History</div>
                 </div>
               </div>
             </div>
@@ -142,13 +146,13 @@ export default function App() {
         ))}
       </div>
 
-      {/* MAIN BOTTOM NAV - STABLE */}
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0a0a0a", borderTop: "1px solid #222", display: "flex", justifyContent: "space-between", padding: "6px 12px", zIndex: 20, alignItems: "center", width: "100%", overflow: "hidden" }}>
+      {/* BOTTOM - NO LINES */}
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#000", borderTop: "1px solid #111", display: "flex", justifyContent: "space-between", padding: "6px 12px", zIndex: 20, alignItems: "center", width: "100%", borderLeft: "none", borderRight: "none" }}>
         <div onClick={()=>{setView("feed"); setActiveTab("For You"); window.scrollTo(0,0)}} style={{ textAlign: "center", color: "white", cursor: "pointer", flexShrink: 0 }}>
           <div style={{ fontSize: "20px" }}>🏠</div>
           <div style={{ fontSize: "9px", fontWeight: "bold" }}>Home</div>
         </div>
-        <div style={{ display: "flex", gap: "24px", alignItems: "center", justifyContent: "center", flex: 1 }}>
+        <div style={{ display: "flex", gap: "28px", alignItems: "center", justifyContent: "center", flex: 1 }}>
           <div style={{ textAlign: "center", color: "#ff3333" }}>
             <div style={{ fontSize: "20px" }}>🔴</div>
             <div style={{ fontSize: "9px", fontWeight: "bold", color: "white" }}>Live</div>
