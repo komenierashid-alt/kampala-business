@@ -1,43 +1,44 @@
-import { useState, useEffect } from "react";
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, query, orderBy, onSnapshot } from "firebase/firestore";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyDkd-f-SR1KKYSxJjV9GkTQuk5-lqSNBQQQ",
-  authDomain: "kampala-business.firebaseapp.com",
-  projectId: "kampala-business",
-  storageBucket: "kampala-business.firebasestorage.app",
-  messagingSenderId: "942834725537",
-  appId: "1:942834725537:web:4c746311a77dedb267b8e8"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+import { useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "./firebase";
 
 export default function App() {
-  const [list, setList] = useState([]);
+  const [music, setMusic] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   useEffect(() => {
-    const q = query(collection(db, "music"), orderBy("createdAt", "asc"));
-    return onSnapshot(q, snap => setList(snap.docs.map(d => d.data())));
+    const load = async () => {
+      try {
+        const snap = await getDocs(collection(db, "music"));
+        const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        setMusic(list);
+      } catch (e) {
+        setError(e.message);
+        console.error(e);
+      }
+      setLoading(false);
+    };
+    load();
   }, []);
 
+  if (loading) return <h1 style={{color:"white", background:"black", padding:20}}>Loading Kampala Business...</h1>;
+  if (error) return <h1 style={{color:"red", padding:20}}>Error: {error}</h1>;
+
   return (
-    <div style={{background:"black", height:"100vh", overflowY:"scroll"}}>
-      {list.map((v,i) => (
-        <div key={i} style={{height:"100vh", display:"flex", alignItems:"center", justifyContent:"center"}}>
-          <video
-            src={v.videoUrl1 || v.videoUrl || v.videoUri || v.uri || v.musicUri || v.url}
-            controls
-            autoPlay
-            muted
-            loop
-            playsInline
-            style={{width:"100%", height:"100%", objectFit:"contain"}}
-            onClick={e => e.target.paused ? e.target.play() : e.target.pause()}
-          />
+    <div style={{background:"black", color:"white", minHeight:"100vh", padding:20}}>
+      <h1>Kampala Business - Music ({music.length})</h1>
+      {music.length === 0 && <p>No music found in Firestore collection 'music'</p>}
+      {music.map(m => (
+        <div key={m.id} style={{border:"1px solid #333", margin:"20px 0", padding:10}}>
+          <h3>{m.title || m.author || "No title"}</h3>
+          <p>ID: {m.id}</p>
+          <pre style={{fontSize:10, background:"#111", padding:10, overflow:"auto"}}>
+            {JSON.stringify(m, null, 2).substring(0, 500)}
+          </pre>
+          {m.videoUrl ? <video src={m.videoUrl} controls style={{width:"100%", maxWidth:400}} /> : <p style={{color:"orange"}}>No videoUrl field in this document</p>}
         </div>
       ))}
-      {list.length==0 && <div style={{color:"white", textAlign:"center", paddingTop:"50%"}}>Loading music videos....</div>}
     </div>
   );
 }
