@@ -5,11 +5,19 @@ export default function App() {
   const videoRefs = useRef({});
   const [caption, setCaption] = useState("");
   const [showUpload, setShowUpload] = useState(false);
+  const [showMusicFolder, setShowMusicFolder] = useState(false);
 
   const [videos, setVideos] = useState([
-    { id: 1, user: "Katongole Rashid", caption: "For You page 🔥", likes: 12, shares: 3, downloads: 5, history: 75, isFollowing: false, isLiked: false },
-    { id: 2, user: "Kayima baker", caption: "Second video", likes: 32, shares: 8, downloads: 12, history: 120, isFollowing: true, isLiked: false },
+    { id: 1, user: "Katongole Rashid", caption: "My music video 🔥", likes: 45, verified: true },
+    { id: 2, user: "Kayima baker", caption: "Another video", likes: 32, verified: false },
   ]);
+
+  const musicFolder = [
+    { id: 1, title: "Amapiano Mix", count: "12 videos", icon: "🎹" },
+    { id: 2, title: "Afrobeat Fire", count: "8 videos", icon: "🔥" },
+    { id: 3, title: "Ugandan Drill", count: "15 videos", icon: "🥁" },
+    { id: 4, title: "My Music Videos", count: `${videos.filter(v=>v.user==="Katongole Rashid").length} videos`, icon: "🎵" },
+  ];
 
   useEffect(() => {
     const obs = new IntersectionObserver((entries) => {
@@ -26,22 +34,9 @@ export default function App() {
     const file = e.target.files[0];
     if (!file) return;
     const url = URL.createObjectURL(file);
-    setVideos([{ id: Date.now(), user: "Katongole Rashid", caption: caption || "New", likes: 0, shares: 0, downloads: 0, history: 0, isFollowing: false, isLiked: false, videoUrl: url }, ...videos]);
+    setVideos([{ id: Date.now(), user: "Katongole Rashid", caption: caption || "New music video 🎵", likes: 0, verified: true, videoUrl: url }, ...videos]);
     setShowUpload(false);
     setCaption("");
-  };
-
-  const toggleLike = (id) => setVideos(videos.map(v => v.id===id ? { ...v, isLiked: !v.isLiked, likes: v.isLiked ? v.likes-1 : v.likes+1 } : v));
-  const toggleFollow = (id) => setVideos(videos.map(v => v.id===id ? { ...v, isFollowing: !v.isFollowing } : v));
-  const handleShare = async (v) => {
-    if (navigator.share) { try { await navigator.share({ title: v.caption, url: "https://kampala-business-13.vercel.app" }); } catch {} }
-    else { navigator.clipboard.writeText("https://kampala-business-13.vercel.app"); alert("Link copied!"); }
-    setVideos(videos.map(x => x.id===v.id ? { ...x, shares: x.shares+1 } : x));
-  };
-  const handleDownload = (v) => {
-    if (!v.videoUrl) { alert("No video file"); return; }
-    const a = document.createElement("a"); a.href = v.videoUrl; a.download = `${v.user}-video.mp4`; a.click();
-    setVideos(videos.map(x => x.id===v.id ? { ...x, downloads: x.downloads+1 } : x));
   };
 
   return (
@@ -56,11 +51,21 @@ export default function App() {
 
       <div style={{ background: "black", width: "100vw", height: "100vh", height: "100dvh", position: "fixed", top: 0, left: 0, fontFamily: "Arial", overflow: "hidden" }}>
 
-        {/* TOP - For You */}
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 20, display: "flex", justifyContent: "center", gap: 15, padding: "12px", background: "linear-gradient(to bottom, rgba(0,0,0,0.9), transparent)" }}>
-          <div style={{ color: "white", fontWeight: "bold", fontSize: 16, borderBottom: "2px solid white", paddingBottom: 3 }}>For You</div>
-          <div style={{ color: "#aaa", fontSize: 16 }}>Following</div>
-          <div style={{ color: "#aaa", fontSize: 16 }}>Live</div>
+        {/* TOP BAR - EXACT AS YOUR ARROWS */}
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 20, display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 12px", background: "linear-gradient(to bottom, rgba(0,0,0,0.9), transparent)" }}>
+          
+          {/* LEFT ARROW - KB LOGO */}
+          <div style={{ background: "white", width: 32, height: 32, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 12, border: "2px solid white" }}>KB</div>
+          
+          {/* MIDDLE GREEN ARROW - For You Following Live */}
+          <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+            <div onClick={() => setShowMusicFolder(true)} style={{ color: "white", fontWeight: "bold", fontSize: 16, borderBottom: "2px solid white", paddingBottom: 3, cursor: "pointer" }}>For You</div>
+            <div style={{ color: "#aaa", fontSize: 15 }}>Following</div>
+            <div style={{ color: "#aaa", fontSize: 15 }}>Live</div>
+          </div>
+
+          {/* Right empty */}
+          <div style={{ width: 32 }}></div>
         </div>
 
         {/* FEED */}
@@ -73,88 +78,71 @@ export default function App() {
                 <div style={{ width: "100%", height: "100%", background: "#111" }} />
               )}
 
-              {/* RIGHT SIDE - ALL BUTTONS YOU ASKED */}
-              <div style={{ position: "absolute", right: 10, bottom: 90, display: "flex", flexDirection: "column", alignItems: "center", gap: 16, zIndex: 10 }}>
-                
-                {/* KB - Profile */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <div style={{ width: 48, height: 48, background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", border: "2px solid white", fontSize: 16 }}>KB</div>
-                  <div onClick={() => toggleFollow(video.id)} style={{ width: 20, height: 20, background: video.isFollowing ? "#666" : "#FE2C55", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 12, marginTop: -8, border: "2px solid black" }}>{video.isFollowing ? "✓" : "+"}</div>
-                </div>
-
-                {/* Like Button */}
-                <div onClick={() => toggleLike(video.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <div style={{ fontSize: 30 }}>{video.isLiked ? "❤️" : "🤍"}</div>
-                  <div style={{ color: "white", fontSize: 12, fontWeight: "bold", marginTop: 2 }}>{video.likes}</div>
-                </div>
-
-                {/* History Button */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <div style={{ fontSize: 26 }}>🕒</div>
-                  <div style={{ color: "white", fontSize: 11, fontWeight: "bold" }}>{video.history}</div>
-                </div>
-
-                {/* Music Button */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <div style={{ fontSize: 24 }}>🎵</div>
-                  <div style={{ color: "white", fontSize: 9 }}>Music</div>
-                </div>
-
-                {/* Notifications Button */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <div style={{ fontSize: 26 }}>🔔</div>
-                  <div style={{ color: "white", fontSize: 9 }}>Notify</div>
-                </div>
-
-                {/* 🔥 Fire Button */}
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <div style={{ fontSize: 28 }}>🔥</div>
-                  <div style={{ color: "white", fontSize: 9 }}>Fire</div>
-                </div>
-
-                {/* Share Button */}
-                <div onClick={() => handleShare(video)} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <div style={{ fontSize: 26 }}>↗️</div>
-                  <div style={{ color: "white", fontSize: 11, fontWeight: "bold" }}>{video.shares}</div>
-                </div>
-
-                {/* Download Button */}
-                <div onClick={() => handleDownload(video)} style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  <div style={{ fontSize: 24 }}>⬇️</div>
-                  <div style={{ color: "white", fontSize: 10, fontWeight: "bold" }}>{video.downloads}</div>
-                </div>
-
+              {/* RIGHT BUTTONS */}
+              <div style={{ position: "absolute", right: 10, bottom: 90, display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
+                <div style={{ width: 48, height: 48, background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold" }}>{video.user[0]}</div>
+                <div style={{ textAlign: "center" }}><div style={{ fontSize: 30 }}>❤️</div><div style={{ color: "white", fontSize: 12, fontWeight: "bold" }}>{video.likes}</div></div>
+                <div style={{ fontSize: 26 }}>💬</div>
+                <div style={{ fontSize: 26 }}>↗️</div>
               </div>
 
-              {/* LEFT BOTTOM - Only name + caption */}
+              {/* LEFT DOWN CORNER - Katongole Rashid + BLUE TICK */}
               <div style={{ position: "absolute", left: 12, bottom: 85, right: 80 }}>
-                <div style={{ fontWeight: "bold", fontSize: 15, color: "white" }}>{video.user} {video.isFollowing && <span style={{ color: "#1DA1F2", fontSize: 12 }}>• Following</span>}</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontWeight: "bold", fontSize: 15, color: "white" }}>Katongole Rashid</span>
+                  {video.verified && (
+                    <span style={{ background: "#1DA1F2", width: 18, height: 18, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: 11, fontWeight: "bold" }}>✓</span>
+                  )}
+                </div>
                 <div style={{ fontSize: 13, color: "white", marginTop: 4 }}>{video.caption}</div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
-                  <div style={{ fontSize: 12 }}>🎵</div>
-                  <div style={{ fontSize: 11, color: "white" }}>Original sound • {video.user}</div>
+                <div style={{ fontSize: 11, color: "#aaa", marginTop: 6, display: "flex", alignItems: "center", gap: 5 }}>
+                  <span>🎵</span> <span>Original sound • Music Video Folder</span>
                 </div>
               </div>
             </div>
           ))}
-          <div style={{ height: 80, background: "black" }} />
+          <div style={{ height: 70, background: "black" }} />
         </div>
+
+        {/* MUSIC VIDEO FOLDER - MIDDLE GREEN ARROW */}
+        {showMusicFolder && (
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.97)", zIndex: 50, padding: 20, overflowY: "auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h2 style={{ color: "white" }}>📁 Music Video Folder</h2>
+              <div onClick={() => setShowMusicFolder(false)} style={{ color: "white", fontSize: 20, background: "#222", width: 32, height: 32, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</div>
+            </div>
+            <p style={{ color: "#aaa", fontSize: 12, marginTop: 5 }}>Tap For You to open folder - middle arrow</p>
+            
+            {musicFolder.map(f => (
+              <div key={f.id} onClick={() => setShowMusicFolder(false)} style={{ display: "flex", gap: 12, padding: 14, background: "#111", borderRadius: 12, marginTop: 12, alignItems: "center", border: "1px solid #222" }}>
+                <div style={{ width: 50, height: 50, background: "#222", borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>{f.icon}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ color: "white", fontWeight: "bold", fontSize: 14 }}>{f.title}</div>
+                  <div style={{ color: "#888", fontSize: 11 }}>{f.count}</div>
+                </div>
+                <div style={{ color: "white" }}>▶️</div>
+              </div>
+            ))}
+
+            <button onClick={() => setShowMusicFolder(false)} style={{ width: "100%", background: "white", color: "black", padding: 14, borderRadius: 25, border: "none", fontWeight: "bold", marginTop: 25 }}>Close Folder</button>
+          </div>
+        )}
 
         {/* BOTTOM NAV */}
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "black", borderTop: "1px solid #222", display: "flex", justifyContent: "space-around", padding: "10px 0", zIndex: 30 }}>
           <div style={{ textAlign: "center", flex: 1 }}><div style={{ fontSize: 22 }}>🏠</div><div style={{ fontSize: 9, color: "white", fontWeight: "bold" }}>Home</div></div>
-          <div style={{ textAlign: "center", flex: 1 }}><div style={{ fontSize: 14, background: "#222", color: "white", padding: "3px 8px", borderRadius: 4, display: "inline-block" }}>Live</div><div style={{ fontSize: 9, color: "white", marginTop: 2 }}>Live</div></div>
+          <div onClick={() => setShowMusicFolder(true)} style={{ textAlign: "center", flex: 1 }}><div style={{ fontSize: 20 }}>📁</div><div style={{ fontSize: 9, color: "#00ff88" }}>Music Folder</div></div>
           <div onClick={() => setShowUpload(true)} style={{ background: "white", width: 42, height: 28, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", color: "black", fontSize: 22, fontWeight: "bold" }}>+</div>
           <div style={{ textAlign: "center", flex: 1 }}><div style={{ fontSize: 20 }}>💬</div><div style={{ fontSize: 9, color: "white" }}>Chat</div></div>
           <div style={{ textAlign: "center", flex: 1 }}><div style={{ fontSize: 20 }}>👤</div><div style={{ fontSize: 9, color: "white" }}>You</div></div>
         </div>
 
         {showUpload && (
-          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.95)", zIndex: 50, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.95)", zIndex: 60, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 20 }}>
             <input value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Caption..." style={{ width: "90%", maxWidth: 300, padding: 12, borderRadius: 10, background: "#222", color: "white", border: "none" }} />
             <input ref={fileRef} type="file" accept="video/*" onChange={handleUpload} style={{ display: "none" }} />
-            <button onClick={() => fileRef.current.click()} style={{ background: "white", color: "black", padding: "14px 24px", borderRadius: 25, border: "none", marginTop: 15, fontWeight: "bold", width: "90%", maxWidth: 300 }}>Choose Video</button>
-            <button onClick={() => setShowUpload(false)} style={{ background: "#222", color: "white", padding: "10px 20px", borderRadius: 20, border: "none", marginTop: 20 }}>Cancel</button>
+            <button onClick={() => fileRef.current.click()} style={{ background: "white", color: "black", padding: "14px 24px", borderRadius: 25, border: "none", marginTop: 15, fontWeight: "bold", width: "90%", maxWidth: 300 }}>Choose Music Video</button>
+            <button onClick={() => setShowUpload(false)} style={{ background: "#222", color: "white", padding: "10px 20px", borderRadius: 20, border: "none", marginTop: 15 }}>Cancel</button>
           </div>
         )}
       </div>
