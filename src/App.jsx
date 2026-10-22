@@ -37,8 +37,9 @@ export default function App() {
 
   if(view === "account" && currentUser) {
     return (
-      <div style={{ background: "#000", minHeight: "100vh", color: "white", fontFamily: "system-ui" }}>
-        <div style={{ background: "#0f0f0f", padding: "10px 12px", borderBottom: "1px solid #222" }}>
+      <div style={{ background: "#000", minHeight: "100vh", color: "white", fontFamily: "system-ui", width: "100%", overflowX: "hidden" }}>
+        <style>{`html,body{margin:0;padding:0;background:#000;overflow-x:hidden;width:100%;}::-webkit-scrollbar{display:none;} *{box-sizing:border-box; -ms-overflow-style:none; scrollbar-width:none;}`}</style>
+        <div style={{ background: "#0f0f0f", padding: "10px 12px", borderBottom: "1px solid #222", width: "100%" }}>
           <div style={{ width: "30px", height: "30px", background: "white", borderRadius: "50%", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", fontSize: "12px" }}>KB</div>
         </div>
         <div style={{ padding: "20px", textAlign: "center" }}>
@@ -51,21 +52,22 @@ export default function App() {
   }
 
   return (
-    <div style={{ background: "#000", minHeight: "100vh", color: "white", paddingBottom: "70px", fontFamily: "system-ui", width: "100vw", margin: 0, overflowX: "hidden" }}>
-      <style>{`body{margin:0;padding:0;background:#000;} *{box-sizing:border-box;}`}</style>
+    <div style={{ background: "#000", minHeight: "100vh", color: "white", paddingBottom: "70px", fontFamily: "system-ui", width: "100%", maxWidth: "100%", overflowX: "hidden", position: "relative" }}>
+      <style>{`html,body{margin:0;padding:0;background:#000;overflow-x:hidden;width:100%;max-width:100%;}::-webkit-scrollbar{display:none; width:0; height:0;} *{box-sizing:border-box; -ms-overflow-style:none; scrollbar-width:none;} body{position:relative; overflow-x:hidden !important;}`}</style>
       
-      <div style={{ background: "#0f0f0f", padding: "10px 12px", borderBottom: "1px solid #1a1a1a", width: "100vw" }}>
+      {/* TOP - STABLE - NO 100vw */}
+      <div style={{ background: "#0f0f0f", padding: "10px 12px", borderBottom: "1px solid #1a1a1a", width: "100%" }}>
         <div style={{ width: "30px", height: "30px", background: "white", borderRadius: "50%", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", fontSize: "12px" }}>KB</div>
       </div>
 
-      <div style={{ display: "flex", gap: "6px", padding: "10px 12px", overflowX: "auto", width: "100vw" }}>
+      <div style={{ display: "flex", gap: "6px", padding: "10px 12px", overflowX: "auto", width: "100%", scrollbarWidth: "none" }}>
         {["For You", "Live", "Following", "Music", "Movies", "History"].map(tab => (
-          <div key={tab} onClick={()=>{ setActiveTab(tab); if(tab==="History") setShowHistory(true); else setShowHistory(false); }} style={{ background: activeTab===tab ? "white" : "#1c1c1c", color: activeTab===tab ? "black" : "#888", padding: "6px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: activeTab===tab ? "700" : "400", whiteSpace: "nowrap" }}>{tab}</div>
+          <div key={tab} onClick={()=>{ setActiveTab(tab); if(tab==="History") setShowHistory(true); else setShowHistory(false); }} style={{ background: activeTab===tab ? "white" : "#1c1c1c", color: activeTab===tab ? "black" : "#888", padding: "6px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: activeTab===tab ? "700" : "400", whiteSpace: "nowrap", flexShrink: 0 }}>{tab}</div>
         ))}
       </div>
 
       {showHistory && (
-        <div style={{ background: "#121212", margin: "8px 12px", padding: "14px", borderRadius: "12px", border: "1px solid #333" }}>
+        <div style={{ background: "#121212", margin: "8px 12px", padding: "14px", borderRadius: "12px", border: "1px solid #333", width: "calc(100% - 24px)" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h3 style={{ margin: 0, fontSize: "14px" }}>📜 History - You Viewed</h3>
             <button onClick={()=>setShowHistory(false)} style={{ background: "#222", color: "white", border: "1px solid #333", padding: "4px 10px", borderRadius: "10px", fontSize: "10px" }}>Close</button>
@@ -77,7 +79,7 @@ export default function App() {
       )}
 
       {authMode && !currentUser && (
-        <div style={{ background: "#121212", margin: "8px 12px", padding: "14px", borderRadius: "12px", border: "1px solid #222" }}>
+        <div style={{ background: "#121212", margin: "8px 12px", padding: "14px", borderRadius: "12px", border: "1px solid #222", width: "calc(100% - 24px)" }}>
           <h3 style={{ margin: "0 0 10px 0", fontSize: "14px" }}>{authMode==='login'?'Login':'Sign Up'}</h3>
           {authMode==='signup' && <input value={formName} onChange={e=>setFormName(e.target.value)} placeholder="Full Name" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "10px", borderRadius: "8px", color: "white", marginBottom: "8px" }} />}
           <input value={formContact} onChange={e=>setFormContact(e.target.value)} placeholder="Phone or Email" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "10px", borderRadius: "8px", color: "white", marginBottom: "8px" }} />
@@ -87,23 +89,23 @@ export default function App() {
       )}
 
       {showUpload && (
-        <div style={{ background: "#121212", margin: "0 12px 10px", padding: "10px", borderRadius: "12px", border: "1px solid #222" }}>
+        <div style={{ background: "#121212", margin: "0 12px 10px", padding: "10px", borderRadius: "12px", border: "1px solid #222", width: "calc(100% - 24px)" }}>
           <textarea value={title} onChange={e=>setTitle(e.target.value)} placeholder="What's happening?" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "10px", borderRadius: "8px", color: "white", minHeight: "60px" }} />
           <button onClick={handlePost} style={{ marginTop: "8px", background: "#1877f2", color: "white", border: "none", padding: "9px", borderRadius: "8px", fontWeight: "bold", width: "100%" }}>Post</button>
         </div>
       )}
 
-      <div style={{ padding: "0 10px", display: "flex", flexDirection: "column", gap: "10px", width: "100vw", boxSizing: "border-box" }}>
+      <div style={{ padding: "0 10px", display: "flex", flexDirection: "column", gap: "10px", width: "100%", maxWidth: "100%" }}>
         {posts.map(p => (
           <div key={p.id} style={{ background: "#121212", borderRadius: "14px", padding: "12px", border: "1px solid #1c1c1c", width: "100%", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: "110px", justifyContent: "space-between" }}>
-              <div style={{ fontSize: "15px" }}>{p.title || "hi"}</div>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: "110px", justifyContent: "space-between", minWidth: 0 }}>
+              <div style={{ fontSize: "15px", wordBreak: "break-word" }}>{p.title || "hi"}</div>
               <div style={{ marginTop: "20px", display: "flex", alignItems: "center", gap: "5px", fontWeight: "800", fontSize: "13px" }}>
                 {p.author} 
                 <span style={{ background: "#1d9bf0", width: "12px", height: "12px", borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "7px" }}>✓</span>
               </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", marginLeft: "12px" }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", marginLeft: "12px", flexShrink: 0 }}>
               <div style={{ position: "relative" }}>
                 <div style={{ width: "46px", height: "46px", borderRadius: "50%", background: "white", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "13px", border: "2px solid #333" }}>KR</div>
                 <div onClick={()=>toggleFollow(p.id)} style={{ position: "absolute", bottom: "-6px", left: "50%", transform: "translateX(-50%)", background: following[p.id] ? "#333" : "#1877f2", color: "white", width: "18px", height: "18px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "bold", border: "2px solid #121212", cursor: "pointer" }}>{following[p.id] ? "✓" : "+"}</div>
@@ -121,12 +123,10 @@ export default function App() {
                   <div style={{ fontSize: "20px" }}>↗️</div>
                   <div style={{ fontSize: "10px", color: "#aaa" }}>Share</div>
                 </div>
-                {/* FIRE LOGO - EXTREMELY GOOD - YOUR REQUEST */}
                 <div onClick={()=>toggleFire(p.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", cursor: "pointer", background: fireActive[p.id] ? "#ff450022" : "transparent", padding: "4px 8px", borderRadius: "10px", border: fireActive[p.id] ? "1px solid #ff4500" : "1px solid transparent" }}>
                   <div style={{ fontSize: "22px", filter: fireActive[p.id] ? "drop-shadow(0 0 6px #ff4500)" : "none" }}>🔥</div>
                   <div style={{ fontSize: "9px", color: fireActive[p.id] ? "#ff6a00" : "#aaa", fontWeight: fireActive[p.id] ? "bold" : "400" }}>{fireActive[p.id] ? "Fired!" : "Fire"}</div>
                 </div>
-                {/* HISTORY BUTTON - YOUR REQUEST */}
                 <div onClick={()=>setShowHistory(true)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", cursor: "pointer" }}>
                   <div style={{ fontSize: "20px" }}>🕒</div>
                   <div style={{ fontSize: "9px", color: "#aaa" }}>History</div>
@@ -137,13 +137,13 @@ export default function App() {
         ))}
       </div>
 
-      {/* BOTTOM - HOME LEFT CORNER, LIVE POST CHAT MIDDLE */}
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0a0a0a", borderTop: "1px solid #222", display: "flex", justifyContent: "space-between", padding: "6px 12px", zIndex: 20, alignItems: "center", width: "100vw", boxSizing: "border-box" }}>
-        <div onClick={()=>{setView("feed"); setActiveTab("For You"); window.scrollTo(0,0)}} style={{ textAlign: "center", color: "white", cursor: "pointer" }}>
+      {/* BOTTOM - STABLE - NO 100vw */}
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0a0a0a", borderTop: "1px solid #222", display: "flex", justifyContent: "space-between", padding: "6px 12px", zIndex: 20, alignItems: "center", width: "100%", maxWidth: "100%", overflow: "hidden" }}>
+        <div onClick={()=>{setView("feed"); setActiveTab("For You"); window.scrollTo(0,0)}} style={{ textAlign: "center", color: "white", cursor: "pointer", flexShrink: 0 }}>
           <div style={{ fontSize: "20px" }}>🏠</div>
           <div style={{ fontSize: "9px", fontWeight: "bold" }}>Home</div>
         </div>
-        <div style={{ display: "flex", gap: "28px", alignItems: "center", justifyContent: "center", position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
+        <div style={{ display: "flex", gap: "24px", alignItems: "center", justifyContent: "center", flex: 1 }}>
           <div style={{ textAlign: "center", color: "#ff3333" }}>
             <div style={{ fontSize: "20px" }}>🔴</div>
             <div style={{ fontSize: "9px", fontWeight: "bold", color: "white" }}>Live</div>
@@ -157,7 +157,7 @@ export default function App() {
             <div style={{ fontSize: "9px" }}>Chat</div>
           </div>
         </div>
-        <div onClick={()=>currentUser ? setView("account") : setAuthMode('login')} style={{ background: currentUser ? "white" : "#1c1c1c", color: currentUser ? "black" : "white", padding: "6px 14px", borderRadius: "20px", fontSize: "11px", fontWeight: "bold", border: "1px solid #333" }}>
+        <div onClick={()=>currentUser ? setView("account") : setAuthMode('login')} style={{ background: currentUser ? "white" : "#1c1c1c", color: currentUser ? "black" : "white", padding: "6px 14px", borderRadius: "20px", fontSize: "11px", fontWeight: "bold", border: "1px solid #333", flexShrink: 0 }}>
           {currentUser ? currentUser.name.split(" ")[0] : "User"}
         </div>
       </div>
