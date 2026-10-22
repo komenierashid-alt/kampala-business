@@ -32,9 +32,8 @@ export default function App() {
   if(view === "account" && currentUser) {
     return (
       <div style={{ background: "#000", minHeight: "100vh", color: "white", fontFamily: "system-ui" }}>
-        <div style={{ background: "#0f0f0f", padding: "12px", display: "flex", justifyContent: "space-between", borderBottom: "1px solid #222" }}>
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}><div style={{ width: "30px", height: "30px", background: "white", borderRadius: "50%", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "12px" }}>KB</div><span style={{ fontWeight: "800", fontSize: "12px" }}>KAMPALA BUSINESS</span></div>
-          <button onClick={()=>setView("feed")} style={{ background: "#222", color: "white", border: "1px solid #333", padding: "6px 12px", borderRadius: "20px", fontSize: "11px" }}>Back to Feed</button>
+        <div style={{ background: "#0f0f0f", padding: "10px 12px", borderBottom: "1px solid #222" }}>
+          <div style={{ width: "32px", height: "32px", background: "white", borderRadius: "50%", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", fontSize: "13px" }}>KB</div>
         </div>
         <div style={{ padding: "20px", textAlign: "center" }}>
           <div style={{ width: "80px", height: "80px", background: "white", borderRadius: "50%", margin: "20px auto", display: "flex", alignItems: "center", justifyContent: "center", color: "black", fontSize: "30px", fontWeight: "bold" }}>{currentUser.name[0]}</div>
@@ -46,16 +45,13 @@ export default function App() {
   }
 
   return (
-    <div style={{ background: "#000", minHeight: "100vh", color: "white", paddingBottom: "80px", fontFamily: "system-ui" }}>
-      {/* TOP - ONLY KB, RIGHT BLANK - YOUR REQUEST */}
-      <div style={{ background: "#0f0f0f", padding: "10px 12px", display: "flex", alignItems: "center", justifyContent: "flex-start", borderBottom: "1px solid #1a1a1a" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <div style={{ width: "28px", height: "28px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", color: "black", fontSize: "11px" }}>KB</div>
-          <span style={{ fontSize: "11px", fontWeight: "800" }}>KAMPALA BUSINESS</span>
-        </div>
+    <div style={{ background: "#000", minHeight: "100vh", color: "white", paddingBottom: "65px", fontFamily: "system-ui", width: "100vw", overflowX: "hidden", boxSizing: "border-box" }}>
+      {/* TOP - ONLY KB - YOUR REQUEST */}
+      <div style={{ background: "#0f0f0f", padding: "10px 12px", borderBottom: "1px solid #1a1a1a", width: "100%", boxSizing: "border-box" }}>
+        <div style={{ width: "30px", height: "30px", background: "white", borderRadius: "50%", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", fontSize: "12px" }}>KB</div>
       </div>
 
-      <div style={{ display: "flex", gap: "6px", padding: "10px 12px", overflowX: "auto" }}>
+      <div style={{ display: "flex", gap: "6px", padding: "10px 12px", overflowX: "auto", width: "100%", boxSizing: "border-box" }}>
         {["For You", "Live", "Following", "Music", "Movies"].map(tab => (
           <div key={tab} onClick={()=>setActiveTab(tab)} style={{ background: activeTab===tab ? "white" : "#1c1c1c", color: activeTab===tab ? "black" : "#888", padding: "6px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: activeTab===tab ? "700" : "400", whiteSpace: "nowrap" }}>{tab}</div>
         ))}
@@ -64,39 +60,41 @@ export default function App() {
       {authMode && !currentUser && (
         <div style={{ background: "#121212", margin: "8px 12px", padding: "14px", borderRadius: "12px", border: "1px solid #222" }}>
           <h3 style={{ margin: "0 0 10px 0", fontSize: "14px" }}>{authMode==='login'?'Login':'Sign Up'}</h3>
-          {authMode==='signup' && <input value={formName} onChange={e=>setFormName(e.target.value)} placeholder="Full Name" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "10px", borderRadius: "8px", color: "white", marginBottom: "8px", boxSizing: "border-box", fontSize: "13px" }} />}
-          <input value={formContact} onChange={e=>setFormContact(e.target.value)} placeholder="Phone or Email" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "10px", borderRadius: "8px", color: "white", marginBottom: "8px", boxSizing: "border-box", fontSize: "13px" }} />
-          <input value={formPass} onChange={e=>setFormPass(e.target.value)} type="password" placeholder="Password" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "10px", borderRadius: "8px", color: "white", marginBottom: "10px", boxSizing: "border-box", fontSize: "13px" }} />
-          <button onClick={handleAuth} style={{ width: "100%", background: "#fff", color: "#000", border: "none", padding: "10px", borderRadius: "8px", fontWeight: "bold", fontSize: "13px" }}>{authMode==='login'?'Login to Account':'Create & Go to Account'}</button>
+          {authMode==='signup' && <input value={formName} onChange={e=>setFormName(e.target.value)} placeholder="Full Name" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "10px", borderRadius: "8px", color: "white", marginBottom: "8px", boxSizing: "border-box" }} />}
+          <input value={formContact} onChange={e=>setFormContact(e.target.value)} placeholder="Phone or Email" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "10px", borderRadius: "8px", color: "white", marginBottom: "8px", boxSizing: "border-box" }} />
+          <input value={formPass} onChange={e=>setFormPass(e.target.value)} type="password" placeholder="Password" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "10px", borderRadius: "8px", color: "white", marginBottom: "10px", boxSizing: "border-box" }} />
+          <button onClick={handleAuth} style={{ width: "100%", background: "#fff", color: "#000", border: "none", padding: "10px", borderRadius: "8px", fontWeight: "bold" }}>{authMode==='login'?'Login':'Create & Go to Account'}</button>
         </div>
       )}
 
       {showUpload && (
         <div style={{ background: "#121212", margin: "0 12px 10px", padding: "10px", borderRadius: "12px", border: "1px solid #222" }}>
-          <textarea value={title} onChange={e=>setTitle(e.target.value)} placeholder="What's happening?" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "10px", borderRadius: "8px", color: "white", minHeight: "60px", boxSizing: "border-box", fontSize: "13px" }} />
-          <button onClick={handlePost} style={{ marginTop: "8px", background: "#1877f2", color: "white", border: "none", padding: "9px", borderRadius: "8px", fontWeight: "bold", width: "100%", fontSize: "13px" }}>Post</button>
+          <textarea value={title} onChange={e=>setTitle(e.target.value)} placeholder="What's happening?" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "10px", borderRadius: "8px", color: "white", minHeight: "60px", boxSizing: "border-box" }} />
+          <button onClick={handlePost} style={{ marginTop: "8px", background: "#1877f2", color: "white", border: "none", padding: "9px", borderRadius: "8px", fontWeight: "bold", width: "100%" }}>Post</button>
         </div>
       )}
 
-      <div style={{ padding: "0 10px", display: "flex", flexDirection: "column", gap: "8px" }}>
+      <div style={{ padding: "0 10px", display: "flex", flexDirection: "column", gap: "8px", width: "100%", boxSizing: "border-box" }}>
         {posts.map(p => (
-          <div key={p.id} style={{ background: "#121212", borderRadius: "12px", padding: "12px", border: "1px solid #1c1c1c" }}>
-            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}><div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "white", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "12px" }}>KR</div><div><div style={{ display: "flex", gap: "4px", fontWeight: "bold", fontSize: "13px" }}>{p.author} <span style={{ background: "#1d9bf0", width: "14px", height: "14px", borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "8px" }}>✓</span></div><div style={{ fontSize: "10px", color: "#666" }}>Founder • Kampala Business</div></div></div>
+          <div key={p.id} style={{ background: "#121212", borderRadius: "12px", padding: "12px", border: "1px solid #1c1c1c", width: "100%", boxSizing: "border-box" }}>
+            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}><div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "white", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "12px" }}>KR</div><div><div style={{ display: "flex", gap: "4px", fontWeight: "bold", fontSize: "13px" }}>{p.author} <span style={{ background: "#1d9bf0", width: "14px", height: "14px", borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "8px" }}>✓</span></div><div style={{ fontSize: "10px", color: "#666" }}>Founder</div></div></div>
             <div style={{ margin: "10px 0", fontSize: "14px" }}>{p.title}</div>
             <div style={{ display: "flex", gap: "20px", borderTop: "1px solid #1e1e1e", paddingTop: "10px" }}><span onClick={()=>handleLike(p.id)} style={{ fontSize: "13px", color: "#aaa" }}>❤️ {p.likes||0} Like</span><span style={{ fontSize: "13px", color: "#aaa" }}>💬 Comment</span><span style={{ fontSize: "13px", color: "#aaa" }}>↗️ Share</span></div>
           </div>
         ))}
       </div>
 
-      {/* BOTTOM - LEFT ALL ICONS, RIGHT USER - YOUR REQUEST */}
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0a0a0a", borderTop: "1px solid #222", display: "flex", justifyContent: "space-between", padding: "8px 14px", zIndex: 20, alignItems: "center" }}>
-        <div style={{ display: "flex", gap: "18px", alignItems: "center" }}>
-          <div onClick={()=>setView("feed")} style={{ textAlign: "center", color: "white" }}><div style={{ fontSize: "16px" }}>🏠</div><div style={{ fontSize: "8px" }}>For You</div></div>
+      {/* BOTTOM - FIT SCREEN - LEFT HOME BUTTON - RIGHT USER */}
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0a0a0a", borderTop: "1px solid #222", display: "flex", justifyContent: "space-between", padding: "6px 10px", zIndex: 20, alignItems: "center", width: "100vw", boxSizing: "border-box", margin: 0 }}>
+        {/* LEFT CORNER - ALL + HOME BUTTON - YOUR REQUEST */}
+        <div style={{ display: "flex", gap: "14px", alignItems: "center" }}>
+          <div onClick={()=>{setView("feed"); setActiveTab("For You"); window.scrollTo(0,0)}} style={{ textAlign: "center", color: "white", cursor: "pointer" }}><div style={{ fontSize: "18px" }}>🏠</div><div style={{ fontSize: "8px", fontWeight: "bold" }}>Home</div></div>
           <div style={{ textAlign: "center", color: "#777" }}><div style={{ fontSize: "16px" }}>🔴</div><div style={{ fontSize: "8px" }}>Live</div></div>
           <div onClick={()=>setShowUpload(!showUpload)} style={{ textAlign: "center" }}><div style={{ background: "white", color: "black", width: "32px", height: "20px", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: "bold" }}>+</div><div style={{ fontSize: "8px", color: "white", marginTop: "2px" }}>Post</div></div>
           <div style={{ textAlign: "center", color: "#777" }}><div style={{ fontSize: "16px" }}>💬</div><div style={{ fontSize: "8px" }}>Chat</div></div>
         </div>
-        <div onClick={()=>currentUser ? setView("account") : setAuthMode('login')} style={{ background: currentUser ? "white" : "#1c1c1c", color: currentUser ? "black" : "white", padding: "6px 14px", borderRadius: "20px", fontSize: "11px", fontWeight: "bold", border: "1px solid #333" }}>{currentUser ? currentUser.name.split(" ")[0] : "User"}</div>
+        {/* RIGHT CORNER - USER - FIT SCREEN */}
+        <div onClick={()=>currentUser ? setView("account") : setAuthMode('login')} style={{ background: currentUser ? "white" : "#1c1c1c", color: currentUser ? "black" : "white", padding: "6px 12px", borderRadius: "20px", fontSize: "11px", fontWeight: "bold", border: "1px solid #333", marginRight: "4px" }}>{currentUser ? currentUser.name.split(" ")[0] : "User"}</div>
       </div>
     </div>
   );
