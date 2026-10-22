@@ -33,7 +33,7 @@ export default function App() {
 
   if(view === "account" && currentUser) {
     return (
-      <div style={{ background: "#000", minHeight: "100vh", color: "white", fontFamily: "system-ui", width: "100%", margin: 0, padding: 0 }}>
+      <div style={{ background: "#000", minHeight: "100vh", color: "white", fontFamily: "system-ui", width: "100%", margin: 0 }}>
         <div style={{ background: "#0f0f0f", padding: "10px 12px", borderBottom: "1px solid #222" }}>
           <div style={{ width: "30px", height: "30px", background: "white", borderRadius: "50%", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", fontSize: "12px" }}>KB</div>
         </div>
@@ -47,11 +47,10 @@ export default function App() {
   }
 
   return (
-    <div style={{ background: "#000", minHeight: "100vh", color: "white", paddingBottom: "65px", fontFamily: "system-ui", width: "100vw", margin: 0, paddingLeft: 0, paddingRight: 0, overflowX: "hidden", boxSizing: "border-box" }}>
+    <div style={{ background: "#000", minHeight: "100vh", color: "white", paddingBottom: "65px", fontFamily: "system-ui", width: "100vw", margin: 0, overflowX: "hidden", boxSizing: "border-box" }}>
       <style>{`body{margin:0;padding:0;background:#000;} *{box-sizing:border-box;}`}</style>
       
-      {/* TOP - ONLY KB - FIT SCREEN */}
-      <div style={{ background: "#0f0f0f", padding: "10px 12px", borderBottom: "1px solid #1a1a1a", width: "100vw", margin: 0 }}>
+      <div style={{ background: "#0f0f0f", padding: "10px 12px", borderBottom: "1px solid #1a1a1a", width: "100vw" }}>
         <div style={{ width: "30px", height: "30px", background: "white", borderRadius: "50%", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", fontSize: "12px" }}>KB</div>
       </div>
 
@@ -64,7 +63,7 @@ export default function App() {
       {authMode && !currentUser && (
         <div style={{ background: "#121212", margin: "8px 12px", padding: "14px", borderRadius: "12px", border: "1px solid #222" }}>
           <h3 style={{ margin: "0 0 10px 0", fontSize: "14px" }}>{authMode==='login'?'Login':'Sign Up'}</h3>
-          {authMode==='signup' && <input value={formName} onChange={e=>setFormName(e.target.value)} placeholder="Full Name" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "10px", borderRadius: "8px", color: "white", marginBottom: "8px", boxSizing: "border-box" }} />}
+          {authMode==='signup' && <input value={formName} onChange={e=>setFormName(e.target.value)} placeholder="Full Name" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "10px", borderRadius: "8px", color: "white", marginBottom: "8px" }} />}
           <input value={formContact} onChange={e=>setFormContact(e.target.value)} placeholder="Phone or Email" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "10px", borderRadius: "8px", color: "white", marginBottom: "8px" }} />
           <input value={formPass} onChange={e=>setFormPass(e.target.value)} type="password" placeholder="Password" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "10px", borderRadius: "8px", color: "white", marginBottom: "10px" }} />
           <button onClick={handleAuth} style={{ width: "100%", background: "#fff", color: "#000", border: "none", padding: "10px", borderRadius: "8px", fontWeight: "bold" }}>{authMode==='login'?'Login':'Create & Go to Account'}</button>
@@ -78,42 +77,50 @@ export default function App() {
         </div>
       )}
 
-      {/* POSTS - NEW LAYOUT - FIT SCREEN, KR RIGHT WITH +, NAME DOWN LEFT */}
+      {/* POSTS - YOUR NEW LAYOUT */}
       <div style={{ padding: "0 10px", display: "flex", flexDirection: "column", gap: "10px", width: "100vw", boxSizing: "border-box" }}>
         {posts.map(p => (
-          <div key={p.id} style={{ background: "#121212", borderRadius: "14px", padding: "12px", border: "1px solid #1c1c1c", width: "100%", boxSizing: "border-box" }}>
+          <div key={p.id} style={{ background: "#121212", borderRadius: "14px", padding: "12px", border: "1px solid #1c1c1c", width: "100%", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             
-            {/* TOP OF POST: NAME LEFT DOWN, KR RIGHT WITH + FOLLOW */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-              {/* LEFT CORNER - NAME DOWN */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "5px", fontWeight: "800", fontSize: "14px" }}>
-                  {p.author} 
-                  <span style={{ background: "#1d9bf0", width: "14px", height: "14px", borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "8px" }}>✓</span>
-                </div>
-                <div style={{ fontSize: "11px", color: "#666" }}>Founder • Kampala Business</div>
-              </div>
-
-              {/* RIGHT SIDE - KR CIRCLE WITH + FOLLOW BUTTON */}
-              <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <div style={{ width: "44px", height: "44px", borderRadius: "50%", background: "white", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "13px", border: "2px solid #333" }}>KR</div>
-                <div onClick={()=>toggleFollow(p.id)} style={{ marginTop: "-8px", background: following[p.id] ? "#333" : "#1877f2", color: "white", width: "18px", height: "18px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "bold", border: "2px solid #121212", cursor: "pointer" }}>{following[p.id] ? "✓" : "+"}</div>
+            {/* LEFT SIDE - CONTENT + KATONGOLE RASHID DOWN LEFT */}
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: "80px", justifyContent: "space-between" }}>
+              <div style={{ fontSize: "15px" }}>{p.title || "hi"}</div>
+              
+              {/* KATONGOLE RASHID DOWN LEFT CORNER - YOUR REQUEST */}
+              <div style={{ marginTop: "20px", display: "flex", alignItems: "center", gap: "5px", fontWeight: "800", fontSize: "13px" }}>
+                {p.author} 
+                <span style={{ background: "#1d9bf0", width: "12px", height: "12px", borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "7px" }}>✓</span>
               </div>
             </div>
 
-            <div style={{ margin: "12px 0", fontSize: "15px", minHeight: "20px" }}>{p.title}</div>
-            
-            <div style={{ display: "flex", gap: "20px", borderTop: "1px solid #1e1e1e", paddingTop: "10px" }}>
-              <span onClick={()=>handleLike(p.id)} style={{ fontSize: "13px", color: "#aaa" }}>❤️ {p.likes||0} Like</span>
-              <span style={{ fontSize: "13px", color: "#aaa" }}>💬 Comment</span>
-              <span style={{ fontSize: "13px", color: "#aaa" }}>↗️ Share</span>
+            {/* RIGHT SIDE - KR CIRCLE + LIKE COMMENT SHARE UNDER IT */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", marginLeft: "12px" }}>
+              <div style={{ position: "relative" }}>
+                <div style={{ width: "46px", height: "46px", borderRadius: "50%", background: "white", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "13px", border: "2px solid #333" }}>KR</div>
+                <div onClick={()=>toggleFollow(p.id)} style={{ position: "absolute", bottom: "-6px", left: "50%", transform: "translateX(-50%)", background: following[p.id] ? "#333" : "#1877f2", color: "white", width: "18px", height: "18px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "bold", border: "2px solid #121212", cursor: "pointer" }}>{following[p.id] ? "✓" : "+"}</div>
+              </div>
+
+              {/* LIKE COMMENT SHARE RIGHT SIDE UNDER KR - YOUR REQUEST */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", alignItems: "center", marginTop: "8px" }}>
+                <div onClick={()=>handleLike(p.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", cursor: "pointer" }}>
+                  <div style={{ fontSize: "20px" }}>❤️</div>
+                  <div style={{ fontSize: "10px", color: "#aaa" }}>{p.likes||1} Like</div>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
+                  <div style={{ fontSize: "18px" }}>💬</div>
+                  <div style={{ fontSize: "10px", color: "#aaa" }}>Comment</div>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
+                  <div style={{ fontSize: "18px" }}>↗️</div>
+                  <div style={{ fontSize: "10px", color: "#aaa" }}>Share</div>
+                </div>
+              </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* BOTTOM - FIT SCREEN - HOME LEFT, USER RIGHT */}
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0a0a0a", borderTop: "1px solid #222", display: "flex", justifyContent: "space-between", padding: "6px 12px", zIndex: 20, alignItems: "center", width: "100vw", boxSizing: "border-box" }}>
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0a0a0a", borderTop: "1px solid #222", display: "flex", justifyContent: "space-between", padding: "6px 12px", zIndex: 20, alignItems: "center", width: "100vw" }}>
         <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
           <div onClick={()=>{setView("feed"); setActiveTab("For You"); window.scrollTo(0,0)}} style={{ textAlign: "center", color: "white" }}><div style={{ fontSize: "18px" }}>🏠</div><div style={{ fontSize: "8px", fontWeight: "bold" }}>Home</div></div>
           <div style={{ textAlign: "center", color: "#777" }}><div style={{ fontSize: "16px" }}>🔴</div><div style={{ fontSize: "8px" }}>Live</div></div>
