@@ -3,12 +3,12 @@ import { initializeApp } from "firebase/app";
 import { getFirestore, collection, query, orderBy, onSnapshot } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyD0uN4D9NN1p5z2v7c9g0h1j2k3l4m5n6o7",
+  apiKey: "AIzaSyDKd-f-5R1KKYSxjV9GKtQuk5-1qSN8QCQ",
   authDomain: "kampala-business.firebaseapp.com",
   projectId: "kampala-business",
-  storageBucket: "kampala-business.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abc123"
+  storageBucket: "kampala-business.firebasestorage.app",
+  messagingSenderId: "942834725537",
+  appId: "1:942834725537:web:4c746311a77dedb267b6e0"
 };
 
 const app = initializeApp(firebaseConfig);
