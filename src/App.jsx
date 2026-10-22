@@ -47,7 +47,7 @@ export default function App() {
   }
 
   return (
-    <div style={{ background: "#000", minHeight: "100vh", color: "white", paddingBottom: "65px", fontFamily: "system-ui", width: "100vw", margin: 0, overflowX: "hidden", boxSizing: "border-box" }}>
+    <div style={{ background: "#000", minHeight: "100vh", color: "white", paddingBottom: "70px", fontFamily: "system-ui", width: "100vw", margin: 0, overflowX: "hidden" }}>
       <style>{`body{margin:0;padding:0;background:#000;} *{box-sizing:border-box;}`}</style>
       
       <div style={{ background: "#0f0f0f", padding: "10px 12px", borderBottom: "1px solid #1a1a1a", width: "100vw" }}>
@@ -77,32 +77,23 @@ export default function App() {
         </div>
       )}
 
-      {/* POSTS - YOUR NEW LAYOUT */}
       <div style={{ padding: "0 10px", display: "flex", flexDirection: "column", gap: "10px", width: "100vw", boxSizing: "border-box" }}>
         {posts.map(p => (
           <div key={p.id} style={{ background: "#121212", borderRadius: "14px", padding: "12px", border: "1px solid #1c1c1c", width: "100%", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            
-            {/* LEFT SIDE - CONTENT + KATONGOLE RASHID DOWN LEFT */}
             <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: "80px", justifyContent: "space-between" }}>
               <div style={{ fontSize: "15px" }}>{p.title || "hi"}</div>
-              
-              {/* KATONGOLE RASHID DOWN LEFT CORNER - YOUR REQUEST */}
               <div style={{ marginTop: "20px", display: "flex", alignItems: "center", gap: "5px", fontWeight: "800", fontSize: "13px" }}>
                 {p.author} 
                 <span style={{ background: "#1d9bf0", width: "12px", height: "12px", borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "7px" }}>✓</span>
               </div>
             </div>
-
-            {/* RIGHT SIDE - KR CIRCLE + LIKE COMMENT SHARE UNDER IT */}
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "12px", marginLeft: "12px" }}>
               <div style={{ position: "relative" }}>
                 <div style={{ width: "46px", height: "46px", borderRadius: "50%", background: "white", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "13px", border: "2px solid #333" }}>KR</div>
                 <div onClick={()=>toggleFollow(p.id)} style={{ position: "absolute", bottom: "-6px", left: "50%", transform: "translateX(-50%)", background: following[p.id] ? "#333" : "#1877f2", color: "white", width: "18px", height: "18px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "bold", border: "2px solid #121212", cursor: "pointer" }}>{following[p.id] ? "✓" : "+"}</div>
               </div>
-
-              {/* LIKE COMMENT SHARE RIGHT SIDE UNDER KR - YOUR REQUEST */}
               <div style={{ display: "flex", flexDirection: "column", gap: "10px", alignItems: "center", marginTop: "8px" }}>
-                <div onClick={()=>handleLike(p.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", cursor: "pointer" }}>
+                <div onClick={()=>handleLike(p.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
                   <div style={{ fontSize: "20px" }}>❤️</div>
                   <div style={{ fontSize: "10px", color: "#aaa" }}>{p.likes||1} Like</div>
                 </div>
@@ -120,14 +111,15 @@ export default function App() {
         ))}
       </div>
 
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0a0a0a", borderTop: "1px solid #222", display: "flex", justifyContent: "space-between", padding: "6px 12px", zIndex: 20, alignItems: "center", width: "100vw" }}>
-        <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
-          <div onClick={()=>{setView("feed"); setActiveTab("For You"); window.scrollTo(0,0)}} style={{ textAlign: "center", color: "white" }}><div style={{ fontSize: "18px" }}>🏠</div><div style={{ fontSize: "8px", fontWeight: "bold" }}>Home</div></div>
-          <div style={{ textAlign: "center", color: "#777" }}><div style={{ fontSize: "16px" }}>🔴</div><div style={{ fontSize: "8px" }}>Live</div></div>
-          <div onClick={()=>setShowUpload(!showUpload)} style={{ textAlign: "center" }}><div style={{ background: "white", color: "black", width: "32px", height: "20px", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: "bold" }}>+</div><div style={{ fontSize: "8px", color: "white", marginTop: "2px" }}>Post</div></div>
-          <div style={{ textAlign: "center", color: "#777" }}><div style={{ fontSize: "16px" }}>💬</div><div style={{ fontSize: "8px" }}>Chat</div></div>
+      {/* BOTTOM - THREE BUTTONS IN MIDDLE - YOUR REQUEST */}
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0a0a0a", borderTop: "1px solid #222", display: "flex", justifyContent: "center", padding: "6px 12px", zIndex: 20, alignItems: "center", width: "100vw", boxSizing: "border-box" }}>
+        <div style={{ display: "flex", gap: "30px", alignItems: "center", justifyContent: "center" }}>
+          <div onClick={()=>{setView("feed"); setActiveTab("For You"); window.scrollTo(0,0)}} style={{ textAlign: "center", color: "white" }}><div style={{ fontSize: "20px" }}>🏠</div><div style={{ fontSize: "9px", fontWeight: "bold" }}>Home</div></div>
+          <div onClick={()=>setShowUpload(!showUpload)} style={{ textAlign: "center" }}><div style={{ background: "white", color: "black", width: "42px", height: "28px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", fontWeight: "bold" }}>+</div><div style={{ fontSize: "9px", color: "white", marginTop: "2px" }}>Post</div></div>
+          <div style={{ textAlign: "center", color: "#777" }}><div style={{ fontSize: "20px" }}>💬</div><div style={{ fontSize: "9px" }}>Chat</div></div>
         </div>
-        <div onClick={()=>currentUser ? setView("account") : setAuthMode('login')} style={{ background: currentUser ? "white" : "#1c1c1c", color: currentUser ? "black" : "white", padding: "6px 14px", borderRadius: "20px", fontSize: "11px", fontWeight: "bold", border: "1px solid #333" }}>{currentUser ? currentUser.name.split(" ")[0] : "User"}</div>
+        {/* User still right corner */}
+        <div onClick={()=>currentUser ? setView("account") : setAuthMode('login')} style={{ position: "absolute", right: "12px", background: currentUser ? "white" : "#1c1c1c", color: currentUser ? "black" : "white", padding: "6px 14px", borderRadius: "20px", fontSize: "11px", fontWeight: "bold", border: "1px solid #333" }}>{currentUser ? currentUser.name.split(" ")[0] : "User"}</div>
       </div>
     </div>
   );
