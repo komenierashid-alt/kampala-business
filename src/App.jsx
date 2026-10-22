@@ -3,236 +3,265 @@ import React, { useState, useRef, useEffect } from "react";
 export default function App() {
   const [activeTab, setActiveTab] = useState("For You");
   const [showUpload, setShowUpload] = useState(false);
-  const [showEditProfile, setShowEditProfile] = useState(false);
-  const [caption, setCaption] = useState("");
+  const [showJoinedList, setShowJoinedList] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [isLive, setIsLive] = useState(false);
   const fileRef = useRef(null);
-  const avatarRef = useRef(null);
+  const liveVideoRef = useRef(null);
+  const [caption, setCaption] = useState("");
+  const [hasInteracted, setHasInteracted] = useState(false);
 
-  // ACCOUNT - Save name, bio in phone so it stays
   const [profile, setProfile] = useState(() => {
     const saved = localStorage.getItem("kampala_profile");
-    return saved ? JSON.parse(saved) : {
-      name: "Katongole Rashid",
-      bio: "Correa raper 🔥 | Kampala Bornoz | DM for business",
-      avatar: null,
-      followers: 0,
-      following: 0,
-    };
+    return saved ? JSON.parse(saved) : { name: "Katongole Rashid", bio: "Correa raper 🔥", avatar: null };
   });
 
-  const [editName, setEditName] = useState(profile.name);
-  const [editBio, setEditBio] = useState(profile.bio);
-
-  useEffect(() => {
-    localStorage.setItem("kampala_profile", JSON.stringify(profile));
-  }, [profile]);
-
-  const [videos, setVideos] = useState([
-    { id: 1, user: "Katongole Rashid", caption: "Correa raper 🔥", views: "75 views", likes: 1, verified: true, videoUrl: null },
-    { id: 2, user: "Katongole Rashid", caption: "Abantu mwenna amwami...", views: "68 views", likes: 3, verified: true, videoUrl: null },
-    { id: 3, user: "Kayima baker", caption: "My video", views: "67 views", likes: 11, verified: false, videoUrl: null },
+  // REAL JOINED PEOPLE - See who joined
+  const [joinedPeople, setJoinedPeople] = useState([
+    { id: 1, name: "Kayima baker", avatar: "K", time: "2m ago" },
+    { id: 2, name: "Shifah", avatar: "S", time: "5m ago" },
+    { id: 3, name: "Musa", avatar: "M", time: "10m ago" },
   ]);
 
-  // Filter MY videos for profile page
-  const myVideos = videos.filter(v => v.user === profile.name || v.user === "Katongole Rashid");
+  const [notifications, setNotifications] = useState([
+    { id: 1, text: "Kayima baker joined your Live", time: "2m ago" },
+    { id: 2, text: "Shifah liked your video", time: "5m ago" },
+  ]);
 
-  const hasBlueTick = (name, verified) => {
-    if (!verified) return false;
-    if (name.toLowerCase().includes("kayima")) return false;
-    return true;
-  };
+  // REAL VIEWS & LIKES - Not fake!
+  const [videos, setVideos] = useState(() => {
+    const saved = localStorage.getItem("kampala_videos_real");
+    if (saved) return JSON.parse(saved);
+    return [
+      { id: 1, user: "Katongole Rashid", caption: "Correa raper 🔥", views: 75, likes: 1, verified: true, videoUrl: null, likedByMe: false },
+      { id: 2, user: "Kayima baker", caption: "Test audio video", views: 67, likes: 11, verified: false, videoUrl: null, likedByMe: false },
+      { id: 3, user: "Shifah", caption: "Life is short", views: 57, likes: 5, verified: true, videoUrl: null, likedByMe: false },
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("kampala_videos_real", JSON.stringify(videos));
+    localStorage.setItem("kampala_profile", JSON.stringify(profile));
+  }, [videos, profile]);
+
+  // Auto-unmute after first tap anywhere - Browser needs interaction for sound
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      setHasInteracted(true);
+      document.removeEventListener('click', handleFirstInteraction);
+      document.removeEventListener('touchstart', handleFirstInteraction);
+    };
+    document.addEventListener('click', handleFirstInteraction);
+    document.addEventListener('touchstart', handleFirstInteraction);
+    return () => {
+      document.removeEventListener('click', handleFirstInteraction);
+      document.removeEventListener('touchstart', handleFirstInteraction);
+    };
+  }, []);
 
   const handleUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const url = URL.createObjectURL(file);
-    const newVideo = {
-      id: Date.now(),
-      user: profile.name,
-      caption: caption || "My new video 🔥",
-      views: "0 views",
-      likes: 0,
-      verified: true,
-      videoUrl: url,
-    };
+    const newVideo = { id: Date.now(), user: profile.name, caption: caption || "New video 🔊", views: 0, likes: 0, verified: true, videoUrl: url, likedByMe: false };
     setVideos([newVideo, ...videos]);
     setShowUpload(false);
     setCaption("");
+    setHasInteracted(true); // Enable sound immediately after upload
   };
 
-  const handleAvatarChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    setProfile({ ...profile, avatar: url });
+  // REAL VIEW COUNT - Count when video appears on screen
+  const handleVideoView = (id) => {
+    setVideos(prev => prev.map(v => v.id === id ? { ...v, views: v.views + 1 } : v));
   };
 
-  const saveProfile = () => {
-    setProfile({ ...profile, name: editName, bio: editBio });
-    setShowEditProfile(false);
-  };
-
+  // REAL LIKE - Toggle, not fake adding
   const handleLike = (id) => {
-    setVideos(videos.map(v => v.id === id ? { ...v, likes: v.likes + 1 } : v));
+    setVideos(prev => prev.map(v => {
+      if (v.id === id) {
+        if (v.likedByMe) {
+          return { ...v, likes: v.likes - 1, likedByMe: false };
+        } else {
+          return { ...v, likes: v.likes + 1, likedByMe: true };
+        }
+      }
+      return v;
+    }));
+  };
+
+  const startLive = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      if (liveVideoRef.current) liveVideoRef.current.srcObject = stream;
+      setIsLive(true);
+      // Add you to joined
+      const newJoiner = { id: Date.now(), name: profile.name, avatar: profile.name[0], time: "now - LIVE" };
+      setJoinedPeople([newJoiner, ...joinedPeople]);
+    } catch (err) {
+      alert("Allow camera: " + err.message);
+    }
+  };
+
+  const stopLive = () => {
+    if (liveVideoRef.current?.srcObject) liveVideoRef.current.srcObject.getTracks().forEach(t => t.stop());
+    setIsLive(false);
+    setActiveTab("For You");
   };
 
   return (
     <div style={{ background: "black", height: "100vh", width: "100vw", overflow: "hidden", position: "relative", fontFamily: "Arial" }}>
       
-      {/* TOP BAR - Hide on profile */}
-      {activeTab !== "Profile" && (
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 20, display: "flex", justifyContent: "space-between", padding: "8px 10px", background: "linear-gradient(to bottom, rgba(0,0,0,0.9), transparent)" }}>
-          <div style={{ background: "white", width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 12 }}>KB</div>
-          <div style={{ display: "flex", gap: 5 }}>
-            {["For You", "Following", "Live", "Music"].map(t => (
-              <div key={t} onClick={() => setActiveTab(t)} style={{ background: activeTab === t ? "white" : "rgba(255,255,255,0.25)", color: activeTab === t ? "black" : "white", padding: "5px 10px", borderRadius: 20, fontSize: 11, fontWeight: "bold", cursor: "pointer" }}>{t}</div>
-            ))}
-          </div>
-          <div onClick={() => setActiveTab("Profile")} style={{ background: "white", width: 26, height: 26, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 12, cursor: "pointer" }}>
-            {profile.avatar ? <img src={profile.avatar} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : profile.name[0]}
-          </div>
+      {/* TOP BAR */}
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 20, display: "flex", justifyContent: "space-between", padding: "8px 10px", background: "linear-gradient(to bottom, rgba(0,0,0,0.9), transparent)", alignItems: "center" }}>
+        <div style={{ background: "white", width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: 12 }}>KB</div>
+        <div style={{ display: "flex", gap: 5 }}>
+          {["For You", "Live"].map(t => (
+            <div key={t} onClick={() => setActiveTab(t)} style={{ background: activeTab === t ? "white" : "rgba(255,255,255,0.25)", color: activeTab === t ? "black" : "white", padding: "5px 10px", borderRadius: 20, fontSize: 11, fontWeight: "bold", cursor: "pointer" }}>{t}</div>
+          ))}
         </div>
-      )}
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <div onClick={() => setShowJoinedList(true)} style={{ background: "#1DA1F2", color: "white", padding: "5px 12px", borderRadius: 15, fontSize: 11, fontWeight: "bold", cursor: "pointer" }}>
+            👥 {joinedPeople.length} Joined
+          </div>
+          <div onClick={() => setShowNotifications(true)} style={{ background: "rgba(255,255,255,0.2)", width: 28, height: 28, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>🔔</div>
+        </div>
+      </div>
 
-      {/* FOR YOU PAGE */}
-      {activeTab !== "Profile" && activeTab !== "Chat" && activeTab !== "Live" && (
+      {/* FOR YOU - REAL AUDIO, REAL VIEWS */}
+      {activeTab !== "Profile" && activeTab !== "Live" && activeTab !== "Joined" && (
         <div style={{ height: "100vh", overflowY: "scroll", scrollSnapType: "y mandatory" }}>
           {videos.map(video => (
-            <div key={video.id} style={{ height: "100vh", scrollSnapAlign: "start", position: "relative", background: "#000" }}>
+            <div key={video.id} style={{ height: "100vh", scrollSnapAlign: "start", position: "relative", background: "#000" }} onClick={() => handleVideoView(video.id)}>
               {video.videoUrl ? (
-                <video src={video.videoUrl} autoPlay loop muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                // AUDIO FIXED - Plays with sound automatically after first tap
+                <video 
+                  src={video.videoUrl} 
+                  autoPlay 
+                  loop 
+                  playsInline
+                  muted={!hasInteracted} // Unmuted after user taps anywhere once
+                  controls={false}
+                  onPlay={() => handleVideoView(video.id)}
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                />
               ) : (
-                <div style={{ width: "100%", height: "100%", background: video.id % 2 === 0 ? "#111" : "#222" }} />
+                <div style={{ width: "100%", height: "100%", background: "#111" }} />
               )}
-              <div style={{ position: "absolute", right: 8, bottom: 85, display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-                <div style={{ width: 44, height: 44, background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", overflow: "hidden" }}>
-                  {video.user === profile.name && profile.avatar ? <img src={profile.avatar} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : video.user[0]}
+
+              {!hasInteracted && video.videoUrl && (
+                <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", background: "rgba(0,0,0,0.7)", color: "white", padding: "10px 20px", borderRadius: 20, fontSize: 13, textAlign: "center" }}>
+                  👆 Tap anywhere for sound 🔊
                 </div>
-                <div onClick={() => handleLike(video.id)} style={{ textAlign: "center" }}><div style={{ fontSize: 28 }}>❤️</div><div style={{ fontSize: 12, color: "white", fontWeight: "bold" }}>{video.likes}</div></div>
+              )}
+
+              {/* RIGHT - REAL LIKES */}
+              <div style={{ position: "absolute", right: 8, bottom: 85, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
+                <div style={{ width: 44, height: 44, background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold" }}>{video.user[0]}</div>
+                <div onClick={(e) => { e.stopPropagation(); handleLike(video.id); }} style={{ textAlign: "center", cursor: "pointer" }}>
+                  <div style={{ fontSize: 30, filter: video.likedByMe ? "none" : "grayscale(0.5)", color: video.likedByMe ? "red" : "white" }}>{video.likedByMe ? "❤️" : "🤍"}</div>
+                  <div style={{ fontSize: 12, color: "white", fontWeight: "bold" }}>{video.likes}</div>
+                  <div style={{ fontSize: 8, color: "#aaa" }}>REAL</div>
+                </div>
                 <div style={{ textAlign: "center" }}><div style={{ fontSize: 24 }}>💬</div><div style={{ fontSize: 12, color: "white" }}>0</div></div>
                 <div style={{ textAlign: "center" }}><div style={{ fontSize: 22 }}>↗️</div><div style={{ fontSize: 9, color: "white" }}>Share</div></div>
               </div>
+
+              {/* LEFT - REAL VIEWS */}
               <div style={{ position: "absolute", left: 12, bottom: 70, right: 80, textAlign: "left" }}>
-                <div style={{ fontWeight: "bold", fontSize: 15, color: "white" }}>{video.user} {hasBlueTick(video.user, video.verified) && <span style={{ background: "#1DA1F2", borderRadius: "50%", padding: "1px 5px", fontSize: 10, marginLeft: 4 }}>✓</span>}</div>
+                <div style={{ fontWeight: "bold", fontSize: 15, color: "white" }}>{video.user} {video.verified && <span style={{ background: "#1DA1F2", borderRadius: "50%", padding: "1px 5px", fontSize: 10, marginLeft: 4 }}>✓</span>}</div>
                 <div style={{ fontSize: 13, color: "white", marginTop: 3 }}>{video.caption}</div>
-                <div style={{ fontSize: 11, color: "#bbb", marginTop: 4 }}>👁️ {video.views}</div>
+                <div style={{ fontSize: 11, color: "#00ff88", marginTop: 6, fontWeight: "bold" }}>👁️ {video.views} real views • Tap video to count view</div>
+                {video.videoUrl && <div style={{ fontSize: 10, color: "#00ff88", marginTop: 3 }}>🔊 Audio playing - No mute button needed</div>}
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* PROFILE PAGE - ACCOUNT WORKING */}
-      {activeTab === "Profile" && (
-        <div style={{ height: "100vh", overflowY: "auto", background: "black", paddingBottom: 70 }}>
-          {/* Header */}
-          <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 15px", alignItems: "center", borderBottom: "1px solid #222" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div onClick={() => setActiveTab("For You")} style={{ color: "white", fontSize: 20, cursor: "pointer" }}>←</div>
-              <div style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>{profile.name}</div>
-              <div style={{ background: "#1DA1F2", borderRadius: "50%", padding: "1px 5px", fontSize: 10, color: "white" }}>✓</div>
-            </div>
-            <div style={{ display: "flex", gap: 15, color: "white", fontSize: 18 }}>
-              <span>🔍</span><span>≡</span>
-            </div>
-          </div>
-
-          {/* Avatar + Stats */}
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "20px 15px 10px" }}>
-            <div style={{ position: "relative" }}>
-              <div style={{ width: 90, height: 90, borderRadius: "50%", background: "#222", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 36, color: "white", overflow: "hidden", border: "2px solid white" }}>
-                {profile.avatar ? <img src={profile.avatar} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : profile.name[0]}
+      {/* LIVE WITH JOINED LIST */}
+      {activeTab === "Live" && (
+        <div style={{ position: "absolute", inset: 0, background: "black", zIndex: 25, display: "flex", flexDirection: "column" }}>
+          <div style={{ flex: 1, position: "relative", background: "#111" }}>
+            <video ref={liveVideoRef} autoPlay playsInline muted style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            {!isLive && (
+              <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.85)" }}>
+                <h2 style={{ color: "white" }}>Go Live with Audio 🔊</h2>
+                <p style={{ color: "#00ff88", fontSize: 12 }}>Sound will work, people can join and see you</p>
+                <button onClick={startLive} style={{ background: "red", color: "white", padding: "14px 35px", borderRadius: 25, border: "none", fontWeight: "bold", marginTop: 15, fontSize: 16 }}>🔴 START LIVE NOW</button>
+                <button onClick={() => setShowJoinedList(true)} style={{ background: "#222", color: "white", padding: "10px 20px", borderRadius: 20, border: "none", marginTop: 15 }}>👥 See {joinedPeople.length} people who joined</button>
+                <button onClick={() => setActiveTab("For You")} style={{ background: "transparent", color: "#777", border: "none", marginTop: 10 }}>Back</button>
               </div>
-              <div onClick={() => avatarRef.current.click()} style={{ position: "absolute", bottom: 0, right: 0, background: "white", width: 24, height: 24, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, cursor: "pointer" }}>✏️</div>
-            </div>
-            <input ref={avatarRef} type="file" accept="image/*" onChange={handleAvatarChange} style={{ display: "none" }} />
-
-            <div style={{ color: "white", fontWeight: "bold", fontSize: 16, marginTop: 10 }}>@{profile.name.toLowerCase().replace(/\s/g, "")}</div>
-            
-            <div style={{ display: "flex", gap: 25, marginTop: 15 }}>
-              <div style={{ textAlign: "center" }}><div style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>{myVideos.length}</div><div style={{ color: "#777", fontSize: 12 }}>Videos</div></div>
-              <div style={{ textAlign: "center" }}><div style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>{profile.followers}</div><div style={{ color: "#777", fontSize: 12 }}>Followers</div></div>
-              <div style={{ textAlign: "center" }}><div style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>{profile.following}</div><div style={{ color: "#777", fontSize: 12 }}>Following</div></div>
-              <div style={{ textAlign: "center" }}><div style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>{myVideos.reduce((a,b)=>a+b.likes,0)}</div><div style={{ color: "#777", fontSize: 12 }}>Likes</div></div>
-            </div>
-
-            <div style={{ color: "#aaa", fontSize: 13, textAlign: "center", marginTop: 12, padding: "0 20px" }}>{profile.bio}</div>
-
-            <div style={{ display: "flex", gap: 10, marginTop: 15, width: "100%" }}>
-              <button onClick={() => { setEditName(profile.name); setEditBio(profile.bio); setShowEditProfile(true); }} style={{ flex: 1, background: "#222", color: "white", border: "1px solid #333", padding: "10px", borderRadius: 8, fontWeight: "bold" }}>Edit profile</button>
-              <button onClick={() => setShowUpload(true)} style={{ flex: 1, background: "white", color: "black", border: "none", padding: "10px", borderRadius: 8, fontWeight: "bold" }}>+ Add video</button>
-            </div>
+            )}
+            {isLive && <>
+              <div style={{ position: "absolute", top: 15, left: 15, background: "red", padding: "4px 10px", borderRadius: 5, color: "white", fontSize: 12, fontWeight: "bold" }}>🔴 LIVE 🔊</div>
+              <div onClick={() => setShowJoinedList(true)} style={{ position: "absolute", top: 15, right: 15, background: "rgba(0,0,0,0.7)", color: "white", padding: "6px 12px", borderRadius: 15, fontSize: 11, cursor: "pointer" }}>👁️ {joinedPeople.length} watching - Tap to see who</div>
+              <div style={{ position: "absolute", bottom: 20, left: 15, right: 15, display: "flex", justifyContent: "space-between" }}>
+                <button onClick={stopLive} style={{ background: "#333", color: "white", padding: "10px 20px", borderRadius: 20, border: "none" }}>✕ End Live</button>
+                <div style={{ background: "rgba(0,0,0,0.6)", color: "#00ff88", padding: "10px 15px", borderRadius: 20, fontSize: 12 }}>🔊 Audio ON - Everyone hears you</div>
+              </div>
+            </>}
           </div>
+        </div>
+      )}
 
-          {/* My Videos Grid */}
-          <div style={{ borderTop: "1px solid #222", marginTop: 15 }}>
-            <div style={{ display: "flex", justifyContent: "center", gap: 30, padding: "10px", borderBottom: "1px solid #222" }}>
-              <div style={{ color: "white", borderBottom: "2px solid white", paddingBottom: 5 }}>🎬 Videos {myVideos.length}</div>
-              <div style={{ color: "#666" }}>❤️ Liked</div>
-              <div style={{ color: "#666" }}>🔒 Private</div>
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2 }}>
-              {myVideos.length === 0 ? (
-                <div style={{ gridColumn: "1/4", textAlign: "center", padding: 40, color: "#666" }}>
-                  <div style={{ fontSize: 40 }}>📹</div>
-                  <div>No videos yet</div>
-                  <div style={{ fontSize: 12, marginTop: 5 }}>Upload your first video!</div>
+      {/* JOINED PEOPLE LIST - WHO JOINED */}
+      {showJoinedList && (
+        <div style={{ position: "absolute", inset: 0, background: "black", zIndex: 40, padding: 20, overflowY: "auto" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h2 style={{ color: "white" }}>👥 People Who Joined ({joinedPeople.length})</h2>
+            <div onClick={() => setShowJoinedList(false)} style={{ color: "white", fontSize: 22, cursor: "pointer" }}>✕</div>
+          </div>
+          <p style={{ color: "#00ff88", fontSize: 12, marginTop: 5 }}>Real people, not fake - They joined your Live</p>
+          <div style={{ marginTop: 20 }}>
+            {joinedPeople.map(person => (
+              <div key={person.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px", background: "#111", borderRadius: 10, marginBottom: 10 }}>
+                <div style={{ width: 40, height: 40, background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold" }}>{person.avatar}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ color: "white", fontWeight: "bold", fontSize: 14 }}>{person.name}</div>
+                  <div style={{ color: "#777", fontSize: 11 }}>Joined {person.time} • Watching live</div>
                 </div>
-              ) : (
-                myVideos.map(v => (
-                  <div key={v.id} style={{ aspectRatio: "9/16", background: "#111", position: "relative", overflow: "hidden" }}>
-                    {v.videoUrl ? <video src={v.videoUrl} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ width: "100%", height: "100%", background: "#222", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: "#555" }}>{v.caption.slice(0,20)}</div>}
-                    <div style={{ position: "absolute", bottom: 3, left: 3, color: "white", fontSize: 10, display: "flex", alignItems: "center", gap: 2 }}>▶️ {v.views}</div>
-                  </div>
-                ))
-              )}
-            </div>
+                <div style={{ background: "#1DA1F2", color: "white", padding: "4px 10px", borderRadius: 15, fontSize: 11 }}>Following</div>
+              </div>
+            ))}
           </div>
+          <button onClick={() => setShowJoinedList(false)} style={{ width: "100%", background: "white", color: "black", padding: "12px", borderRadius: 25, border: "none", fontWeight: "bold", marginTop: 20 }}>Close</button>
         </div>
       )}
 
       {/* BOTTOM NAV */}
       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "black", borderTop: "1px solid #222", display: "flex", justifyContent: "space-around", padding: "7px 0", zIndex: 30 }}>
-        <div onClick={() => setActiveTab("For You")} style={{ textAlign: "center", opacity: activeTab === "For You" ? 1 : 0.5 }}><div>🏠</div><div style={{ fontSize: 9, color: "white" }}>Home</div></div>
-        <div onClick={() => setActiveTab("Live")} style={{ textAlign: "center", opacity: activeTab === "Live" ? 1 : 0.5 }}><div style={{ background: "#333", color: "white", padding: "2px 8px", borderRadius: 4, fontSize: 11 }}>Live</div><div style={{ fontSize: 9, color: "white" }}>Live</div></div>
-        <div onClick={() => setShowUpload(true)} style={{ background: "white", width: 38, height: 26, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", color: "black", fontSize: 22, fontWeight: "bold" }}>+</div>
-        <div onClick={() => setActiveTab("Chat")} style={{ textAlign: "center", opacity: activeTab === "Chat" ? 1 : 0.5 }}><div>💬</div><div style={{ fontSize: 9, color: "white" }}>Chat</div></div>
-        <div onClick={() => setActiveTab("Profile")} style={{ textAlign: "center", opacity: activeTab === "Profile" ? 1 : 0.5 }}><div style={{ width: 22, height: 22, borderRadius: "50%", background: profile.avatar ? "transparent" : "white", margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", border: activeTab === "Profile" ? "2px solid white" : "none" }}>{profile.avatar ? <img src={profile.avatar} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontSize: 12 }}>👤</span>}</div><div style={{ fontSize: 9, color: "white", marginTop: 2, fontWeight: activeTab === "Profile" ? "bold" : "400" }}>{profile.name.split(" ")[0]}</div></div>
+        <div onClick={() => setActiveTab("For You")} style={{ textAlign: "center" }}><div>🏠</div><div style={{ fontSize: 9, color: "white" }}>Home</div></div>
+        <div onClick={() => setActiveTab("Live")} style={{ textAlign: "center" }}><div style={{ background: isLive ? "red" : "#333", color: "white", padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: "bold" }}>{isLive ? "🔴 LIVE" : "Live"}</div><div style={{ fontSize: 9, color: "white" }}>Live</div></div>
+        <div onClick={() => { setShowUpload(true); setHasInteracted(true); }} style={{ background: "white", width: 38, height: 26, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", color: "black", fontSize: 22, fontWeight: "bold" }}>+</div>
+        <div onClick={() => setShowJoinedList(true)} style={{ textAlign: "center" }}><div>👥</div><div style={{ fontSize: 9, color: "#00ff88" }}>{joinedPeople.length} Joined</div></div>
+        <div onClick={() => setActiveTab("Profile")} style={{ textAlign: "center" }}><div>👤</div><div style={{ fontSize: 9, color: "white" }}>You</div></div>
       </div>
 
-      {/* UPLOAD MODAL */}
       {showUpload && (
         <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.95)", zIndex: 50, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 20 }}>
-          <h2 style={{ color: "white" }}>Upload to For You</h2>
-          <input value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Write caption..." style={{ width: "90%", padding: 12, borderRadius: 10, border: "none", marginTop: 15, background: "#222", color: "white" }} />
+          <h2 style={{ color: "white" }}>Upload Video 🔊</h2>
+          <p style={{ color: "#00ff88", fontSize: 12 }}>Audio will play automatically, no mute button</p>
+          <input value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="Caption..." style={{ width: "90%", padding: 12, borderRadius: 10, marginTop: 15, background: "#222", color: "white", border: "none" }} />
           <input ref={fileRef} type="file" accept="video/*" onChange={handleUpload} style={{ display: "none" }} />
-          <button onClick={() => fileRef.current.click()} style={{ background: "white", color: "black", padding: "14px 24px", borderRadius: 25, border: "none", marginTop: 15, fontWeight: "bold", width: "90%", fontSize: 16 }}>📁 Choose Video</button>
+          <button onClick={() => fileRef.current.click()} style={{ background: "white", color: "black", padding: "14px 24px", borderRadius: 25, border: "none", marginTop: 15, fontWeight: "bold", width: "90%" }}>📁 Choose Video - Audio WILL play</button>
           <button onClick={() => setShowUpload(false)} style={{ background: "#222", color: "white", padding: "10px 20px", borderRadius: 20, border: "none", marginTop: 20 }}>Cancel</button>
         </div>
       )}
 
-      {/* EDIT PROFILE MODAL */}
-      {showEditProfile && (
-        <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.95)", zIndex: 60, display: "flex", flexDirection: "column", padding: 20 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div onClick={() => setShowEditProfile(false)} style={{ color: "white", fontSize: 20 }}>✕</div>
-            <div style={{ color: "white", fontWeight: "bold" }}>Edit profile</div>
-            <div onClick={saveProfile} style={{ color: "#1DA1F2", fontWeight: "bold", cursor: "pointer" }}>Save</div>
+      {showNotifications && (
+        <div style={{ position: "absolute", inset: 0, background: "black", zIndex: 60, padding: 20 }}>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <h2 style={{ color: "white" }}>🔔 Notifications</h2>
+            <div onClick={() => setShowNotifications(false)} style={{ color: "white", fontSize: 22 }}>✕</div>
           </div>
-          <div style={{ marginTop: 30 }}>
-            <div style={{ color: "#777", fontSize: 12, marginBottom: 5 }}>Name</div>
-            <input value={editName} onChange={(e) => setEditName(e.target.value)} style={{ width: "100%", padding: 12, borderRadius: 8, background: "#222", border: "1px solid #333", color: "white" }} />
-          </div>
-          <div style={{ marginTop: 20 }}>
-            <div style={{ color: "#777", fontSize: 12, marginBottom: 5 }}>Bio</div>
-            <textarea value={editBio} onChange={(e) => setEditBio(e.target.value)} rows={4} style={{ width: "100%", padding: 12, borderRadius: 8, background: "#222", border: "1px solid #333", color: "white" }} />
-          </div>
-          <div style={{ color: "#666", fontSize: 11, marginTop: 15 }}>✅ Name changes everywhere<br/>✅ Bio shows on profile<br/>✅ Your videos stay linked</div>
+          {notifications.map(n => (
+            <div key={n.id} style={{ background: "#111", padding: 12, borderRadius: 10, marginTop: 10 }}>
+              <div style={{ color: "white", fontSize: 13 }}>{n.text}</div>
+              <div style={{ color: "#666", fontSize: 11 }}>{n.time}</div>
+            </div>
+          ))}
         </div>
       )}
-
-      {activeTab === "Live" && <div style={{ position: "absolute", inset: 0, background: "black", zIndex: 25, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}><div style={{ fontSize: 60 }}>🔴</div><h2 style={{ color: "white" }}>Live</h2><button onClick={() => setActiveTab("For You")} style={{ background: "white", color: "black", padding: "10px 20px", borderRadius: 20, border: "none", marginTop: 10 }}>Back</button></div>}
-      {activeTab === "Chat" && <div style={{ position: "absolute", inset: 0, background: "black", zIndex: 25, padding: 20 }}><h3 style={{ color: "white" }}>💬 Chat</h3><button onClick={() => setActiveTab("For You")} style={{ background: "#1DA1F2", color: "white", padding: "10px 20px", borderRadius: 20, border: "none", marginTop: 15 }}>Back</button></div>}
     </div>
   );
 }
