@@ -6,9 +6,10 @@ export default function App() {
   const [posts, setPosts] = useState([]);
   const [title, setTitle] = useState("");
   const [showUpload, setShowUpload] = useState(false);
-  const [authMode, setAuthMode] = useState(null); // login | signup
+  const [authMode, setAuthMode] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
-  const [view, setView] = useState("feed"); // feed | account
+  const [view, setView] = useState("feed");
+  const [activeTab, setActiveTab] = useState("For You");
 
   const [formName, setFormName] = useState("");
   const [formContact, setFormContact] = useState("");
@@ -16,19 +17,14 @@ export default function App() {
 
   useEffect(() => {
     const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
-    const unsub = onSnapshot(q, (snap) => {
-      setPosts(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    });
+    const unsub = onSnapshot(q, (snap) => setPosts(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
     return () => unsub();
   }, []);
 
   const handleAuth = () => {
-    if(!formContact || !formPass || (authMode==='signup' && !formName)) { alert("Fill all fields"); return; }
-    // REAL SAVE - For now save to local, later Firebase Auth
-    const user = { name: authMode==='signup' ? formName : "User", contact: formContact, joined: new Date().toLocaleDateString() };
-    setCurrentUser(user);
-    setView("account"); // GO TO ACCOUNT, NOT DASHBOARD!
-    setAuthMode(null);
+    if(!formContact || !formPass || (authMode==='signup' && !formName)) { alert("Fill all"); return; }
+    setCurrentUser({ name: authMode==='signup' ? formName : "User", contact: formContact, joined: new Date().toLocaleDateString() });
+    setView("account"); setAuthMode(null);
     setFormName(""); setFormContact(""); setFormPass("");
   };
 
@@ -40,24 +36,17 @@ export default function App() {
 
   const handleLike = async (id) => { await updateDoc(doc(db, "posts", id), { likes: increment(1) }); };
 
-  // ACCOUNT VIEW - AFTER LOGIN
   if(view === "account" && currentUser) {
     return (
       <div style={{ background: "#000", minHeight: "100vh", color: "white", fontFamily: "system-ui" }}>
         <div style={{ background: "#0f0f0f", padding: "12px", display: "flex", justifyContent: "space-between", borderBottom: "1px solid #222" }}>
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}><div style={{ width: "32px", height: "32px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "black", fontWeight: "bold" }}>KB</div><span style={{ fontWeight: "800", fontSize: "13px" }}>KAMPALA BUSINESS</span></div>
-          <button onClick={()=>setView("feed")} style={{ background: "#222", color: "white", border: "1px solid #333", padding: "7px 14px", borderRadius: "20px", fontSize: "12px" }}>Back to Feed</button>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}><div style={{ width: "30px", height: "30px", background: "white", borderRadius: "50%", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "12px" }}>KB</div><span style={{ fontWeight: "800", fontSize: "12px" }}>KAMPALA BUSINESS</span></div>
+          <button onClick={()=>setView("feed")} style={{ background: "#222", color: "white", border: "1px solid #333", padding: "6px 12px", borderRadius: "20px", fontSize: "11px" }}>Back to Feed</button>
         </div>
         <div style={{ padding: "20px", textAlign: "center" }}>
           <div style={{ width: "80px", height: "80px", background: "white", borderRadius: "50%", margin: "20px auto", display: "flex", alignItems: "center", justifyContent: "center", color: "black", fontSize: "30px", fontWeight: "bold" }}>{currentUser.name[0]}</div>
-          <h2 style={{ margin: "0" }}>{currentUser.name}</h2>
-          <p style={{ color: "#888", fontSize: "13px", margin: "5px 0" }}>{currentUser.contact}</p>
-          <p style={{ color: "#555", fontSize: "12px" }}>Joined {currentUser.joined} • Kampala, UG</p>
-          <div style={{ background: "#121212", borderRadius: "12px", padding: "14px", marginTop: "20px", textAlign: "left", border: "1px solid #222" }}>
-            <div style={{ fontWeight: "bold", marginBottom: "10px" }}>My Account</div>
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid #222", fontSize: "14px" }}><span>Posts</span><span>{posts.filter(p=>p.author===currentUser.name).length}</span></div>
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 0", fontSize: "14px" }}><span>Verified</span><span style={{ color: "#1d9bf0" }}>✓ Pending</span></div>
-          </div>
+          <h2 style={{ margin: 0 }}>{currentUser.name}</h2>
+          <p style={{ color: "#888", fontSize: "12px" }}>{currentUser.contact}</p>
           <button onClick={()=>{setCurrentUser(null); setView("feed")}} style={{ marginTop: "20px", background: "#222", color: "#ff4444", border: "1px solid #333", width: "100%", padding: "12px", borderRadius: "10px" }}>Logout</button>
         </div>
       </div>
@@ -66,61 +55,68 @@ export default function App() {
 
   return (
     <div style={{ background: "#000", minHeight: "100vh", color: "white", paddingBottom: "80px", fontFamily: "system-ui" }}>
-      <div style={{ background: "#0f0f0f", padding: "12px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 20, borderBottom: "1px solid #222" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}><div style={{ width: "32px", height: "32px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", color: "black" }}>KB</div><span style={{ fontSize: "13px", fontWeight: "800" }}>KAMPALA BUSINESS</span></div>
-        <div style={{ display: "flex", gap: "8px" }}>
-          {currentUser ? <button onClick={()=>setView("account")} style={{ background: "white", color: "black", border: "none", padding: "7px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" }}>{currentUser.name}</button> :
-          <>
-            <button onClick={()=>setAuthMode(authMode==='login'?null:'login')} style={{ background: "#222", color: "white", border: "1px solid #333", padding: "7px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" }}>Login</button>
-            <button onClick={()=>setAuthMode(authMode==='signup'?null:'signup')} style={{ background: "#1877f2", color: "white", border: "none", padding: "7px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: "bold" }}>Sign Up</button>
-          </>}
+      {/* TOP - KB LEFT, USER RIGHT - LIKE YOUR PHOTO */}
+      <div style={{ background: "#0f0f0f", padding: "10px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #1a1a1a" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div style={{ width: "28px", height: "28px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", color: "black", fontSize: "11px" }}>KB</div>
+          <span style={{ fontSize: "11px", fontWeight: "800", letterSpacing: "0.5px" }}>KAMPALA BUSINESS</span>
         </div>
+        {currentUser ? 
+          <div onClick={()=>setView("account")} style={{ background: "white", color: "black", padding: "5px 12px", borderRadius: "20px", fontSize: "11px", fontWeight: "bold" }}>{currentUser.name.split(" ")[0]}</div>
+          : <div style={{ display: "flex", gap: "6px" }}>
+              <button onClick={()=>setAuthMode('login')} style={{ background: "#222", color: "white", border: "1px solid #333", padding: "5px 10px", borderRadius: "20px", fontSize: "10px" }}>Login</button>
+              <button onClick={()=>setAuthMode('signup')} style={{ background: "white", color: "black", border: "none", padding: "5px 10px", borderRadius: "20px", fontSize: "10px", fontWeight: "bold" }}>User</button>
+            </div>
+        }
+      </div>
+
+      {/* LEFT UP CORNER - For You, Live, Following - LIKE YOU SAID */}
+      <div style={{ display: "flex", gap: "6px", padding: "10px 12px", overflowX: "auto" }}>
+        {["For You", "Live", "Following", "Music", "Movies"].map(tab => (
+          <div key={tab} onClick={()=>setActiveTab(tab)} style={{ background: activeTab===tab ? "white" : "#1c1c1c", color: activeTab===tab ? "black" : "#888", padding: "6px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: activeTab===tab ? "700" : "400", whiteSpace: "nowrap", cursor: "pointer" }}>{tab}</div>
+        ))}
       </div>
 
       {authMode && !currentUser && (
-        <div style={{ background: "#121212", margin: "12px", padding: "16px", borderRadius: "12px", border: "1px solid #222" }}>
-          <h3 style={{ margin: "0 0 12px 0" }}>{authMode==='login'?'Login':'Sign Up'}</h3>
-          {authMode==='signup' && <input value={formName} onChange={e=>setFormName(e.target.value)} placeholder="Full Name" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "12px", borderRadius: "8px", color: "white", marginBottom: "10px", boxSizing: "border-box" }} />}
-          <input value={formContact} onChange={e=>setFormContact(e.target.value)} placeholder="Phone or Email" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "12px", borderRadius: "8px", color: "white", marginBottom: "10px", boxSizing: "border-box" }} />
-          <input value={formPass} onChange={e=>setFormPass(e.target.value)} type="password" placeholder="Password" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "12px", borderRadius: "8px", color: "white", marginBottom: "12px", boxSizing: "border-box" }} />
-          <button onClick={handleAuth} style={{ width: "100%", background: authMode==='login'?"white":"#1877f2", color: authMode==='login'?"black":"white", border: "none", padding: "12px", borderRadius: "8px", fontWeight: "bold" }}>{authMode==='login'?'Login to Account':'Create & Go to Account'}</button>
-          <div style={{ textAlign: "center", marginTop: "10px", fontSize: "12px", color: "#888" }} onClick={()=>setAuthMode(authMode==='login'?'signup':'login')}>{authMode==='login'?"No account? Sign Up":"Have account? Login"}</div>
+        <div style={{ background: "#121212", margin: "8px 12px", padding: "14px", borderRadius: "12px", border: "1px solid #222" }}>
+          <h3 style={{ margin: "0 0 10px 0", fontSize: "14px" }}>{authMode==='login'?'Login':'Sign Up'}</h3>
+          {authMode==='signup' && <input value={formName} onChange={e=>setFormName(e.target.value)} placeholder="Full Name" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "10px", borderRadius: "8px", color: "white", marginBottom: "8px", boxSizing: "border-box", fontSize: "13px" }} />}
+          <input value={formContact} onChange={e=>setFormContact(e.target.value)} placeholder="Phone or Email" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "10px", borderRadius: "8px", color: "white", marginBottom: "8px", boxSizing: "border-box", fontSize: "13px" }} />
+          <input value={formPass} onChange={e=>setFormPass(e.target.value)} type="password" placeholder="Password" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "10px", borderRadius: "8px", color: "white", marginBottom: "10px", boxSizing: "border-box", fontSize: "13px" }} />
+          <button onClick={handleAuth} style={{ width: "100%", background: "#fff", color: "#000", border: "none", padding: "10px", borderRadius: "8px", fontWeight: "bold", fontSize: "13px" }}>{authMode==='login'?'Login to Account':'Create & Go to Account'}</button>
         </div>
       )}
-
-      <div style={{ display: "flex", gap: "8px", padding: "12px" }}>
-        <div style={{ background: "white", color: "black", padding: "7px 16px", borderRadius: "20px", fontSize: "13px", fontWeight: "bold" }}>For You</div>
-        <div style={{ background: "#1e1e1e", padding: "7px 16px", borderRadius: "20px", fontSize: "13px", color: "#aaa" }}>Music</div>
-        <div style={{ background: "#1e1e1e", padding: "7px 16px", borderRadius: "20px", fontSize: "13px", color: "#aaa" }}>Movies</div>
-      </div>
 
       {showUpload && (
-        <div style={{ background: "#121212", margin: "0 12px 12px", padding: "12px", borderRadius: "12px", border: "1px solid #222" }}>
-          <textarea value={title} onChange={e=>setTitle(e.target.value)} placeholder="What's happening?" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "12px", borderRadius: "10px", color: "white", minHeight: "70px", boxSizing: "border-box" }} />
-          <button onClick={handlePost} style={{ marginTop: "10px", background: "#1877f2", color: "white", border: "none", padding: "11px", borderRadius: "10px", fontWeight: "bold", width: "100%" }}>Post</button>
+        <div style={{ background: "#121212", margin: "0 12px 10px", padding: "10px", borderRadius: "12px", border: "1px solid #222" }}>
+          <textarea value={title} onChange={e=>setTitle(e.target.value)} placeholder="What's happening?" style={{ width: "100%", background: "#1e1e1e", border: "1px solid #333", padding: "10px", borderRadius: "8px", color: "white", minHeight: "60px", boxSizing: "border-box", fontSize: "13px" }} />
+          <button onClick={handlePost} style={{ marginTop: "8px", background: "#1877f2", color: "white", border: "none", padding: "9px", borderRadius: "8px", fontWeight: "bold", width: "100%", fontSize: "13px" }}>Post</button>
         </div>
       )}
 
-      <div style={{ padding: "0 8px", display: "flex", flexDirection: "column", gap: "10px" }}>
+      <div style={{ padding: "0 10px", display: "flex", flexDirection: "column", gap: "8px" }}>
         {posts.map(p => (
-          <div key={p.id} style={{ background: "#121212", borderRadius: "14px", padding: "14px", border: "1px solid #1e1e1e" }}>
-            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}><div style={{ width: "42px", height: "42px", borderRadius: "50%", background: "white", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold" }}>KR</div><div><div style={{ display: "flex", gap: "5px", fontWeight: "bold", fontSize: "14px" }}>{p.author} <span style={{ background: "#1d9bf0", width: "16px", height: "16px", borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "10px" }}>✓</span></div><div style={{ fontSize: "11px", color: "#777" }}>Founder</div></div></div>
-            <div style={{ margin: "14px 0", fontSize: "15px" }}>{p.title}</div>
-            <div style={{ display: "flex", gap: "22px", borderTop: "1px solid #222", paddingTop: "12px" }}>
-              <button onClick={()=>handleLike(p.id)} style={{ background: "none", border: "none", color: "#aaa", fontSize: "14px" }}>❤️ {p.likes||0} Like</button>
-              <button style={{ background: "none", border: "none", color: "#aaa", fontSize: "14px" }}>💬 Comment</button>
-              <button style={{ background: "none", border: "none", color: "#aaa", fontSize: "14px" }}>↗️ Share</button>
+          <div key={p.id} style={{ background: "#121212", borderRadius: "12px", padding: "12px", border: "1px solid #1c1c1c" }}>
+            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}><div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "white", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "12px" }}>KR</div><div><div style={{ display: "flex", gap: "4px", fontWeight: "bold", fontSize: "13px" }}>{p.author} <span style={{ background: "#1d9bf0", width: "14px", height: "14px", borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "8px" }}>✓</span></div><div style={{ fontSize: "10px", color: "#666" }}>Founder • Kampala Business</div></div></div>
+            <div style={{ margin: "10px 0", fontSize: "14px" }}>{p.title}</div>
+            <div style={{ display: "flex", gap: "20px", borderTop: "1px solid #1e1e1e", paddingTop: "10px" }}>
+              <span onClick={()=>handleLike(p.id)} style={{ fontSize: "13px", color: "#aaa" }}>❤️ {p.likes||0} Like</span>
+              <span style={{ fontSize: "13px", color: "#aaa" }}>💬 Comment</span>
+              <span style={{ fontSize: "13px", color: "#aaa" }}>↗️ Share</span>
             </div>
           </div>
         ))}
       </div>
 
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0f0f0f", borderTop: "1px solid #222", display: "flex", justifyContent: "space-around", padding: "10px 0", zIndex: 20 }}>
-        <div onClick={()=>setView("feed")} style={{ textAlign: "center", fontSize: "10px", color: "white" }}><div style={{ fontSize: "18px" }}>🏠</div>For You</div>
-        <div style={{ textAlign: "center", fontSize: "10px", color: "#888" }}><div style={{ fontSize: "18px" }}>🔴</div>Live</div>
-        <div onClick={()=>setShowUpload(!showUpload)} style={{ textAlign: "center" }}><div style={{ background: "white", color: "black", width: "38px", height: "26px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto", fontSize: "20px", fontWeight: "bold" }}>+</div><div style={{ fontSize: "10px", color: "white" }}>Post</div></div>
-        <div style={{ textAlign: "center", fontSize: "10px", color: "#888" }}><div style={{ fontSize: "18px" }}>💬</div>Chat</div>
-        <div onClick={()=>currentUser ? setView("account") : setAuthMode('login')} style={{ textAlign: "center", fontSize: "10px", color: currentUser ? "white" : "#888" }}><div style={{ fontSize: "18px" }}>👤</div>{currentUser ? currentUser.name.split(" ")[0] : "Account"}</div>
+      {/* BOTTOM - ALL DOWN CORNER LEFT + USER WORD DOWN RIGHT - LIKE YOU SAID */}
+      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0a0a0a", borderTop: "1px solid #222", display: "flex", justifyContent: "space-between", padding: "8px 14px", zIndex: 20, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: "18px", alignItems: "center" }}>
+          <div onClick={()=>setView("feed")} style={{ textAlign: "center", color: "white" }}><div style={{ fontSize: "16px" }}>🏠</div><div style={{ fontSize: "8px" }}>For You</div></div>
+          <div style={{ textAlign: "center", color: "#777" }}><div style={{ fontSize: "16px" }}>🔴</div><div style={{ fontSize: "8px" }}>Live</div></div>
+          <div onClick={()=>setShowUpload(!showUpload)} style={{ textAlign: "center" }}><div style={{ background: "white", color: "black", width: "32px", height: "20px", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: "bold" }}>+</div><div style={{ fontSize: "8px", color: "white", marginTop: "2px" }}>Post</div></div>
+          <div style={{ textAlign: "center", color: "#777" }}><div style={{ fontSize: "16px" }}>💬</div><div style={{ fontSize: "8px" }}>Chat</div></div>
+        </div>
+        <div onClick={()=>currentUser ? setView("account") : setAuthMode('login')} style={{ background: currentUser ? "white" : "#1c1c1c", color: currentUser ? "black" : "white", padding: "6px 14px", borderRadius: "20px", fontSize: "11px", fontWeight: "bold", border: "1px solid #333" }}>{currentUser ? currentUser.name.split(" ")[0] : "User"}</div>
       </div>
     </div>
   );
