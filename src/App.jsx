@@ -14,6 +14,9 @@ export default function App() {
   const [formContact, setFormContact] = useState("");
   const [formPass, setFormPass] = useState("");
   const [following, setFollowing] = useState({});
+  const [history, setHistory] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [fireActive, setFireActive] = useState({});
 
   useEffect(() => {
     const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
@@ -28,8 +31,9 @@ export default function App() {
     setFormName(""); setFormContact(""); setFormPass("");
   };
   const handlePost = async () => { if(!title.trim()) return; await addDoc(collection(db, "posts"), { title, createdAt: new Date(), author: currentUser?.name || "Katongole Rashid", likes: 0 }); setTitle(""); setShowUpload(false); };
-  const handleLike = async (id) => { await updateDoc(doc(db, "posts", id), { likes: increment(1) }); };
+  const handleLike = async (id) => { await updateDoc(doc(db, "posts", id), { likes: increment(1) }); setHistory(prev=> [id, ...prev.filter(x=>x!==id)].slice(0,20)); };
   const toggleFollow = (id) => { setFollowing(prev=>({...prev, [id]: !prev[id]})); };
+  const toggleFire = (id) => { setFireActive(prev=>({...prev, [id]: !prev[id]})); setHistory(prev=> [id, ...prev.filter(x=>x!==id)].slice(0,20)); };
 
   if(view === "account" && currentUser) {
     return (
@@ -55,10 +59,22 @@ export default function App() {
       </div>
 
       <div style={{ display: "flex", gap: "6px", padding: "10px 12px", overflowX: "auto", width: "100vw" }}>
-        {["For You", "Live", "Following", "Music", "Movies"].map(tab => (
-          <div key={tab} onClick={()=>setActiveTab(tab)} style={{ background: activeTab===tab ? "white" : "#1c1c1c", color: activeTab===tab ? "black" : "#888", padding: "6px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: activeTab===tab ? "700" : "400", whiteSpace: "nowrap" }}>{tab}</div>
+        {["For You", "Live", "Following", "Music", "Movies", "History"].map(tab => (
+          <div key={tab} onClick={()=>{ setActiveTab(tab); if(tab==="History") setShowHistory(true); else setShowHistory(false); }} style={{ background: activeTab===tab ? "white" : "#1c1c1c", color: activeTab===tab ? "black" : "#888", padding: "6px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: activeTab===tab ? "700" : "400", whiteSpace: "nowrap" }}>{tab}</div>
         ))}
       </div>
+
+      {showHistory && (
+        <div style={{ background: "#121212", margin: "8px 12px", padding: "14px", borderRadius: "12px", border: "1px solid #333" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h3 style={{ margin: 0, fontSize: "14px" }}>📜 History - You Viewed</h3>
+            <button onClick={()=>setShowHistory(false)} style={{ background: "#222", color: "white", border: "1px solid #333", padding: "4px 10px", borderRadius: "10px", fontSize: "10px" }}>Close</button>
+          </div>
+          <div style={{ marginTop: "10px", color: "#888", fontSize: "12px" }}>
+            {history.length===0 ? "No history yet - Scroll and like posts!" : history.map(id => { const post = posts.find(p=>p.id===id); return post ? <div key={id} style={{ background: "#1a1a1a", padding: "8px", borderRadius: "8px", marginBottom: "6px", fontSize: "12px" }}>{post.title}</div> : null })}
+          </div>
+        </div>
+      )}
 
       {authMode && !currentUser && (
         <div style={{ background: "#121212", margin: "8px 12px", padding: "14px", borderRadius: "12px", border: "1px solid #222" }}>
@@ -80,7 +96,7 @@ export default function App() {
       <div style={{ padding: "0 10px", display: "flex", flexDirection: "column", gap: "10px", width: "100vw", boxSizing: "border-box" }}>
         {posts.map(p => (
           <div key={p.id} style={{ background: "#121212", borderRadius: "14px", padding: "12px", border: "1px solid #1c1c1c", width: "100%", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-            <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: "80px", justifyContent: "space-between" }}>
+            <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: "110px", justifyContent: "space-between" }}>
               <div style={{ fontSize: "15px" }}>{p.title || "hi"}</div>
               <div style={{ marginTop: "20px", display: "flex", alignItems: "center", gap: "5px", fontWeight: "800", fontSize: "13px" }}>
                 {p.author} 
@@ -92,18 +108,28 @@ export default function App() {
                 <div style={{ width: "46px", height: "46px", borderRadius: "50%", background: "white", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "13px", border: "2px solid #333" }}>KR</div>
                 <div onClick={()=>toggleFollow(p.id)} style={{ position: "absolute", bottom: "-6px", left: "50%", transform: "translateX(-50%)", background: following[p.id] ? "#333" : "#1877f2", color: "white", width: "18px", height: "18px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "bold", border: "2px solid #121212", cursor: "pointer" }}>{following[p.id] ? "✓" : "+"}</div>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px", alignItems: "center", marginTop: "8px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "center", marginTop: "8px" }}>
                 <div onClick={()=>handleLike(p.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
-                  <div style={{ fontSize: "20px" }}>❤️</div>
+                  <div style={{ fontSize: "22px" }}>❤️</div>
                   <div style={{ fontSize: "10px", color: "#aaa" }}>{p.likes||1} Like</div>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
-                  <div style={{ fontSize: "18px" }}>💬</div>
+                  <div style={{ fontSize: "20px" }}>💬</div>
                   <div style={{ fontSize: "10px", color: "#aaa" }}>Comment</div>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
-                  <div style={{ fontSize: "18px" }}>↗️</div>
+                  <div style={{ fontSize: "20px" }}>↗️</div>
                   <div style={{ fontSize: "10px", color: "#aaa" }}>Share</div>
+                </div>
+                {/* FIRE LOGO - EXTREMELY GOOD - YOUR REQUEST */}
+                <div onClick={()=>toggleFire(p.id)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", cursor: "pointer", background: fireActive[p.id] ? "#ff450022" : "transparent", padding: "4px 8px", borderRadius: "10px", border: fireActive[p.id] ? "1px solid #ff4500" : "1px solid transparent" }}>
+                  <div style={{ fontSize: "22px", filter: fireActive[p.id] ? "drop-shadow(0 0 6px #ff4500)" : "none" }}>🔥</div>
+                  <div style={{ fontSize: "9px", color: fireActive[p.id] ? "#ff6a00" : "#aaa", fontWeight: fireActive[p.id] ? "bold" : "400" }}>{fireActive[p.id] ? "Fired!" : "Fire"}</div>
+                </div>
+                {/* HISTORY BUTTON - YOUR REQUEST */}
+                <div onClick={()=>setShowHistory(true)} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", cursor: "pointer" }}>
+                  <div style={{ fontSize: "20px" }}>🕒</div>
+                  <div style={{ fontSize: "9px", color: "#aaa" }}>History</div>
                 </div>
               </div>
             </div>
@@ -111,16 +137,12 @@ export default function App() {
         ))}
       </div>
 
-      {/* BOTTOM - HOME LEFT CORNER, LIVE POST CHAT MIDDLE - YOUR REQUEST */}
+      {/* BOTTOM - HOME LEFT CORNER, LIVE POST CHAT MIDDLE */}
       <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0a0a0a", borderTop: "1px solid #222", display: "flex", justifyContent: "space-between", padding: "6px 12px", zIndex: 20, alignItems: "center", width: "100vw", boxSizing: "border-box" }}>
-        
-        {/* LEFT DOWN CORNER - HOME */}
         <div onClick={()=>{setView("feed"); setActiveTab("For You"); window.scrollTo(0,0)}} style={{ textAlign: "center", color: "white", cursor: "pointer" }}>
           <div style={{ fontSize: "20px" }}>🏠</div>
           <div style={{ fontSize: "9px", fontWeight: "bold" }}>Home</div>
         </div>
-
-        {/* MIDDLE - THREE BUTTONS: LIVE POST CHAT */}
         <div style={{ display: "flex", gap: "28px", alignItems: "center", justifyContent: "center", position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
           <div style={{ textAlign: "center", color: "#ff3333" }}>
             <div style={{ fontSize: "20px" }}>🔴</div>
@@ -135,8 +157,6 @@ export default function App() {
             <div style={{ fontSize: "9px" }}>Chat</div>
           </div>
         </div>
-
-        {/* RIGHT CORNER - USER */}
         <div onClick={()=>currentUser ? setView("account") : setAuthMode('login')} style={{ background: currentUser ? "white" : "#1c1c1c", color: currentUser ? "black" : "white", padding: "6px 14px", borderRadius: "20px", fontSize: "11px", fontWeight: "bold", border: "1px solid #333" }}>
           {currentUser ? currentUser.name.split(" ")[0] : "User"}
         </div>
