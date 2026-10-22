@@ -10,7 +10,6 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [view, setView] = useState("feed");
   const [activeTab, setActiveTab] = useState("For You");
-
   const [formName, setFormName] = useState("");
   const [formContact, setFormContact] = useState("");
   const [formPass, setFormPass] = useState("");
@@ -27,13 +26,7 @@ export default function App() {
     setView("account"); setAuthMode(null);
     setFormName(""); setFormContact(""); setFormPass("");
   };
-
-  const handlePost = async () => {
-    if(!title.trim()) return;
-    await addDoc(collection(db, "posts"), { title, createdAt: new Date(), author: currentUser?.name || "Katongole Rashid", verified: true, likes: 0 });
-    setTitle(""); setShowUpload(false);
-  };
-
+  const handlePost = async () => { if(!title.trim()) return; await addDoc(collection(db, "posts"), { title, createdAt: new Date(), author: currentUser?.name || "Katongole Rashid", verified: true, likes: 0 }); setTitle(""); setShowUpload(false); };
   const handleLike = async (id) => { await updateDoc(doc(db, "posts", id), { likes: increment(1) }); };
 
   if(view === "account" && currentUser) {
@@ -45,8 +38,7 @@ export default function App() {
         </div>
         <div style={{ padding: "20px", textAlign: "center" }}>
           <div style={{ width: "80px", height: "80px", background: "white", borderRadius: "50%", margin: "20px auto", display: "flex", alignItems: "center", justifyContent: "center", color: "black", fontSize: "30px", fontWeight: "bold" }}>{currentUser.name[0]}</div>
-          <h2 style={{ margin: 0 }}>{currentUser.name}</h2>
-          <p style={{ color: "#888", fontSize: "12px" }}>{currentUser.contact}</p>
+          <h2 style={{ margin: 0 }}>{currentUser.name}</h2><p style={{ color: "#888", fontSize: "12px" }}>{currentUser.contact}</p>
           <button onClick={()=>{setCurrentUser(null); setView("feed")}} style={{ marginTop: "20px", background: "#222", color: "#ff4444", border: "1px solid #333", width: "100%", padding: "12px", borderRadius: "10px" }}>Logout</button>
         </div>
       </div>
@@ -55,25 +47,17 @@ export default function App() {
 
   return (
     <div style={{ background: "#000", minHeight: "100vh", color: "white", paddingBottom: "80px", fontFamily: "system-ui" }}>
-      {/* TOP - KB LEFT, USER RIGHT - LIKE YOUR PHOTO */}
-      <div style={{ background: "#0f0f0f", padding: "10px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #1a1a1a" }}>
+      {/* TOP - ONLY KB, RIGHT BLANK - YOUR REQUEST */}
+      <div style={{ background: "#0f0f0f", padding: "10px 12px", display: "flex", alignItems: "center", justifyContent: "flex-start", borderBottom: "1px solid #1a1a1a" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <div style={{ width: "28px", height: "28px", background: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", color: "black", fontSize: "11px" }}>KB</div>
-          <span style={{ fontSize: "11px", fontWeight: "800", letterSpacing: "0.5px" }}>KAMPALA BUSINESS</span>
+          <span style={{ fontSize: "11px", fontWeight: "800" }}>KAMPALA BUSINESS</span>
         </div>
-        {currentUser ? 
-          <div onClick={()=>setView("account")} style={{ background: "white", color: "black", padding: "5px 12px", borderRadius: "20px", fontSize: "11px", fontWeight: "bold" }}>{currentUser.name.split(" ")[0]}</div>
-          : <div style={{ display: "flex", gap: "6px" }}>
-              <button onClick={()=>setAuthMode('login')} style={{ background: "#222", color: "white", border: "1px solid #333", padding: "5px 10px", borderRadius: "20px", fontSize: "10px" }}>Login</button>
-              <button onClick={()=>setAuthMode('signup')} style={{ background: "white", color: "black", border: "none", padding: "5px 10px", borderRadius: "20px", fontSize: "10px", fontWeight: "bold" }}>User</button>
-            </div>
-        }
       </div>
 
-      {/* LEFT UP CORNER - For You, Live, Following - LIKE YOU SAID */}
       <div style={{ display: "flex", gap: "6px", padding: "10px 12px", overflowX: "auto" }}>
         {["For You", "Live", "Following", "Music", "Movies"].map(tab => (
-          <div key={tab} onClick={()=>setActiveTab(tab)} style={{ background: activeTab===tab ? "white" : "#1c1c1c", color: activeTab===tab ? "black" : "#888", padding: "6px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: activeTab===tab ? "700" : "400", whiteSpace: "nowrap", cursor: "pointer" }}>{tab}</div>
+          <div key={tab} onClick={()=>setActiveTab(tab)} style={{ background: activeTab===tab ? "white" : "#1c1c1c", color: activeTab===tab ? "black" : "#888", padding: "6px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: activeTab===tab ? "700" : "400", whiteSpace: "nowrap" }}>{tab}</div>
         ))}
       </div>
 
@@ -99,16 +83,12 @@ export default function App() {
           <div key={p.id} style={{ background: "#121212", borderRadius: "12px", padding: "12px", border: "1px solid #1c1c1c" }}>
             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}><div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "white", color: "black", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "12px" }}>KR</div><div><div style={{ display: "flex", gap: "4px", fontWeight: "bold", fontSize: "13px" }}>{p.author} <span style={{ background: "#1d9bf0", width: "14px", height: "14px", borderRadius: "50%", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "8px" }}>✓</span></div><div style={{ fontSize: "10px", color: "#666" }}>Founder • Kampala Business</div></div></div>
             <div style={{ margin: "10px 0", fontSize: "14px" }}>{p.title}</div>
-            <div style={{ display: "flex", gap: "20px", borderTop: "1px solid #1e1e1e", paddingTop: "10px" }}>
-              <span onClick={()=>handleLike(p.id)} style={{ fontSize: "13px", color: "#aaa" }}>❤️ {p.likes||0} Like</span>
-              <span style={{ fontSize: "13px", color: "#aaa" }}>💬 Comment</span>
-              <span style={{ fontSize: "13px", color: "#aaa" }}>↗️ Share</span>
-            </div>
+            <div style={{ display: "flex", gap: "20px", borderTop: "1px solid #1e1e1e", paddingTop: "10px" }}><span onClick={()=>handleLike(p.id)} style={{ fontSize: "13px", color: "#aaa" }}>❤️ {p.likes||0} Like</span><span style={{ fontSize: "13px", color: "#aaa" }}>💬 Comment</span><span style={{ fontSize: "13px", color: "#aaa" }}>↗️ Share</span></div>
           </div>
         ))}
       </div>
 
-      {/* BOTTOM - ALL DOWN CORNER LEFT + USER WORD DOWN RIGHT - LIKE YOU SAID */}
+      {/* BOTTOM - LEFT ALL ICONS, RIGHT USER - YOUR REQUEST */}
       <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0a0a0a", borderTop: "1px solid #222", display: "flex", justifyContent: "space-between", padding: "8px 14px", zIndex: 20, alignItems: "center" }}>
         <div style={{ display: "flex", gap: "18px", alignItems: "center" }}>
           <div onClick={()=>setView("feed")} style={{ textAlign: "center", color: "white" }}><div style={{ fontSize: "16px" }}>🏠</div><div style={{ fontSize: "8px" }}>For You</div></div>
