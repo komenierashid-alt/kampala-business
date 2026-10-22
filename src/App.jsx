@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { db, addProduct } from "./firebase.js";
+import { db, addProduct } from "./lib/firebase.js"
 import { collection, onSnapshot, query, orderBy } from "firebase/firestore";
 
 export default function App() {
