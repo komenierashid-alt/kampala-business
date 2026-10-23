@@ -3,9 +3,9 @@ export default function Home(){
 return(
 <div style={{background:'black', color:'white', minHeight:'100dvh', width:'100vw', display:'flex', flexDirection:'column', fontFamily:'sans-serif', position:'fixed', top:0, left:0, right:0, bottom:0}}>
 
-<div style={{display:'flex', justifyContent:'space-between', padding:'10px 12px', borderBottom:'1px solid #222', alignItems:'center', background:'black'}}>
+<div style={{display:'flex', justifyContent:'space-between', padding:'10px 12px', borderBottom:'1px solid #222', alignItems:'center'}}>
 <div style={{display:'flex', gap:'12px', alignItems:'center'}}>
-<img src="/icon-512.png" alt="KB" style={{width:'36px', height:'36px', borderRadius:'8px'}}/>
+<div style={{width:'32px', height:'32px', background:'white', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'bold', color:'black', fontSize:'12px'}}><span style={{color:'red'}}>K</span>B</div>
 <span style={{color:'white', fontWeight:'bold', borderBottom:'2px solid white', fontSize:'13px', paddingBottom:'3px'}}>For You</span>
 <span style={{color:'#888', fontSize:'13px'}}>Muzika</span>
 <span style={{color:'#888', fontSize:'13px'}}>Following</span>
@@ -14,31 +14,26 @@ return(
 </div>
 
 <div style={{flex:1, background:'black', position:'relative', width:'100%'}}>
-<div style={{position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', opacity:0.1}}>
-<img src="/icon-512.png" alt="KB" style={{width:'120px', height:'120px', borderRadius:'24px'}}/>
-</div>
-
 <div style={{position:'absolute', right:'10px', bottom:'110px', display:'flex', flexDirection:'column', gap:'18px', alignItems:'center'}}>
+
 <div style={{position:'relative'}}>
-<div style={{width:'52px', height:'52px', borderRadius:'50%', border:'2px solid white', overflow:'hidden', background:'black'}}>
-<img src="/icon-512.png" alt="KB" style={{width:'100%', height:'100%', objectFit:'cover'}}/>
-</div>
+<div style={{width:'52px', height:'52px', borderRadius:'50%', border:'2px solid white', background:'white', color:'black', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'bold'}}><span style={{color:'red'}}>K</span>B</div>
 <div style={{background:'#ff0000', color:'white', width:'22px', height:'22px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', position:'absolute', bottom:'-7px', left:'50%', transform:'translateX(-50%)', border:'2px solid black', fontWeight:'bold'}}>+</div>
 </div>
+
 <div style={{textAlign:'center'}}><div style={{fontSize:'26px'}}>♡</div><div style={{fontSize:'11px'}}>0</div></div>
 <div style={{textAlign:'center'}}><div style={{fontSize:'22px'}}>💬</div><div style={{fontSize:'11px'}}>0</div></div>
 <div style={{textAlign:'center'}}><div style={{fontSize:'20px'}}>↗</div><div style={{fontSize:'11px'}}>Share</div></div>
 <div style={{textAlign:'center'}}><div style={{fontSize:'22px'}}>🔥</div><div style={{fontSize:'11px'}}>0</div></div>
-<div style={{textAlign:'center'}}><div style={{fontSize:'18px'}}>☆</div><div style={{fontSize:'11px'}}>Save</div></div>
+<div style={{textAlign:'center'}}><div style={{fontSize:'20px', color:'#ff0000'}}>★</div><div style={{fontSize:'11px', color:'#ff0000', fontWeight:'bold'}}>Favorite</div></div>
 </div>
 
 <div style={{position:'absolute', left:'10px', bottom:'12px'}}>
-<div style={{background:'#222', padding:'6px 12px', borderRadius:'20px', display:'flex', gap:'5px', alignItems:'center', marginBottom:'8px', border:'1px solid #333', width:'fit-content'}}>
-<span>⌂</span><span style={{fontSize:'12px', fontWeight:'bold'}}>Home</span>
+<div style={{display:'flex', gap:'8px', alignItems:'center', marginBottom:'8px'}}>
+<div style={{background:'white', color:'black', padding:'6px 14px', borderRadius:'20px', fontSize:'12px', fontWeight:'bold', display:'flex', gap:'5px', alignItems:'center'}}>✓ Joined</div>
+<div style={{background:'#222', color:'white', padding:'6px 14px', borderRadius:'20px', fontSize:'12px', fontWeight:'bold', border:'1px solid #444', display:'flex', gap:'5px', alignItems:'center'}}>⌂ Home</div>
 </div>
-<div style={{fontWeight:'bold', fontSize:'14px', display:'flex', gap:'6px', alignItems:'center'}}>
-<img src="/icon-192.png" style={{width:'20px', height:'20px', borderRadius:'4px'}} alt="KB"/> Katongole Rashid ✓
-</div>
+<div style={{fontWeight:'bold', fontSize:'14px'}}>Katongole Rashid ✓</div>
 <div style={{fontSize:'11px', color:'#777', marginTop:'2px'}}>Founder - Kampala Business</div>
 </div>
 </div>
