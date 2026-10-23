@@ -1,18 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Kampala Business - KB Live</title>
-    <meta property="og:title" content="Kampala Business - KB" />
-    <meta property="og:description" content="Kampala Business CEO Katongole Rashid - TikTok For Business" />
-    <meta property="og:image" content="https://kampala-business-kb-live.vercel.app/logo.png" />
-    <meta property="og:url" content="https://kampala-business-kb-live.vercel.app" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <link rel="icon" href="/logo.png" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kampala Business - KB Live</title>
+<meta property="og:title" content="Kampala Business - KB" />
+<meta property="og:description" content="Kampala Business CEO Katonopole Rashid - Tiktok For Business" />
+<meta property="og:image" content="https://kampala-business-kb-live.vercel.app/logo.png" />
+<meta property="og:url" content="https://kampala-business-kb-live.vercel.app/" />
+<meta name="twitter:card" content="summary_large_image" />
+<link rel="icon" href="/logo.png" />
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#000000" />
+<link rel="apple-touch-icon" href="/favicon.svg" />
+</head>
+<body>
+<div id="root"></div>
+<script type="module" src="/src/main.jsx"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js');
+  });
+}
+</script>
+</body>
 </html>
