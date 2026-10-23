@@ -1,5 +1,22 @@
 "use client"
+import { useState, useEffect } from "react"
+
 export default function Home(){
+const [loading, setLoading] = useState(true)
+
+useEffect(()=>{
+const t = setTimeout(()=>setLoading(false), 2500)
+return ()=>clearTimeout(t)
+},[])
+
+if(loading){
+return(
+<div style={{background:'black', width:'100vw', height:'100dvh', display:'flex', alignItems:'center', justifyContent:'center', position:'fixed', top:0, left:0, zIndex:9999}}>
+<img src="/icon-512.png" alt="KB" style={{width:'200px', height:'200px', borderRadius:'32px'}} />
+</div>
+)
+}
+
 return(
 <div style={{background:'black', color:'white', minHeight:'100dvh', width:'100vw', display:'flex', flexDirection:'column', fontFamily:'sans-serif', position:'fixed', top:0, left:0, right:0, bottom:0}}>
 
@@ -24,7 +41,6 @@ return(
 <div style={{textAlign:'center'}}><div style={{fontSize:'16px', color:'#ff0000'}}>★</div><div style={{fontSize:'11px', color:'#ff0000', fontWeight:'bold'}}>Favorite</div></div>
 </div>
 
-{/* ONLY NAME - NO FOUNDER TEXT */}
 <div style={{position:'absolute', left:'10px', bottom:'12px'}}>
 <div style={{fontWeight:'bold', fontSize:'14px'}}>Katongole Rashid ✓</div>
 </div>
