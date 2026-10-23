@@ -5,165 +5,156 @@ export default function UptownApp(){
 const [splash, setSplash] = useState(true)
 const [page, setPage] = useState('foryou')
 const [showUpload, setShowUpload] = useState(false)
-const [videos, setVideos] = useState([
-  {id:1, user:'Katongole Rashid', verified:true, views:45200, likes:1200, fires:340},
-])
 const [follows, setFollows] = useState({})
 const [favorites, setFavorites] = useState([])
-const [myVideos, setMyVideos] = useState([{id:99, views:210, isPrivate:false, title:'My first video'}])
-const [notifications, setNotifications] = useState([
-  {id:1, type:'follow', text:'John followed you', time:'2m ago'},
-  {id:2, type:'bluetick', text:'Request your Blue Tick now! Tap to apply.', time:'1d ago'},
-  {id:3, type:'message', text:'Sheilah: Nice video! (Incoming)'},
-  {id:4, type:'message', text:'You: Thanks! (Outgoing)'},
+const [myVideos, setMyVideos] = useState([
+  {id:1, title:'Uptown Nightlife', views:3421, private:false, time:'2d ago'},
+  {id:2, title:'Kampala City Tour', views:1289, private:false, time:'5d ago'},
 ])
-const [liveUsers] = useState([{name:'MC Kats', viewers:120}, {name:'DJ Nimrod', viewers:340}])
-const [profile, setProfile] = useState({name:'My Page', bio:'Uptown creator', pic:'UP'})
 
-useEffect(()=>{ setTimeout(()=>setSplash(false), 2800) },[])
-
-const toggleFollow = (user) => {
-  const cur = follows[user] || 'none'
-  if(cur==='none') setFollows({...follows, [user]:'white'})
-  else if(cur==='white') setFollows({...follows, [user]:'green'})
-  else setFollows({...follows, [user]:'none'})
-}
-const handleLike = () => setVideos(v=>v.map(x=>({...x, likes:x.likes+1})))
-const handleFire = () => { setVideos(v=>v.map(x=>({...x, fires:x.fires+1}))); alert('🔥 FIRE sent!') }
-const handleFavorite = () => setFavorites(f=> f.includes(1) ? f.filter(x=>x!==1) : [...f,1])
-const requestBlueTick = () => alert('Blue tick request sent to Katongole Rashid inbox!')
-
-// UPLOAD FUNCTIONS
-const uploadAction = (type) => {
-  setShowUpload(false)
-  if(type==='record') alert('🎥 Opening Camera to RECORD VIDEO...')
-  if(type==='duet') alert('👥 Duet Video - Choose video to duet...')
-  if(type==='video') alert('📹 Upload Video from Gallery...')
-  if(type==='picture') alert('🖼️ Upload Picture / Letter...')
-  if(type==='post') alert('📝 Create Post - Video, Picture, Text...')
-  setMyVideos([...myVideos, {id:Date.now(), views:0, isPrivate:false, title: type + ' upload - ' + new Date().toLocaleTimeString()}])
-}
+useEffect(()=>{ const t=setTimeout(()=>setSplash(false), 2400); return()=>clearTimeout(t) },[])
 
 if(splash){
 return(
 <div style={{width:'100vw', height:'100dvh', background:'#000', display:'flex', alignItems:'center', justifyContent:'center', position:'fixed', inset:0, zIndex:99999}}>
-<style>{`@keyframes spinScale{0%{transform:rotate(-180deg) scale(0);opacity:0}60%{transform:rotate(20deg) scale(1.2);opacity:1}100%{transform:rotate(0) scale(1);opacity:1}}@keyframes textShine{0%{opacity:0;letter-spacing:20px;transform:translateY(20px)}100%{opacity:1;letter-spacing:-1px;transform:translateY(0)}}@keyframes out{to{opacity:0;transform:scale(1.3)}}.anim-pin{animation:spinScale 0.9s cubic-bezier(0.34,1.56,0.64,1) forwards}.anim-text{animation:textShine 0.8s ease-out 0.7s forwards;opacity:0}.anim-out{animation:out 0.5s ease-in 2.5s forwards}`}</style>
-<div className="anim-out"><svg width="90vw" height="90vh" viewBox="0 0 200 230" style={{maxWidth:'550px'}}><g className="anim-pin"><path d="M100 10 C30 10 10 50 10 80 C10 125 100 220 100 220 C100 220 190 125 190 80 C190 50 170 10 100 10 Z" fill="none" stroke="white" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"/></g><g className="anim-text"><text x="22" y="110" fontFamily="Arial Black" fontWeight="900" fontSize="38"><tspan fill="#FF0000">UP</tspan><tspan fill="white">TOWN</tspan></text></g></svg></div>
+<style>{`@keyframes in{0%{transform:scale(0.7);opacity:0}100%{transform:scale(1);opacity:1}}@keyframes out{to{opacity:0}} .in{animation:in 0.8s cubic-bezier(0.2,0.8,0.2,1) forwards} .out{animation:out 0.4s 2s forwards}`}</style>
+<div className="out"><div className="in">
+<svg width="220" height="250" viewBox="0 0 200 230"><path d="M100 12 C32 12 12 52 12 82 C12 126 100 218 100 218 C100 218 188 126 188 82 C188 52 168 12 100 12 Z" fill="none" stroke="white" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/><text x="28" y="112" fontFamily="Inter, Arial Black" fontWeight="900" fontSize="36"><tspan fill="#FF0024">UP</tspan><tspan fill="white">TOWN</tspan></text></svg>
+</div></div>
 </div>
 )
 }
 
+const FollowButton = ({user}) => {
+  const state = follows[user] || 'follow'
+  return (
+    <div onClick={()=> setFollows({...follows, [user]: state==='follow' ? 'following' : state==='following' ? 'followback' : 'follow'})} style={{cursor:'pointer', display:'flex', flexDirection:'column', alignItems:'center', gap:'4px'}}>
+      <div style={{width:'48px', height:'48px', borderRadius:'50%', background:'#fff', display:'flex', alignItems:'center', justifyContent:'center', border: state==='followback' ? '2px solid #00D632' : '2px solid #fff', position:'relative'}}>
+        <span style={{fontWeight:'900', fontSize:'11px', color:'#000'}}><span style={{color:'#FF0024'}}>UP</span>TOWN</span>
+        <div style={{position:'absolute', bottom:'-6px', background: state==='follow'?'#FF0024': state==='following'?'#fff':'#00D632', color: state==='following'?'#000':'#fff', width:'20px', height:'20px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', border:'2px solid #000', fontSize:'12px', fontWeight:'700'}}>{state==='follow'?'+':'✓'}</div>
+      </div>
+    </div>
+  )
+}
+
 return(
-<div style={{background:'black', color:'white', minHeight:'100dvh', width:'100vw', display:'flex', flexDirection:'column', fontFamily:'sans-serif', position:'fixed', inset:0}}>
+<div style={{background:'#000', color:'#fff', width:'100vw', height:'100dvh', position:'fixed', inset:0, display:'flex', flexDirection:'column', fontFamily:'Inter, -apple-system, sans-serif'}}>
 
-<div style={{display:'flex', alignItems:'center', padding:'10px 12px', borderBottom:'1px solid #222', gap:'12px'}}>
-<button onClick={()=>setPage('foryou')} style={{background: page==='foryou'?'#222':'transparent', border: page==='foryou'?'1px solid #fff':'none', color: page==='foryou'?'white':'#888', padding:'5px 12px', borderRadius:'15px', fontSize:'13px', fontWeight:'bold'}}>For You</button>
-<button onClick={()=>setPage('muzika')} style={{background:'none', border:'none', color: page==='muzika'?'white':'#888', fontSize:'13px'}}>Muzika</button>
-<button onClick={()=>setPage('following')} style={{background:'none', border:'none', color: page==='following'?'white':'#888', fontSize:'13px'}}>Following</button>
-<button onClick={()=>setPage('liveList')} style={{marginLeft:'auto', background:'#FF0000', color:'white', padding:'5px 12px', borderRadius:'20px', fontSize:'12px', fontWeight:'bold', border:'none', display:'flex', gap:'5px', alignItems:'center'}}><span style={{width:'7px', height:'7px', background:'white', borderRadius:'50%'}}></span>Live 2</button>
+{/* HEADER */}
+<div style={{display:'flex', padding:'12px 16px', gap:'20px', alignItems:'center', borderBottom:'1px solid #1a1a1a', background:'#000'}}>
+{['For You','Muzika','Following'].map(t=>{
+  const active = page===t.toLowerCase().replace(' ','')
+  const key = t.toLowerCase().replace(' ','')
+  return <button key={t} onClick={()=>setPage(key==='foryou'? 'foryou' : key)} style={{background:'none', border:'none', color: active?'#fff':'#717171', fontSize:'14px', fontWeight: active? '700':'500', padding:'0 0 2px', borderBottom: active?'2px solid #fff':'2px solid transparent'}}>{t}</button>
+})}
+<button onClick={()=>setPage('live')} style={{marginLeft:'auto', background:'#1a1a1a', color:'#fff', border:'1px solid #2a2a2a', padding:'6px 12px', borderRadius:'20px', fontSize:'12px', fontWeight:'600', display:'flex', alignItems:'center', gap:'6px'}}><span style={{width:'6px', height:'6px', background:'#FF0024', borderRadius:'50%'}}></span>Live</button>
 </div>
 
-<div style={{flex:1, position:'relative', background:'black', overflow:'auto'}}>
-{page!=='inbox' && page!=='you' && page!=='liveList' && (
-<div style={{height:'100%', display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'center', background:'black', position:'relative'}}>
-<div style={{fontSize:'80px', opacity:0.15}}>▶</div>
+{/* CONTENT */}
+<div style={{flex:1, position:'relative', overflow:'hidden', background:'#000'}}>
 
-{/* BOTTOM LEFT - NAME WITH BLUE TICK IN CYCLE */}
-<div style={{position:'absolute', bottom:'20px', left:'10px', display:'flex', flexDirection:'column', gap:'2px'}}>
-<div style={{fontWeight:'bold', fontSize:'15px', display:'flex', alignItems:'center', gap:'6px'}}>
-Katongole Rashid
-{/* BLUE TICK IN CYCLE */}
-<span style={{width:'18px', height:'18px', background:'#1DA1F2', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'12px', color:'white', fontWeight:'bold'}}>✓</span>
+{/* VIDEO FEED */}
+{(page==='foryou' || page==='muzika' || page==='following') && (
+<div style={{width:'100%', height:'100%', position:'relative', background:'#000', display:'flex', alignItems:'center', justifyContent:'center'}}>
+<div style={{width:'100%', height:'100%', background:'linear-gradient(0deg, rgba(0,0,0,0.9) 0%, transparent 40%, transparent 100%)', position:'absolute', inset:0, zIndex:1}}></div>
+
+{/* Creator Info - Bottom Left */}
+<div style={{position:'absolute', left:'16px', bottom:'16px', zIndex:2, maxWidth:'70%'}}>
+<div style={{display:'flex', alignItems:'center', gap:'8px', marginBottom:'6px'}}>
+<span style={{fontWeight:'700', fontSize:'15px'}}>Katongole Rashid</span>
+<span style={{width:'18px', height:'18px', background:'#1D9BF0', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center'}}><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>
 </div>
-<div style={{fontSize:'12px', color:'#aaa'}}>Full screen video - everybody sees everybody</div>
+<div style={{fontSize:'13px', color:'#d0d0d0', lineHeight:'1.3'}}>Kampala nights 🌃 #uptown #kampala</div>
 </div>
 
-<div style={{position:'absolute', right:'10px', bottom:'100px', display:'flex', flexDirection:'column', gap:'16px', alignItems:'center'}}>
-<div style={{position:'relative', cursor:'pointer'}} onClick={()=>toggleFollow('Katongole Rashid')}>
-<div style={{width:'52px', height:'52px', borderRadius:'50%', border: follows['Katongole Rashid']==='green' ? '2px solid #00FF00' : '2px solid white', background:'white', color:'black', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'bold', fontSize:'10px'}}><span style={{color:'red'}}>UP</span>TOWN</div>
-<div style={{background: follows['Katongole Rashid']==='none' ? '#FF0000' : follows['Katongole Rashid']==='white' ? 'white' : '#00FF00', color: follows['Katongole Rashid']==='white' ? 'black' : 'white', width:'22px', height:'22px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', position:'absolute', bottom:'-7px', left:'50%', transform:'translateX(-50%)', border:'2px solid black', fontWeight:'bold'}}>{follows['Katongole Rashid']==='none' ? '+' : '✓'}</div>
+{/* Actions - Right Side */}
+<div style={{position:'absolute', right:'12px', bottom:'90px', zIndex:2, display:'flex', flexDirection:'column', gap:'22px', alignItems:'center'}}>
+<FollowButton user="katongole" />
+<button onClick={()=>{}} style={{background:'none', border:'none', color:'#fff', display:'flex', flexDirection:'column', alignItems:'center', gap:'4px'}}><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg><span style={{fontSize:'12px', fontWeight:'600'}}>1.2K</span></button>
+<button onClick={()=>{}} style={{background:'none', border:'none', color:'#fff', display:'flex', flexDirection:'column', alignItems:'center', gap:'4px'}}><div style={{width:'28px', height:'28px', borderRadius:'50%', background:'rgba(255,255,255,0.12)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'14px'}}>🔥</div><span style={{fontSize:'12px', fontWeight:'600'}}>340</span></button>
+<button onClick={()=>setFavorites(f=> f.includes(1) ? [] : [1])} style={{background:'none', border:'none', color: favorites.includes(1)?'#FFC700':'#fff', display:'flex', flexDirection:'column', alignItems:'center', gap:'4px'}}><svg width="24" height="24" viewBox="0 0 24 24" fill={favorites.includes(1)?'currentColor':'none'} stroke="currentColor" strokeWidth="1.8"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span style={{fontSize:'11px', fontWeight:'600'}}>Favorite</span></button>
+<button style={{background:'none', border:'none', color:'#fff', display:'flex', flexDirection:'column', alignItems:'center', gap:'4px'}}><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg><span style={{fontSize:'11px'}}>Share</span></button>
 </div>
-<div style={{fontSize:'10px', color: follows['Katongole Rashid']==='green' ? '#00FF00' : '#888'}}>{follows['Katongole Rashid']==='none'?'':follows['Katongole Rashid']==='white'?'White ✓':'Green ✓ Follow Back'}</div>
 
-<button onClick={handleLike} style={{background:'none', border:'none', color:'white', textAlign:'center'}}><div style={{fontSize:'26px'}}>♡</div><div style={{fontSize:'11px'}}>1200</div><div style={{fontSize:'9px'}}>Like</div></button>
-<button onClick={handleFire} style={{background:'none', border:'none', color:'white', textAlign:'center'}}><div style={{fontSize:'22px'}}>🔥</div><div style={{fontSize:'11px'}}>340</div><div style={{fontSize:'9px'}}>Fire</div></button>
-<button onClick={handleFavorite} style={{background:'none', border:'none', color: favorites.includes(1)?'#FF0000':'white', textAlign:'center'}}><div style={{fontSize:'16px'}}>★</div><div style={{fontSize:'11px', fontWeight:'bold'}}>Favorite</div></button>
-<div style={{textAlign:'center'}}><div style={{fontSize:'20px'}}>↗</div><div style={{fontSize:'11px'}}>Share</div></div>
-</div>
+<div style={{color:'#333', fontSize:'60px'}}>▶</div>
 </div>
 )}
 
-{page==='liveList' && (
-<div style={{padding:'15px'}}>
-<h3>🔴 Live Now - Tap to Watch</h3>
-{[{name:'MC Kats', viewers:120}, {name:'DJ Nimrod', viewers:340}].map((u,i)=>(
-<div key={i} style={{background:'#222', padding:'12px', borderRadius:'10px', marginBottom:'10px', display:'flex', justifyContent:'space-between'}}>
-<div><b>{u.name}</b> 🔴<div style={{fontSize:'12px', color:'#aaa'}}>{u.viewers} watching</div></div>
-<button onClick={()=>alert(`Request to join ${u.name} live - waiting approval`)} style={{background:'#FF0000', color:'white', border:'none', padding:'6px 14px', borderRadius:'15px'}}>Request Join</button>
+{page==='live' && (
+<div style={{padding:'20px'}}>
+<div style={{fontSize:'16px', fontWeight:'700', marginBottom:'16px'}}>Live now</div>
+{[{name:'DJ Nimrod', viewers:'342'}, {name:'MC Kats', viewers:'128'}].map(u=>(
+<div key={u.name} style={{background:'#121212', border:'1px solid #222', padding:'14px', borderRadius:'14px', display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'10px'}}>
+<div style={{display:'flex', gap:'12px', alignItems:'center'}}><div style={{width:'44px', height:'44px', borderRadius:'50%', background:'#222'}}></div><div><div style={{fontWeight:'600', fontSize:'14px', display:'flex', gap:'6px', alignItems:'center'}}>{u.name} <span style={{background:'#FF0024', color:'#fff', fontSize:'9px', padding:'2px 6px', borderRadius:'10px'}}>LIVE</span></div><div style={{fontSize:'12px', color:'#888'}}>{u.viewers} viewers</div></div></div>
+<button style={{background:'#fff', color:'#000', border:'none', padding:'8px 16px', borderRadius:'20px', fontSize:'13px', fontWeight:'600'}}>Join</button>
 </div>
 ))}
 </div>
 )}
 
 {page==='inbox' && (
-<div style={{padding:'15px'}}>
-<h3>Inbox - Notifications + Messages</h3>
-{notifications.map(n=>(
-<div key={n.id} onClick={()=> n.text.includes('Blue Tick') ? requestBlueTick() : null} style={{background: n.text.includes('Blue Tick') ? '#1a1a2e' : '#222', border: n.text.includes('Blue Tick') ? '1px solid #1DA1F2' : 'none', padding:'12px', borderRadius:'10px', marginBottom:'8px'}}>
-<div style={{fontSize:'13px'}}>{n.text}</div><div style={{fontSize:'11px', color:'#888'}}>{n.time || 'now'}</div>
+<div style={{padding:'0'}}>
+<div style={{padding:'16px', borderBottom:'1px solid #1a1a1a', fontWeight:'700'}}>Inbox</div>
+<div style={{padding:'16px', display:'flex', flexDirection:'column', gap:'12px'}}>
+<div style={{background:'#121212', border:'1px solid #FF0024', borderRadius:'12px', padding:'14px'}}><div style={{fontSize:'13px', fontWeight:'600', color:'#FF0024', marginBottom:'4px'}}>Blue Tick Verification</div><div style={{fontSize:'13px', color:'#ccc'}}>Request verification to get your profile verified. Only verified creators get blue badge.</div><button style={{marginTop:'10px', background:'#fff', color:'#000', border:'none', padding:'7px 14px', borderRadius:'20px', fontSize:'12px', fontWeight:'600'}}>Request Blue Tick</button></div>
+<div style={{display:'flex', gap:'12px', padding:'12px 0', borderBottom:'1px solid #1a1a1a'}}><div style={{width:'40px', height:'40px', borderRadius:'50%', background:'#222'}}></div><div><div style={{fontSize:'14px', fontWeight:'500'}}>New follower</div><div style={{fontSize:'12px', color:'#888'}}>Someone followed you</div></div><div style={{marginLeft:'auto', fontSize:'11px', color:'#666'}}>2h ago</div></div>
 </div>
-))}
 </div>
 )}
 
 {page==='you' && (
-<div style={{padding:'15px'}}>
-<div style={{display:'flex', gap:'15px', alignItems:'center'}}>
-<div style={{width:'70px', height:'70px', borderRadius:'50%', background:'white', color:'black', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'bold'}}>{profile.pic}</div>
-<div><div style={{fontWeight:'bold', display:'flex', gap:'6px', alignItems:'center'}}>{profile.name} <span style={{width:'16px', height:'16px', background:'#ccc', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'10px', color:'black'}}>✓</span><span style={{fontSize:'10px', color:'#888'}}>No blue tick - request in Inbox</span></div><div style={{fontSize:'12px', color:'#aaa'}}>{profile.bio}</div></div>
+<div style={{padding:'20px', overflowY:'auto', height:'100%'}}>
+<div style={{display:'flex', gap:'16px'}}>
+<div style={{width:'72px', height:'72px', borderRadius:'50%', background:'#fff', color:'#000', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'900'}}>UP</div>
+<div style={{flex:1}}><div style={{fontWeight:'700', fontSize:'18px'}}>My Profile</div><div style={{fontSize:'13px', color:'#888', marginTop:'2px'}}>Edit profile to add bio, change name and photo</div><div style={{display:'flex', gap:'16px', marginTop:'10px', fontSize:'13px'}}><span><b>12</b> <span style={{color:'#888'}}>Followers</span></span><span><b>24</b> <span style={{color:'#888'}}>Following</span></span></div></div>
 </div>
-<h4 style={{marginTop:'20px'}}>Your Videos - Views + Private/Delete</h4>
+<button style={{width:'100%', marginTop:'16px', background:'#1a1a1a', border:'1px solid #2a2a2a', color:'#fff', padding:'12px', borderRadius:'12px', fontSize:'14px', fontWeight:'600'}}>Edit Profile</button>
+
+<div style={{marginTop:'24px', display:'flex', justifyContent:'space-between', alignItems:'center'}}><span style={{fontWeight:'700'}}>Your Videos</span><span style={{fontSize:'12px', color:'#888'}}>{myVideos.length} videos</span></div>
+<div style={{marginTop:'12px', display:'flex', flexDirection:'column', gap:'8px'}}>
 {myVideos.map(v=>(
-<div key={v.id} style={{background:'#222', padding:'10px', borderRadius:'10px', marginBottom:'8px', display:'flex', justifyContent:'space-between'}}>
-<div><b>{v.title}</b><div style={{fontSize:'11px', color:'#aaa'}}>{v.views} views • {v.isPrivate ? '🔒 Private' : '🌍 Public'}</div></div>
-<div style={{display:'flex', gap:'6px'}}>
-<button onClick={()=> setMyVideos(myVideos.map(m=> m.id===v.id ? {...m, isPrivate:!m.isPrivate}:m))} style={{background:'#333', color:'white', border:'none', padding:'5px 8px', borderRadius:'10px', fontSize:'11px'}}>{v.isPrivate?'Public':'Private'}</button>
-<button onClick={()=> setMyVideos(myVideos.filter(m=>m.id!==v.id))} style={{background:'red', color:'white', border:'none', padding:'5px 8px', borderRadius:'10px', fontSize:'11px'}}>Delete</button>
-</div>
+<div key={v.id} style={{background:'#121212', border:'1px solid #1e1e1e', borderRadius:'12px', padding:'12px', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+<div><div style={{fontSize:'14px', fontWeight:'500'}}>{v.title}</div><div style={{fontSize:'12px', color:'#888', marginTop:'2px'}}>{v.views} views • {v.time} • {v.private ? 'Private' : 'Public'}</div></div>
+<button style={{background:'none', border:'none', color:'#888'}}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
 </div>
 ))}
 </div>
+</div>
 )}
 </div>
 
-{/* RED BUTTON UPLOAD MENU */}
+{/* UPLOAD MODAL - REAL */}
 {showUpload && (
-<div style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.85)', zIndex:9999, display:'flex', alignItems:'flex-end', justifyContent:'center'}} onClick={()=>setShowUpload(false)}>
-<div style={{background:'#1a1a1a', width:'100%', maxWidth:'400px', borderTopLeftRadius:'20px', borderTopRightRadius:'20px', padding:'20px', borderTop:'1px solid #333'}} onClick={e=>e.stopPropagation()}>
-<div style={{width:'40px', height:'4px', background:'#444', borderRadius:'2px', margin:'0 auto 15px'}}></div>
-<h3 style={{margin:'0 0 15px', textAlign:'center'}}>Create & Upload</h3>
-<div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px'}}>
-<button onClick={()=>uploadAction('record')} style={{background:'#222', border:'none', color:'white', padding:'18px', borderRadius:'15px', display:'flex', flexDirection:'column', alignItems:'center', gap:'8px'}}><span style={{fontSize:'28px'}}>🎥</span><span style={{fontSize:'13px', fontWeight:'bold'}}>Record Video</span></button>
-<button onClick={()=>uploadAction('duet')} style={{background:'#222', border:'none', color:'white', padding:'18px', borderRadius:'15px', display:'flex', flexDirection:'column', alignItems:'center', gap:'8px'}}><span style={{fontSize:'28px'}}>👥</span><span style={{fontSize:'13px', fontWeight:'bold'}}>Duet Video</span></button>
-<button onClick={()=>uploadAction('video')} style={{background:'#222', border:'none', color:'white', padding:'18px', borderRadius:'15px', display:'flex', flexDirection:'column', alignItems:'center', gap:'8px'}}><span style={{fontSize:'28px'}}>📹</span><span style={{fontSize:'13px', fontWeight:'bold'}}>Upload Video</span></button>
-<button onClick={()=>uploadAction('picture')} style={{background:'#222', border:'none', color:'white', padding:'18px', borderRadius:'15px', display:'flex', flexDirection:'column', alignItems:'center', gap:'8px'}}><span style={{fontSize:'28px'}}>🖼️</span><span style={{fontSize:'13px', fontWeight:'bold'}}>Picture / Letter</span></button>
+<div style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.6)', backdropFilter:'blur(12px)', zIndex:50, display:'flex', alignItems:'flex-end'}} onClick={()=>setShowUpload(false)}>
+<div style={{background:'#121212', width:'100%', borderTopLeftRadius:'24px', borderTopRightRadius:'24px', borderTop:'1px solid #2a2a2a', padding:'12px 20px 32px'}} onClick={e=>e.stopPropagation()}>
+<div style={{width:'36px', height:'4px', background:'#333', borderRadius:'10px', margin:'0 auto 20px'}}></div>
+<div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'16px', textAlign:'center'}}>
+{[
+{icon:'🎬', label:'Camera', desc:'Record'},
+{icon:'↗️', label:'Duet', desc:'React'},
+{icon:'📤', label:'Upload', desc:'Gallery'},
+{icon:'🖼️', label:'Photo', desc:'Image'},
+{icon:'📝', label:'Text', desc:'Post'},
+{icon:'🎵', label:'Muzika', desc:'Music (Owner)'},
+].map(i=>(
+<button key={i.label} style={{background:'#1a1a1a', border:'1px solid #222', borderRadius:'16px', padding:'18px 8px', color:'#fff', display:'flex', flexDirection:'column', alignItems:'center', gap:'8px'}}>
+<span style={{fontSize:'22px'}}>{i.icon}</span>
+<span style={{fontSize:'12px', fontWeight:'600'}}>{i.label}</span>
+<span style={{fontSize:'10px', color:'#888'}}>{i.desc}</span>
+</button>
+))}
 </div>
-<button onClick={()=>uploadAction('post')} style={{width:'100%', marginTop:'12px', background:'#FF0000', color:'white', border:'none', padding:'16px', borderRadius:'15px', fontWeight:'bold', fontSize:'15px'}}>📝 Post Anything - Video, Photo, Text</button>
-<button onClick={()=>setShowUpload(false)} style={{width:'100%', marginTop:'10px', background:'transparent', color:'#888', border:'none', padding:'10px'}}>Cancel</button>
 </div>
 </div>
 )}
 
-{/* BOTTOM NAV */}
-<div style={{display:'flex', justifyContent:'space-around', padding:'10px 0', borderTop:'1px solid #222', background:'black', alignItems:'center'}}>
-<button onClick={()=>setPage('foryou')} style={{background:'none', border:'none', color: page==='foryou'?'white':'#666', fontSize:'11px', textAlign:'center'}}>⌂<br/>Home</button>
-<button onClick={()=>setPage('liveList')} style={{background:'none', border:'none', color: page==='liveList'?'#FF0000':'#666', fontSize:'11px', textAlign:'center'}}>◯<br/>Live<br/><span style={{fontSize:'8px'}}>DOWN</span></button>
-
-{/* BIG RED + BUTTON MIDDLE - NOW UPLOAD CENTER */}
-<button onClick={()=>setShowUpload(true)} style={{width:'62px', height:'42px', background:'#FF0000', borderRadius:'12px', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'30px', fontWeight:'bold', color:'white', border:'2px solid #FF0000', boxShadow:'0 0 15px rgba(255,0,0,0.4)'}}>+</button>
-
-<button onClick={()=>setPage('inbox')} style={{background:'none', border:'none', color: page==='inbox'?'white':'#666', fontSize:'11px', textAlign:'center', position:'relative'}}>✉<br/>Inbox {notifications.length>0 && <span style={{position:'absolute', top:'-2px', right:'-4px', background:'red', color:'white', borderRadius:'50%', width:'16px', height:'16px', fontSize:'10px', display:'flex', alignItems:'center', justifyContent:'center'}}>{notifications.length}</span>}</button>
-<button onClick={()=>setPage('you')} style={{background:'none', border:'none', color: page==='you'?'white':'#666', fontSize:'11px', textAlign:'center'}}>○<br/>You</button>
+{/* BOTTOM NAV - REAL */}
+<div style={{display:'flex', justifyContent:'space-around', padding:'10px 0 12px', borderTop:'1px solid #1a1a1a', background:'#000'}}>
+<button onClick={()=>setPage('foryou')} style={{background:'none', border:'none', color: page==='foryou'?'#fff':'#666', display:'flex', flexDirection:'column', alignItems:'center', gap:'3px', fontSize:'10px', fontWeight:'600'}}><svg width="22" height="22" viewBox="0 0 24 24" fill={page==='foryou'?'white':'none'} stroke="currentColor" strokeWidth={page==='foryou'?0:1.6}><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>Home</button>
+<button onClick={()=>setPage('live')} style={{background:'none', border:'none', color: page==='live'?'#fff':'#666', display:'flex', flexDirection:'column', alignItems:'center', gap:'3px', fontSize:'10px', fontWeight:'600'}}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>Live</button>
+<button onClick={()=>setShowUpload(true)} style={{background:'#FF0024', border:'none', width:'48px', height:'32px', borderRadius:'10px', color:'#fff', fontSize:'22px', fontWeight:'300', display:'flex', alignItems:'center', justifyContent:'center', marginTop:'2px'}}>+</button>
+<button onClick={()=>setPage('inbox')} style={{background:'none', border:'none', color: page==='inbox'?'#fff':'#666', display:'flex', flexDirection:'column', alignItems:'center', gap:'3px', fontSize:'10px', fontWeight:'600'}}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>Inbox</button>
+<button onClick={()=>setPage('you')} style={{background:'none', border:'none', color: page==='you'?'#fff':'#666', display:'flex', flexDirection:'column', alignItems:'center', gap:'3px', fontSize:'10px', fontWeight:'600'}}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>You</button>
 </div>
 </div>
 )
