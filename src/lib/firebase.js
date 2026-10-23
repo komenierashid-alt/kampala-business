@@ -1,5 +1,7 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "firebase/firestore";
+import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDk_f-5RiKXYsxJyX9QtXquh-1gSN8QQcQ",
@@ -12,10 +14,5 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
-
-export async function addProduct(name, price, qty) {
-  await addDoc(collection(db, "products"), {
-    name, price: Number(price), qty: Number(qty),
-    createdAt: serverTimestamp()
-  });
-}
+export const auth = getAuth(app);
+export const storage = getStorage(app);
