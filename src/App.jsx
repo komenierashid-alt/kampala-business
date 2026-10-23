@@ -6,7 +6,7 @@ const [splash, setSplash] = useState(true)
 const [showAuth, setShowAuth] = useState(false)
 const [user, setUser] = useState(null)
 const [isOwner, setIsOwner] = useState(false)
-const [allowPosting, setAllowPosting] = useState(false) // Katongole controls this - false = preparation mode
+const [allowPosting, setAllowPosting] = useState(false)
 const [page, setPage] = useState('foryou')
 const [showUpload, setShowUpload] = useState(false)
 const [follows, setFollows] = useState({})
@@ -17,8 +17,8 @@ const [authForm, setAuthForm] = useState({name:'', username:'', email:'', passwo
 const [showBlocked, setShowBlocked] = useState(false)
 
 const videos = [
-  {id:1, user:'Katongole Rashid', username:'@katongole', verified:true, caption:'Welcome to UPTOWN 🔥 Official launch preparation. Follow us for updates! #Uptown #Kampala', likes:'12.4K', fires:'890', isOwner:true, isAdvert:true},
-  {id:2, user:'Katongole Rashid', username:'@katongole', verified:true, caption:'Big things coming... Businesses, Muzika, Live. Stay tuned! 🚀', likes:'8.2K', fires:'450', isOwner:true, isAdvert:true},
+  {id:1, user:'Katongole Rashid', username:'@katongole', verified:true, caption:'Welcome to UPTOWN 🔥 Official launch preparation. Follow us for updates! #Uptown #Kampala', likes:'12.4K', fires:'890', isOwner:true},
+  {id:2, user:'Katongole Rashid', username:'@katongole', verified:true, caption:'Big things coming... Businesses, Muzika, Live. Stay tuned! 🚀', likes:'8.2K', fires:'450', isOwner:true},
 ]
 
 useEffect(()=>{
@@ -47,12 +47,6 @@ const handleCreateAccount = () => {
   setUser(newUser); setIsOwner(ownerCheck); setShowAuth(false)
 }
 
-const togglePosting = () => {
-  const newVal = !allowPosting
-  setAllowPosting(newVal)
-  localStorage.setItem('uptown_allow_posting', newVal ? 'true' : 'false')
-}
-
 const requestBlueTick = () => {
   if(myVerified) return
   const req = {id:Date.now(), name: user?.name || 'My Page', username: user?.username || '@mypage', message:'Requesting blue tick', status:'pending'}
@@ -70,33 +64,6 @@ const openProfile = (v) => {
   }
 }
 
-const handleShare = async (v) => {
-  if(navigator.share){ await navigator.share({title:'UPTOWN', text:`${v.user}: ${v.caption}`, url: location.href}).catch(()=>{}) }
-}
-
-const handleDownload = () => {
-  const canvas = document.createElement('canvas'); canvas.width=720; canvas.height=1280
-  const ctx = canvas.getContext('2d')
-  ctx.fillStyle='#000'; ctx.fillRect(0,0,720,1280)
-  ctx.fillStyle='#222'; ctx.font='bold 40px Inter'; ctx.fillText('UPTOWN VIDEO', 220, 600)
-  ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(480, 1160, 210, 55)
-  ctx.fillStyle='#fff'; ctx.font='900 20px Inter'; ctx.fillText('UPTOWN', 490, 1192)
-  const a=document.createElement('a'); a.download=`uptown-${Date.now()}.jpg`; a.href=canvas.toDataURL(); a.click()
-}
-
-const FollowButton = ({u}) => {
-  const s = follows[u] || 'follow'
-  return(
-    <div onClick={(e)=>{e.stopPropagation(); setFollows({...follows, [u]: s==='follow' ? 'following' : 'followback'})}} style={{cursor:'pointer'}}>
-      <div style={{width:'48px', height:'48px', borderRadius:'50%', background:'#fff', display:'flex', alignItems:'center', justifyContent:'center', border: s==='followback' ? '2px solid #00D632' : '2px solid #fff', position:'relative'}}>
-        <span style={{fontWeight:'900', fontSize:'11px', color:'#000'}}><span style={{color:'#FF0024'}}>UP</span>TOWN</span>
-        <div style={{position:'absolute', bottom:'-6px', background: s==='follow'?'#FF0024':'#00D632', color:'#fff', width:'20px', height:'20px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', border:'2px solid #000', fontSize:'12px'}}>{s==='follow'?'+':'✓'}</div>
-      </div>
-      <div style={{fontSize:'9px', marginTop:'4px', textAlign:'center', color: s==='followback' ? '#00D632' : '#fff', fontWeight:'600'}}>{s==='follow' ? '' : s==='following' ? 'Following' : 'Follow Back ✓'}</div>
-    </div>
-  )
-}
-
 if(splash){
 return(<div style={{width:'100vw', height:'100dvh', background:'#000', display:'flex', alignItems:'center', justifyContent:'center', position:'fixed', inset:0, zIndex:99999}}><svg width="220" height="250" viewBox="0 0 200 230"><path d="M100 12 C32 12 12 52 12 82 C12 126 100 218 100 218 C100 218 188 126 188 82 C188 52 168 12 100 12 Z" fill="none" stroke="white" strokeWidth="7"/><text x="28" y="112" fontFamily="Arial Black" fontWeight="900" fontSize="36"><tspan fill="#FF0024">UP</tspan><tspan fill="white">TOWN</tspan></text></svg></div>)
 }
@@ -106,14 +73,13 @@ return(
 
 {showAuth && (
 <div style={{position:'fixed', inset:0, background:'#000', zIndex:100, display:'flex', flexDirection:'column', padding:'24px', justifyContent:'center'}}>
-<div style={{textAlign:'center', marginBottom:'28px'}}><svg width="110" height="130" viewBox="0 0 200 230"><path d="M100 12 C32 12 12 52 12 82 C12 126 100 218 100 218 C100 218 188 126 188 82 C188 52 168 12 100 12 Z" fill="none" stroke="white" strokeWidth="7"/><text x="28" y="112" fontFamily="Arial Black" fontWeight="900" fontSize="36"><tspan fill="#FF0024">UP</tspan><tspan fill="white">TOWN</tspan></text></svg><div style={{fontWeight:'800', fontSize:'22px', marginTop:'14px'}}>Welcome to UPTOWN</div><div style={{color:'#888', fontSize:'13px', marginTop:'4px'}}>Sign up to see official adverts</div></div>
+<div style={{textAlign:'center', marginBottom:'28px'}}><svg width="110" height="130" viewBox="0 0 200 230"><path d="M100 12 C32 12 12 52 12 82 C12 126 100 218 100 218 C100 218 188 126 188 82 C188 52 168 12 100 12 Z" fill="none" stroke="white" strokeWidth="7"/><text x="28" y="112" fontFamily="Arial Black" fontWeight="900" fontSize="36"><tspan fill="#FF0024">UP</tspan><tspan fill="white">TOWN</tspan></text></svg><div style={{fontWeight:'800', fontSize:'22px', marginTop:'14px'}}>Welcome to UPTOWN</div></div>
 <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
 <input value={authForm.name} onChange={e=>setAuthForm({...authForm, name:e.target.value})} placeholder="Your Name" style={{background:'#121212', border:'1px solid #222', borderRadius:'12px', padding:'14px', color:'#fff'}}/>
 <input value={authForm.username} onChange={e=>setAuthForm({...authForm, username:e.target.value})} placeholder="Username" style={{background:'#121212', border:'1px solid #222', borderRadius:'12px', padding:'14px', color:'#fff'}}/>
 <input value={authForm.email} onChange={e=>setAuthForm({...authForm, email:e.target.value})} placeholder="Email" style={{background:'#121212', border:'1px solid #222', borderRadius:'12px', padding:'14px', color:'#fff'}}/>
 <input value={authForm.password} onChange={e=>setAuthForm({...authForm, password:e.target.value})} type="password" placeholder="Password" style={{background:'#121212', border:'1px solid #222', borderRadius:'12px', padding:'14px', color:'#fff'}}/>
-<button onClick={handleCreateAccount} style={{background:'#fff', color:'#000', border:'none', padding:'14px', borderRadius:'12px', fontWeight:'700'}}>Sign Up & See Adverts</button>
-<div style={{fontSize:'11px', color:'#666', textAlign:'center', marginTop:'6px'}}>Posting disabled during preparation - follow only</div>
+<button onClick={handleCreateAccount} style={{background:'#fff', color:'#000', border:'none', padding:'14px', borderRadius:'12px', fontWeight:'700'}}>Sign Up & Watch</button>
 </div>
 </div>
 )}
@@ -130,33 +96,37 @@ return(
 
 {(page==='foryou' || page==='muzika' || page==='following') && (
 <div style={{flex:1, overflowY:'scroll', scrollSnapType:'y mandatory'}}>
-<div style={{background:'#0a0a0a', borderBottom:'1px solid #1a1a1a', padding:'10px 16px', display:'flex', gap:'8px', alignItems:'center'}}>
-<div style={{width:'6px', height:'6px', background:'#FFA500', borderRadius:'50%'}}></div>
-<span style={{fontSize:'11px', color:'#FFA500', fontWeight:'700'}}>PREPARATION MODE</span>
-<span style={{fontSize:'11px', color:'#666'}}>- Only Katongole posts visible - Follow allowed - Posting disabled until owner allows</span>
+<div style={{background:'#0a0a0a', borderBottom:'1px solid #1a1a1a', padding:'8px 16px', textAlign:'center'}}>
+<span style={{fontSize:'11px', color:'#666'}}>Preparation Mode: Watch only - No like/share/download</span>
 </div>
 
 {videos.map(v=>(
 <div key={v.id} onClick={()=>openProfile(v)} style={{width:'100%', height:'100%', scrollSnapAlign:'start', position:'relative', background:'#000', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
-<div style={{position:'absolute', inset:0, background:'linear-gradient(0deg, rgba(0,0,0,0.85) 0%, transparent 40%)', zIndex:1}}></div>
+<div style={{position:'absolute', inset:0, background:'linear-gradient(0deg, rgba(0,0,0,0.9) 0%, transparent 50%)', zIndex:1}}></div>
 <div style={{color:'#1a1a1a', fontSize:'70px'}}>▶</div>
 
-<div style={{position:'absolute', left:'16px', bottom:'16px', zIndex:2}}>
+{/* LEFT - ONLY WATCH */}
+<div style={{position:'absolute', left:'16px', bottom:'20px', zIndex:2, maxWidth:'80%'}}>
 <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
-<span style={{fontWeight:'700', fontSize:'15px'}}>{v.user}</span>
-<span style={{width:'18px', height:'18px', background:'#1D9BF0', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center'}}><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>
-<span style={{fontSize:'11px', background:'#FFA500', color:'#000', padding:'2px 6px', borderRadius:'8px', fontWeight:'700'}}>ADVERT</span>
+<span style={{fontWeight:'700', fontSize:'16px'}}>{v.user}</span>
+<span style={{width:'20px', height:'20px', background:'#1D9BF0', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center'}}><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>
+<span style={{fontSize:'11px', background:'#FFA500', color:'#000', padding:'3px 8px', borderRadius:'8px', fontWeight:'700'}}>ADVERT</span>
 </div>
-<div style={{fontSize:'13px', color:'#d0d0d0', marginTop:'4px', maxWidth:'75%'}}>{v.caption}</div>
+<div style={{fontSize:'14px', color:'#fff', marginTop:'8px', lineHeight:'1.4'}}>{v.caption}</div>
+<div style={{fontSize:'11px', color:'#666', marginTop:'8px'}}>👁 Watch only - No interaction allowed in preparation</div>
 </div>
 
-<div style={{position:'absolute', right:'12px', bottom:'90px', zIndex:2, display:'flex', flexDirection:'column', gap:'22px', alignItems:'center'}}>
-<FollowButton u={v.username}/>
-<button style={{background:'none', border:'none', color:'#fff', display:'flex', flexDirection:'column', alignItems:'center'}}><span style={{fontSize:'24px'}}>♡</span><span style={{fontSize:'12px'}}>{v.likes}</span></button>
-<button style={{background:'none', border:'none', color:'#fff', display:'flex', flexDirection:'column', alignItems:'center'}}><span>🔥</span><span style={{fontSize:'12px'}}>{v.fires}</span></button>
-<button onClick={(e)=>{e.stopPropagation(); handleShare(v)}} style={{background:'none', border:'none', color:'#fff', display:'flex', flexDirection:'column', alignItems:'center'}}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/></svg><span style={{fontSize:'11px'}}>Share</span></button>
-<button onClick={(e)=>{e.stopPropagation(); handleDownload()}} style={{background:'none', border:'none', color:'#fff', display:'flex', flexDirection:'column', alignItems:'center'}}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/></svg><span style={{fontSize:'11px'}}>Download</span></button>
+{/* RIGHT SIDE - NO BUTTONS FOR PUBLIC - ONLY OWNER SEES */}
+{isOwner ? (
+<div style={{position:'absolute', right:'12px', bottom:'90px', zIndex:2, display:'flex', flexDirection:'column', gap:'18px', alignItems:'center'}}>
+<div style={{width:'48px', height:'48px', borderRadius:'50%', background:'#fff', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'900', fontSize:'11px', color:'#000'}}><span style={{color:'#FF0024'}}>UP</span>TOWN</div>
+<div style={{color:'#888', fontSize:'10px', textAlign:'center'}}>Owner<br/>View</div>
 </div>
+) : (
+<div style={{position:'absolute', right:'12px', bottom:'100px', zIndex:2}}>
+<div style={{background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.1)', padding:'8px 12px', borderRadius:'20px', fontSize:'11px', color:'#888'}}>Watch Only</div>
+</div>
+)}
 </div>
 ))}
 </div>
@@ -168,14 +138,15 @@ return(
 {isOwner ? (
 <div>
 <div style={{background:'#121212', border:'1px solid #1D9BF0', borderRadius:'14px', padding:'14px', marginBottom:'16px'}}>
-<div style={{fontWeight:'700', color:'#1D9BF0'}}>UPTOWN BOARD</div>
-<div style={{fontSize:'11px', color:'#888', marginTop:'4px'}}>Owner controls • Blue tick requests • Posting control</div>
+<div style={{fontWeight:'700', color:'#1D9BF0', fontSize:'16px'}}>UPTOWN BOARD</div>
+<div style={{fontSize:'11px', color:'#888', marginTop:'4px'}}>All notifications come here - Only you see this board</div>
 <div style={{marginTop:'12px', display:'flex', gap:'8px', alignItems:'center'}}>
 <span style={{fontSize:'12px'}}>Public posting:</span>
-<button onClick={togglePosting} style={{background: allowPosting ? '#00D632' : '#333', color: allowPosting?'#000':'#fff', border:'none', padding:'6px 12px', borderRadius:'20px', fontSize:'11px', fontWeight:'700'}}>{allowPosting ? 'ALLOWED ✓' : 'DISABLED - Prep Mode'}</button>
+<button onClick={()=>{const nv=!allowPosting; setAllowPosting(nv); localStorage.setItem('uptown_allow_posting', nv?'true':'false')}} style={{background: allowPosting ? '#00D632' : '#333', color: allowPosting?'#000':'#fff', border:'none', padding:'6px 12px', borderRadius:'20px', fontSize:'11px', fontWeight:'700'}}>{allowPosting ? 'ALLOWED ✓' : 'DISABLED'}</button>
 </div>
 </div>
-{blueBoard.map(r=>(
+{blueBoard.length===0 ? <div style={{textAlign:'center', color:'#666', marginTop:'30px'}}>Uptown Board empty<br/><span style={{fontSize:'11px'}}>Blue tick requests will appear here</span></div> :
+blueBoard.map(r=>(
 <div key={r.id} style={{background:'#121212', border:'1px solid #222', borderRadius:'14px', padding:'14px', marginBottom:'10px'}}>
 <div style={{display:'flex', gap:'10px'}}><div style={{width:'40px', height:'40px', borderRadius:'50%', background:'#222', display:'flex', alignItems:'center', justifyContent:'center'}}>{r.name[0]}</div><div><div style={{fontWeight:'600'}}>{r.name} <span style={{color:'#888', fontSize:'11px'}}>{r.username}</span></div><div style={{fontSize:'12px', color:'#aaa'}}>{r.message}</div></div></div>
 <div style={{display:'flex', gap:'8px', marginTop:'12px'}}>
@@ -190,7 +161,7 @@ return(
 <div style={{fontWeight:'700', fontSize:'16px', marginBottom:'8px'}}>Blue Tick</div>
 <div style={{fontSize:'13px', color:'#888', marginBottom:'16px'}}>Request verification - goes to Uptown Board</div>
 {myVerified ? <div style={{background:'#1D9BF0', color:'#fff', padding:'10px', borderRadius:'10px', fontWeight:'700'}}>🎉 Congratulations you got your Blue Tick ✓</div> : <button onClick={requestBlueTick} style={{background:'#fff', color:'#000', border:'none', padding:'10px 20px', borderRadius:'20px', fontWeight:'700'}}>Request Blue Tick</button>}
-<div style={{marginTop:'20px', fontSize:'11px', color:'#666', borderTop:'1px solid #222', paddingTop:'12px'}}>Posting disabled - Preparation mode<br/>You can follow / follow back only</div>
+<div style={{marginTop:'20px', fontSize:'11px', color:'#555'}}>Watch only mode - Preparation</div>
 </div>
 )}
 </div>
@@ -205,8 +176,8 @@ return(
 )}
 
 {showBlocked && (
-<div style={{position:'fixed', top:'50%', left:'50%', transform:'translate(-50%, -50%)', background:'#1a1a1a', border:'1px solid #333', padding:'16px 20px', borderRadius:'14px', zIndex:80, textAlign:'center'}}>
-<div style={{fontWeight:'700'}}>🔒 Confidential</div><div style={{fontSize:'12px', color:'#888', marginTop:'4px'}}>Katongole Rashid's page is private<br/>Cannot be opened</div>
+<div style={{position:'fixed', top:'50%', left:'50%', transform:'translate(-50%, -50%)', background:'#1a1a1a', border:'1px solid #333', padding:'18px 22px', borderRadius:'14px', zIndex:80, textAlign:'center'}}>
+<div style={{fontWeight:'700', fontSize:'16px'}}>🔒 Confidential</div><div style={{fontSize:'12px', color:'#888', marginTop:'6px'}}>Katongole Rashid's page is private<br/>Cannot be opened</div>
 </div>
 )}
 
@@ -214,29 +185,20 @@ return(
 <div style={{padding:'20px'}}>
 <div style={{display:'flex', gap:'16px', alignItems:'center'}}>
 <div style={{width:'72px', height:'72px', borderRadius:'50%', background:'#fff', color:'#000', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'900'}}>UP</div>
-<div><div style={{fontWeight:'700', display:'flex', gap:'6px', alignItems:'center'}}>{user?.name || 'My Page'} {myVerified && <span style={{width:'18px', height:'18px', background:'#1D9BF0', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center'}}><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>}</div><div style={{fontSize:'12px', color:'#888'}}>{user?.username} • Following {Object.keys(follows).length}</div></div>
+<div><div style={{fontWeight:'700', display:'flex', gap:'6px', alignItems:'center'}}>{user?.name || 'My Page'} {myVerified && <span style={{width:'18px', height:'18px', background:'#1D9BF0', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center'}}><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>}</div><div style={{fontSize:'12px', color:'#888'}}>{user?.username}</div></div>
 </div>
-{isOwner && <div style={{marginTop:'16px', background:'#0a1f2f', border:'1px solid #1D9BF0', borderRadius:'12px', padding:'12px'}}><div style={{fontWeight:'700', fontSize:'13px', color:'#1D9BF0'}}>OWNER CONTROLS</div><div style={{fontSize:'11px', color:'#aaa', marginTop:'4px'}}>Posting: {allowPosting ? 'Allowed' : 'Disabled (Prep Mode)'} • Board in Inbox • Only you post to Muzika</div><button onClick={togglePosting} style={{marginTop:'8px', background: allowPosting ? '#00D632' : '#FFA500', color: allowPosting?'#000':'#000', border:'none', padding:'6px 12px', borderRadius:'20px', fontSize:'11px', fontWeight:'700'}}>{allowPosting ? 'Posting ON - Public can post' : 'Posting OFF - Tap to allow public posting'}</button></div>}
-{!isOwner && <div style={{marginTop:'16px', background:'#121212', border:'1px solid #222', borderRadius:'12px', padding:'12px'}}><div style={{fontSize:'12px', color:'#888'}}>Preparation mode: You can follow and follow back only. Posting will be enabled by owner soon.</div></div>}
+{isOwner && <div style={{marginTop:'16px', background:'#0a1f2f', border:'1px solid #1D9BF0', borderRadius:'12px', padding:'12px'}}><div style={{fontWeight:'700', fontSize:'13px', color:'#1D9BF0'}}>OWNER - Uptown Board Only You</div><div style={{fontSize:'11px', color:'#aaa', marginTop:'4px'}}>All notifications go to Uptown Board • Public cannot like/share/download • Watch only</div></div>}
 </div>
 )}
 </div>
 
 {showUpload && (
-<div style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.7)', zIndex:50, display:'flex', alignItems:'flex-end'}} onClick={()=>setShowUpload(false)}>
-<div style={{background:'#121212', width:'100%', borderTopLeftRadius:'24px', borderTopRightRadius:'24px', padding:'20px 20px 32px'}} onClick={e=>e.stopPropagation()}>
+<div style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.8)', zIndex:50, display:'flex', alignItems:'flex-end'}} onClick={()=>setShowUpload(false)}>
+<div style={{background:'#121212', width:'100%', borderTopLeftRadius:'24px', borderTopRightRadius:'24px', padding:'30px 20px', textAlign:'center'}} onClick={e=>e.stopPropagation()}>
 {!isOwner && !allowPosting ? (
-<div style={{textAlign:'center', padding:'20px'}}>
-<div style={{fontSize:'18px', fontWeight:'700'}}>🚧 Posting Disabled</div>
-<div style={{fontSize:'13px', color:'#888', marginTop:'8px'}}>We are preparing for launch.<br/>Only Katongole Rashid can post now.<br/>You can follow / follow back and see adverts on For You page.</div>
-<div style={{marginTop:'16px', fontSize:'11px', background:'#1a1a1a', padding:'10px', borderRadius:'10px', color:'#FFA500'}}>Preparation Mode: Follow only</div>
-</div>
+<div><div style={{fontSize:'18px', fontWeight:'700'}}>🚧 Posting Disabled</div><div style={{fontSize:'13px', color:'#888', marginTop:'8px'}}>Preparation mode: You can watch only.<br/>No like, share, download, or posting.<br/>Owner posts adverts only.</div></div>
 ) : (
-<div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'12px'}}>
-{[{l:'Camera'},{l:'Duet'},{l:'Upload'},{l:'Photo'},{l:'Text'},{l:'Muzika', d: isOwner ? 'You can post' : 'Owner only'}].map(i=>(
-<div key={i.l} style={{background:'#1a1a1a', border:'1px solid #222', borderRadius:'16px', padding:'18px 8px', textAlign:'center', opacity: i.l==='Muzika' && !isOwner ? 0.4 : 1}}><div style={{fontSize:'12px', fontWeight:'600'}}>{i.l}</div><div style={{fontSize:'10px', color:'#888'}}>{i.d || ''}</div></div>
-))}
-</div>
+<div style={{fontSize:'14px'}}>Upload enabled for owner</div>
 )}
 </div>
 </div>
