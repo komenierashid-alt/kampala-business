@@ -3,23 +3,17 @@ import { useState, useEffect } from "react"
 
 export default function Home(){
 const [splash, setSplash] = useState(true)
-useEffect(()=>{ 
-  // Change 2500 to 999999 if you want it to stay FOREVER
-  // Or keep 2500 for 2.5 sec splash then app
-  const t = setTimeout(()=>setSplash(false), 2500)
-  return ()=>clearTimeout(t)
-},[])
+useEffect(()=>{ setTimeout(()=>setSplash(false), 2500) },[])
 
 if(splash){
 return(
 <div style={{width:'100vw', height:'100dvh', background:'#000', display:'flex', alignItems:'center', justifyContent:'center', position:'fixed', inset:0, zIndex:99999}}>
-  {/* FULL HD VECTOR - INFINITE RESOLUTION */}
-  <svg width="85vw" height="85vh" viewBox="0 0 200 230" style={{maxWidth:'500px', maxHeight:'600px'}}>
-    {/* White pin */}
+  <svg width="90vw" height="90vh" viewBox="0 0 200 230" style={{maxWidth:'550px', maxHeight:'650px'}}>
     <path d="M100 10 C30 10 10 50 10 80 C10 125 100 220 100 220 C100 220 190 125 190 80 C190 50 170 10 100 10 Z" fill="none" stroke="white" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"/>
-    {/* K RED + B WHITE - Extra Bold */}
-    <text x="38" y="115" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="68" fill="#FF0000" letterSpacing="-2">K</text>
-    <text x="92" y="115" fontFamily="Arial Black, sans-serif" fontWeight="900" fontSize="68" fill="white" letterSpacing="-2">B</text>
+    {/* UPTOWN */}
+    <text x="22" y="108" fontFamily="Arial Black, Impact, sans-serif" fontWeight="900" fontSize="38" letterSpacing="-1">
+      <tspan fill="#FF0000">UP</tspan><tspan fill="white">TOWN</tspan>
+    </text>
   </svg>
 </div>
 )
@@ -34,18 +28,21 @@ return(
 <span style={{color:'#888', fontSize:'13px'}}>Following</span>
 <div style={{marginLeft:'auto'}}>🔍</div>
 </div>
+
 <div style={{flex:1, position:'relative'}}>
 <div style={{position:'absolute', right:'10px', bottom:'110px', display:'flex', flexDirection:'column', gap:'18px', alignItems:'center'}}>
-<div style={{position:'relative'}}><div style={{width:'52px', height:'52px', borderRadius:'50%', border:'2px solid white', background:'white', color:'black', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'bold'}}><span style={{color:'red'}}>K</span>B</div><div style={{background:'red', color:'white', width:'22px', height:'22px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', position:'absolute', bottom:'-7px', left:'50%', transform:'translateX(-50%)', border:'2px solid black'}}>+</div></div>
+<div style={{position:'relative'}}><div style={{width:'52px', height:'52px', borderRadius:'50%', border:'2px solid white', background:'white', color:'black', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'bold', fontSize:'12px'}}><span style={{color:'red'}}>UP</span>TOWN</div><div style={{background:'red', color:'white', width:'22px', height:'22px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', position:'absolute', bottom:'-7px', left:'50%', transform:'translateX(-50%)', border:'2px solid black'}}>+</div></div>
 <div style={{textAlign:'center'}}><div style={{fontSize:'26px'}}>♡</div><div style={{fontSize:'11px'}}>0</div></div>
 <div style={{textAlign:'center'}}><div style={{fontSize:'22px'}}>💬</div><div style={{fontSize:'11px'}}>0</div></div>
 <div style={{textAlign:'center'}}><div style={{fontSize:'20px'}}>↗</div><div style={{fontSize:'11px'}}>Share</div></div>
 <div style={{textAlign:'center'}}><div style={{fontSize:'22px'}}>🔥</div><div style={{fontSize:'11px'}}>0</div></div>
 <div style={{textAlign:'center'}}><div style={{fontSize:'16px', color:'red'}}>★</div><div style={{fontSize:'11px', color:'red', fontWeight:'bold'}}>Favorite</div></div>
 </div>
+
 <div style={{position:'absolute', left:'10px', bottom:'12px', fontWeight:'bold', fontSize:'14px'}}>Katongole Rashid ✓</div>
 <div style={{position:'absolute', right:'10px', bottom:'12px'}}><div style={{background:'white', color:'black', padding:'8px 18px', borderRadius:'20px', fontSize:'13px', fontWeight:'bold'}}>✓ Joined</div></div>
 </div>
+
 <div style={{display:'flex', justifyContent:'space-around', padding:'12px 0', borderTop:'1px solid #222', alignItems:'center'}}>
 <span style={{fontSize:'11px', textAlign:'center', fontWeight:'bold'}}>⌂<br/>Home</span>
 <span style={{fontSize:'11px', textAlign:'center', color:'#666'}}>○<br/>Live</span>
