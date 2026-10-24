@@ -17,6 +17,12 @@ const [chatUser, setChatUser] = useState(null)
 const [authForm, setAuthForm] = useState({name:'', username:'', email:'', password:''})
 const [showBlocked, setShowBlocked] = useState(false)
 const [installPrompt, setInstallPrompt] = useState(null)
+
+// + NEW - For posting
+const [posts, setPosts] = useState([])
+const [uploadCaption, setUploadCaption] = useState('')
+const [uploadPreview, setUploadPreview] = useState(null)
+
 const [allUsers, setAllUsers] = useState([
   {id:1, name:'Katongole Rashid', username:'@katongole', verified:true, isOwner:true, followers:12400},
   {id:2, name:'Sheilah G', username:'@sheilah', verified:false, followers:892},
@@ -37,8 +43,12 @@ useEffect(()=>{
     const savedOwner = localStorage.getItem('uptown_is_owner')
     const savedAllow = localStorage.getItem('uptown_allow_posting')
     const savedFollows = localStorage.getItem('uptown_follows')
+    const savedPosts = localStorage.getItem('uptown_posts') // + NEW
+    const savedBlueBoard = localStorage.getItem('uptown_blueboard') // + NEW
     if(savedUsers) setAllUsers(JSON.parse(savedUsers))
     if(savedFollows) setFollows(JSON.parse(savedFollows))
+    if(savedPosts) setPosts(JSON.parse(savedPosts)) // + NEW
+    if(savedBlueBoard) setBlueBoard(JSON.parse(savedBlueBoard)) // + NEW
     if(!savedUser) setShowAuth(true)
     else {
       setUser(JSON.parse(savedUser))
@@ -80,27 +90,63 @@ const handleAuth = () => {
 }
 
 const handleFollow = (username) => {
-  // FOLLOW IS ALLOWED FOR EVERYONE - NO LOCK
   const newFollows = {...follows, [username]: follows[username]==='following' ? 'follow' : 'following'}
   setFollows(newFollows); localStorage.setItem('uptown_follows', JSON.stringify(newFollows))
+}
+
+// + NEW - REAL UPLOAD FOR OWNER
+const handleFileChange = (e) => {
+  const file = e.target.files?.[0]
+  if(!file) return
+  const url = URL.createObjectURL(file)
+  setUploadPreview({url, type: file.type, file})
+}
+
+const handlePostNow = () => {
+  if(!uploadPreview) return
+  const newPost = {
+    id: Date.now(),
+    user: 'Katongole Rashid',
+    username: '@katongole',
+    verified: true,
+    isOwner: true,
+    caption: uploadCaption || 'UPTOWN 🔥 New post #Kampala',
+    mediaUrl: uploadPreview.url,
+    mediaType: uploadPreview.type.startsWith('video') ? 'video' : 'image',
+    isNewPost: true
+  }
+  const updated = [newPost, ...posts]
+  setPosts(updated)
+  localStorage.setItem('uptown_posts', JSON.stringify(updated))
+  setUploadPreview(null)
+  setUploadCaption('')
+  setShowUpload(false)
+  setPage('foryou')
 }
 
 const requestBlueTick = () => {
   if(myVerified) return
   const req = {id:Date.now(), name: user?.name || 'My Page', username: user?.username || '@mypage', message:'Requesting blue tick', status:'pending'}
-  setBlueBoard([...blueBoard, req])
+  const updated = [...blueBoard, req]
+  setBlueBoard(updated)
+  localStorage.setItem('uptown_blueboard', JSON.stringify(updated)) // + NEW save
 }
 
 const acceptBlueTick = (id) => {
-  setBlueBoard(blueBoard.map(r=> r.id===id ? {...r, status:'accepted'} : r)); setMyVerified(true); setChatUser(null)
+  const updated = blueBoard.map(r=> r.id===id ? {...r, status:'accepted'} : r)
+  setBlueBoard(updated)
+  localStorage.setItem('uptown_blueboard', JSON.stringify(updated))
+  setMyVerified(true); setChatUser(null)
+  // + NEW - Actually verify user in allUsers list
+  const updatedUsers = allUsers.map(u=> u.username === blueBoard.find(r=>r.id===id)?.username ? {...u, verified:true} : u)
+  setAllUsers(updatedUsers)
+  localStorage.setItem('uptown_all_users', JSON.stringify(updatedUsers))
 }
 
 const openProfile = (v) => {
-  // ONLY BLOCK IF NOT OWNER AND TRYING TO OPEN OWNER PAGE
   if(v.isOwner && !isOwner){
     setShowBlocked(true); setTimeout(()=>setShowBlocked(false), 2500); return
   }
-  // Owner can open everything
 }
 
 const handleShare = async (v) => {
@@ -110,7 +156,7 @@ const handleShare = async (v) => {
 }
 
 const handleDownload = () => {
-  if(!isOwner) return // locked for public
+  if(!isOwner) return
   const canvas = document.createElement('canvas'); canvas.width=720; canvas.height=1280
   const ctx = canvas.getContext('2d'); ctx.fillStyle='#000'; ctx.fillRect(0,0,720,1280)
   ctx.fillStyle='#222'; ctx.font='bold 40px Inter'; ctx.fillText('UPTOWN VIDEO', 220, 600)
@@ -121,6 +167,9 @@ const handleDownload = () => {
 if(splash){
 return(<div style={{width:'100vw', height:'100dvh', background:'#000', display:'flex', alignItems:'center', justifyContent:'center', position:'fixed', inset:0, zIndex:99999}}><svg width="220" height="250" viewBox="0 0 200 230"><path d="M100 12 C32 12 12 52 12 82 C12 126 100 218 100 218 C100 218 188 126 188 82 C188 52 168 12 100 12 Z" fill="none" stroke="white" strokeWidth="7"/><text x="28" y="112" fontFamily="Arial Black" fontWeight="900" fontSize="36"><tspan fill="#FF0024">UP</tspan><tspan fill="white">TOWN</tspan></text></svg></div>)
 }
+
+// + NEW - Combined feed: posts + default videos
+const feed = [...posts, ...videos]
 
 return(
 <div style={{background:'#000', color:'#fff', width:'100vw', height:'100dvh', position:'fixed', inset:0, display:'flex', flexDirection:'column', fontFamily:'Inter, sans-serif'}}>
@@ -154,10 +203,14 @@ return(
 
 {page==='foryou' && (
 <div style={{flex:1, overflowY:'scroll', scrollSnapType:'y mandatory'}}>
-{videos.map(v=>(
+{feed.map(v=>(
 <div key={v.id} onClick={()=>openProfile(v)} style={{width:'100%', height:'100%', scrollSnapAlign:'start', position:'relative', background:'#000', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0}}>
+{/* + NEW - Show uploaded image/video if exists */}
+{v.mediaUrl ? (
+  v.mediaType==='video' ? <video src={v.mediaUrl} autoPlay loop muted style={{width:'100%', height:'100%', objectFit:'cover'}}/> : <img src={v.mediaUrl} style={{width:'100%', height:'100%', objectFit:'cover'}}/>
+) : null}
 <div style={{position:'absolute', inset:0, background:'linear-gradient(0deg, rgba(0,0,0,0.9) 0%, transparent 50%)', zIndex:1}}></div>
-<div style={{color:'#1a1a1a', fontSize:'70px'}}>▶</div>
+{!v.mediaUrl && <div style={{color:'#1a1a1a', fontSize:'70px'}}>▶</div>}
 <div style={{position:'absolute', left:'16px', bottom:'20px', zIndex:2, maxWidth:'75%'}}>
 <div style={{display:'flex', alignItems:'center', gap:'8px'}}><span style={{fontWeight:'700', fontSize:'16px'}}>{v.user}</span><span style={{width:'20px', height:'20px', background:'#1D9BF0', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center'}}><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>{!isOwner && <span style={{fontSize:'10px'}}>🔒</span>}</div>
 <div style={{fontSize:'14px', color:'#fff', marginTop:'8px'}}>{v.caption}</div>
@@ -165,7 +218,6 @@ return(
 </div>
 
 <div style={{position:'absolute', right:'12px', bottom:'90px', zIndex:2, display:'flex', flexDirection:'column', gap:'18px', alignItems:'center'}}>
-{/* FOLLOW BUTTON - NO LOCK FOR EVERYONE */}
 <button onClick={(e)=>{e.stopPropagation(); handleFollow(v.username)}} style={{background:'none', border:'none', display:'flex', flexDirection:'column', alignItems:'center', gap:'4px'}}>
 <div style={{width:'48px', height:'48px', borderRadius:'50%', background:'#fff', display:'flex', alignItems:'center', justifyContent:'center', border: follows[v.username] ? '2px solid #00D632' : '2px solid #fff', position:'relative'}}>
 <span style={{fontWeight:'900', fontSize:'11px', color:'#000'}}><span style={{color:'#FF0024'}}>UP</span>TOWN</span>
@@ -174,7 +226,6 @@ return(
 <span style={{fontSize:'10px', color:'#fff', fontWeight:'600'}}>{follows[v.username] ? 'Following' : 'Follow'}</span>
 </button>
 
-{/* OTHER ICONS - LOCKED FOR PUBLIC, OPEN FOR OWNER */}
 <div style={{display:'flex', flexDirection:'column', gap:'16px', marginTop:'10px'}}>
 <button onClick={(e)=>{e.stopPropagation(); if(!isOwner) return; }} style={{background:'none', border:'none', color: isOwner ? '#fff' : '#555', display:'flex', flexDirection:'column', alignItems:'center', position:'relative'}}><span style={{fontSize:'22px'}}>{isOwner ? '♡' : '🔒'}</span><span style={{fontSize:'10px'}}>{isOwner ? '12.4K' : '🔒'}</span></button>
 <button style={{background:'none', border:'none', color: isOwner ? '#fff' : '#555', display:'flex', flexDirection:'column', alignItems:'center'}}><span style={{fontSize:'18px'}}>{isOwner ? '🔥' : '🔒'}</span><span style={{fontSize:'10px'}}>{isOwner ? '340' : '🔒'}</span></button>
@@ -198,7 +249,6 @@ return(
 <div style={{width:'44px', height:'44px', borderRadius:'50%', background:'#222', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700'}}>{u.name[0]}</div>
 <div><div style={{fontWeight:'600', fontSize:'14px', display:'flex', gap:'4px', alignItems:'center'}}>{u.name} {u.verified && <span style={{width:'14px', height:'14px', background:'#1D9BF0', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center'}}><svg width="8" height="8" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>} {!isOwner && <span>🔒</span>}</div><div style={{fontSize:'11px', color:'#888'}}>{u.username} • {u.followers} followers • {isOwner ? 'Full' : '🔒 Locked'}</div></div>
 </div>
-{/* FOLLOW BUTTON - NEVER LOCKED */}
 <button onClick={()=>handleFollow(u.username)} style={{background: follows[u.username]==='following' ? '#fff' : '#FF0024', color: follows[u.username]==='following' ? '#000' : '#fff', border:'none', padding:'8px 16px', borderRadius:'20px', fontSize:'12px', fontWeight:'700'}}>
 {follows[u.username]==='following' ? 'Following ✓' : 'Follow +'}
 </button>
@@ -271,9 +321,25 @@ return(
 
 {showUpload && (
 <div style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.8)', zIndex:50, display:'flex', alignItems:'flex-end'}} onClick={()=>setShowUpload(false)}>
-<div style={{background:'#121212', width:'100%', borderTopLeftRadius:'24px', borderTopRightRadius:'24px', padding:'30px 20px', textAlign:'center'}} onClick={e=>e.stopPropagation()}>
+<div style={{background:'#121212', width:'100%', borderTopLeftRadius:'24px', borderTopRightRadius:'24px', padding:'24px 20px', textAlign:'center'}} onClick={e=>e.stopPropagation()}>
 {isOwner ? (
-<div><div style={{fontSize:'18px', fontWeight:'700', color:'#00D632'}}>✓ Upload Enabled - Owner</div><div style={{fontSize:'13px', color:'#888', marginTop:'8px'}}>You can post to For You and Muzika - Full access</div><div style={{marginTop:'16px', display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'12px'}}>{['Camera','Upload','Muzika'].map(t=><div key={t} style={{background:'#1a1a1a', border:'1px solid #222', borderRadius:'12px', padding:'14px', fontSize:'12px'}}>{t}</div>)}</div></div>
+<div>
+<div style={{fontSize:'18px', fontWeight:'700', color:'#00D632'}}>✓ Upload Enabled - Owner</div>
+
+{/* + NEW REAL UPLOAD UI - ONLY FOR KATONGOLE RASHID */}
+<div style={{marginTop:'16px'}}>
+<input type="file" accept="image/*,video/*" onChange={handleFileChange} style={{background:'#1a1a1a', border:'1px solid #333', borderRadius:'10px', padding:'10px', color:'#fff', width:'100%'}} />
+{uploadPreview && (
+  <div style={{marginTop:'12px'}}>
+    {uploadPreview.type.startsWith('video') ? <video src={uploadPreview.url} style={{width:'100%', borderRadius:'12px', maxHeight:'200px'}} controls/> : <img src={uploadPreview.url} style={{width:'100%', borderRadius:'12px', maxHeight:'200px', objectFit:'cover'}}/>}
+  </div>
+)}
+<input value={uploadCaption} onChange={e=>setUploadCaption(e.target.value)} placeholder="Write caption... #Uptown #Kampala" style={{marginTop:'12px', background:'#1a1a1a', border:'1px solid #333', borderRadius:'10px', padding:'12px', color:'#fff', width:'100%'}}/>
+<button onClick={handlePostNow} style={{marginTop:'12px', background:'#fff', color:'#000', border:'none', width:'100%', padding:'14px', borderRadius:'12px', fontWeight:'800'}}>POST NOW 🚀</button>
+</div>
+
+<div style={{marginTop:'16px', display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:'12px', opacity:0.5}}>{['Camera','Upload','Muzika'].map(t=><div key={t} style={{background:'#1a1a1a', border:'1px solid #222', borderRadius:'12px', padding:'14px', fontSize:'12px'}}>{t}</div>)}</div>
+</div>
 ) : (
 <div><div style={{fontSize:'30px'}}>🔒</div><div style={{fontSize:'18px', fontWeight:'700', marginTop:'10px'}}>Posting Locked</div><div style={{fontSize:'13px', color:'#888', marginTop:'8px'}}>Preparation mode<br/>You can see appearance and follow each other<br/>Videos by Katongole Rashid only<br/>Follow + button is open</div></div>
 )}
