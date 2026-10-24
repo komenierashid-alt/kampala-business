@@ -95,6 +95,7 @@ const handleAuth = () => {
 }
 
 const handleFollow = (username) => {
+  if(username==='@katongole' && !isOwner){ setBlockedMsg('🔒 Confidential — Cannot follow private owner account'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2000); return }
   const newFollows = {...follows, [username]: follows[username]==='following' ? 'follow' : 'following'}
   setFollows(newFollows); localStorage.setItem('uptown_follows', JSON.stringify(newFollows))
 }
@@ -104,49 +105,49 @@ const handleFavorite = (id) => {
   setFavorites(newFav)
 }
 
-// BLUE TICK REQUEST - ANYONE CAN TAP IN INBOX
 const requestBlueTick = () => {
   if(!user) return
   if(blueBoard.find(r=>r.email===user.email && r.status==='pending')){
-    setBlockedMsg('Already requested! Waiting for Owner approval'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2500); return
+    setBlockedMsg('Already requested! Waiting for Owner'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2500); return
   }
   if(allUsers.find(u=>u.username===user.username && u.verified)){
     setBlockedMsg('You already have blue tick ✓'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2500); return
   }
   const req = {id:Date.now(), name: user.name, username: user.username, email: user.email, message:'Requesting blue tick verification', status:'pending'}
-  const newBoard = [...blueBoard, req]; saveBoard(newBoard)
+  saveBoard([...blueBoard, req])
   setBlockedMsg('Request sent to Uptown Board! Owner will approve'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2500)
 }
 
-// OWNER ACCEPTS - AUTO BLUE TICK + NOTIFICATION
 const acceptBlueTick = (id) => {
   const req = blueBoard.find(r=>r.id===id)
   if(!req) return
-  const updatedBoard = blueBoard.map(r=> r.id===id ? {...r, status:'accepted'} : r); saveBoard(updatedBoard)
+  saveBoard(blueBoard.map(r=> r.id===id ? {...r, status:'accepted'} : r))
   const updatedUsers = allUsers.map(u=> u.username===req.username ? {...u, verified:true} : u); setAllUsers(updatedUsers); localStorage.setItem('uptown_all_users', JSON.stringify(updatedUsers))
   const updatedDB = JSON.parse(localStorage.getItem('uptown_users_db') || '[]').map(u=> u.email===req.email ? {...u, verified:true} : u); localStorage.setItem('uptown_users_db', JSON.stringify(updatedDB))
-  const notif = {id:Date.now(), toEmail: req.email, text:`Congratulations ${req.name}! You're verified ✓ Blue tick added to your name`, type:'verified'}
-  saveNotifs([...notifications, notif])
+  saveNotifs([...notifications, {id:Date.now(), toEmail: req.email, text:`Congratulations ${req.name}! You're verified ✓ Blue tick added`, type:'verified'}])
   setChatUser(null)
-  setBlockedMsg(`Verified ${req.name} ✓ Notification sent`); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2500)
+  setBlockedMsg(`Verified ${req.name} ✓`); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2500)
 }
 
-// OWNER SENDS INVITE TO UNVERIFIED TO REQUEST BLUE TICK
 const sendInviteToUnverified = () => {
   const unverified = allUsers.filter(u=>!u.verified && !u.isOwner)
-  const newNotifs = unverified.map(u=>({id:Date.now()+Math.random(), toEmail: u.email || u.username, text:`UPTOWN: Hi ${u.name}, request for Blue Tick in Inbox → Notifications to get verified ✓`, type:'invite'}))
+  const newNotifs = unverified.map(u=>({id:Date.now()+Math.random(), toEmail: u.email || u.username, text:`UPTOWN: Hi ${u.name}, request for Blue Tick in Inbox`, type:'invite'}))
   saveNotifs([...notifications, ...newNotifs])
-  setBlockedMsg(`Invite sent to ${unverified.length} users to request blue tick`); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2500)
+  setBlockedMsg(`Invite sent to ${unverified.length} users`); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2500)
 }
 
+// 🔒 CONFIDENTIAL: ONLY KATONGOLE ACCOUNT PRIVATE
 const openProfile = (v) => {
-  if(v.isOwner && !isOwner){
-    setBlockedMsg("Katongole Rashid's page is private 🔒"); setShowBlocked(true); setTimeout(()=>setShowBlocked(false), 2500); return
+  if(v.username === '@katongole' || v.isOwner){
+    if(!isOwner){
+      setBlockedMsg("🔒 Confidential — Katongole Rashid's account is private. Cannot be viewed by public");
+      setShowBlocked(true); setTimeout(()=>setShowBlocked(false), 2500); return
+    }
   }
 }
 
 const handleShare = async (v) => {
-  if(!isOwner){ setBlockedMsg('Share locked — Owner only until launch'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2000); return }
+  if(!isOwner){ setBlockedMsg('Share locked — Owner only'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2000); return }
   if(navigator.share){ await navigator.share({title:'UPTOWN', text:`${v.user}: ${v.caption}`, url: location.href}).catch(()=>{}) }
 }
 
@@ -168,7 +169,7 @@ return(
 {authMode==='signup' && <><input value={authForm.name} onChange={e=>setAuthForm({...authForm, name:e.target.value})} placeholder="Your Name" style={{background:'#121212', border:'1px solid #222', borderRadius:'12px', padding:'14px', color:'#fff'}}/><input value={authForm.username} onChange={e=>setAuthForm({...authForm, username:e.target.value})} placeholder="Username" style={{background:'#121212', border:'1px solid #222', borderRadius:'12px', padding:'14px', color:'#fff'}}/></>}
 <input value={authForm.email} onChange={e=>setAuthForm({...authForm, email:e.target.value})} placeholder="Email" style={{background:'#121212', border:'1px solid #222', borderRadius:'12px', padding:'14px', color:'#fff'}}/>
 <input value={authForm.password} onChange={e=>setAuthForm({...authForm, password:e.target.value})} type="password" placeholder="Password" style={{background:'#121212', border:'1px solid #222', borderRadius:'12px', padding:'14px', color:'#fff'}}/>
-<button onClick={handleAuth} style={{background:'#fff', color:'#000', border:'none', padding:'14px', borderRadius:'12px', fontWeight:'700'}}>{authMode==='signup' ? 'Sign Up & See App' : 'Login'}</button>
+<button onClick={handleAuth} style={{background:'#fff', color:'#000', border:'none', padding:'14px', borderRadius:'12px', fontWeight:'700'}}>{authMode==='signup' ? 'Sign Up' : 'Login'}</button>
 </div>
 </div>
 )}
@@ -176,9 +177,8 @@ return(
 <div style={{display:'flex', padding:'12px 16px', gap:'20px', alignItems:'center', borderBottom:'1px solid #1a1a1a'}}>
 {['For You','Muzika','Following'].map(t=>{
   const key = t.toLowerCase().replace(' ',''); const active = (page==='foryou' && t==='For You') || page===key
-  return <button key={t} onClick={()=>setPage(key==='foryou'?'foryou':key)} style={{background:'none', border:'none', color: active?'#fff':'#717171', fontSize:'14px', fontWeight: active?'700':'500'}}>{t} {key==='muzika' && !isOwner ? '' : ''}</button>
+  return <button key={t} onClick={()=>setPage(key==='foryou'?'foryou':key)} style={{background:'none', border:'none', color: active?'#fff':'#717171', fontSize:'14px', fontWeight: active?'700':'500'}}>{t}</button>
 })}
-<button onClick={()=>{if(!isOwner){return} setPage('live')}} style={{marginLeft:'auto', background:'#1a1a1a', border:'1px solid #2a2a2a', color:'#fff', padding:'6px 12px', borderRadius:'20px', fontSize:'12px'}}>{!isOwner ? '🔒 Live' : '● Live'}</button>
 </div>
 
 <div style={{flex:1, position:'relative', overflow:'hidden', display:'flex', flexDirection:'column'}}>
@@ -190,7 +190,7 @@ return(
 <div style={{position:'absolute', inset:0, background:'linear-gradient(0deg, rgba(0,0,0,0.9) 0%, transparent 50%)', zIndex:1}}></div>
 <div style={{color:'#1a1a1a', fontSize:'70px'}}>▶</div>
 <div style={{position:'absolute', left:'16px', bottom:'20px', zIndex:2, maxWidth:'75%'}}>
-<div style={{display:'flex', alignItems:'center', gap:'8px'}}><span style={{fontWeight:'700', fontSize:'16px'}}>{v.user}</span><span style={{width:'20px', height:'20px', background:'#1D9BF0', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center'}}><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span></div>
+<div style={{display:'flex', alignItems:'center', gap:'8px'}}><span style={{fontWeight:'700', fontSize:'16px'}}>{v.user}</span><span style={{width:'20px', height:'20px', background:'#1D9BF0', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center'}}><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>{isOwner ? '' : v.isOwner ? <span style={{fontSize:'10px', background:'#111', padding:'2px 6px', borderRadius:'10px'}}>🔒 Private</span> : null}</div>
 <div style={{fontSize:'14px', color:'#fff', marginTop:'8px'}}>{v.caption}</div>
 </div>
 <div style={{position:'absolute', right:'12px', bottom:'90px', zIndex:2, display:'flex', flexDirection:'column', gap:'18px', alignItems:'center'}}>
@@ -205,7 +205,6 @@ return(
 <button style={{background:'none', border:'none', color: isOwner ? '#fff' : '#555', display:'flex', flexDirection:'column', alignItems:'center'}}><span style={{fontSize:'22px'}}>{isOwner ? '♡' : '🔒'}</span><span style={{fontSize:'10px'}}>{isOwner ? '12.4K' : '🔒'}</span></button>
 <button style={{background:'none', border:'none', color: isOwner ? '#fff' : '#555', display:'flex', flexDirection:'column', alignItems:'center'}}><span style={{fontSize:'18px'}}>{isOwner ? '🔥' : '🔒'}</span><span style={{fontSize:'10px'}}>{isOwner ? '340' : '🔒'}</span></button>
 <button onClick={(e)=>{e.stopPropagation(); handleShare(v)}} style={{background:'none', border:'none', color: isOwner ? '#fff' : '#555', display:'flex', flexDirection:'column', alignItems:'center'}}><span style={{fontSize:'18px'}}>{isOwner ? '↗' : '🔒'}</span><span style={{fontSize:'10px'}}>{isOwner ? 'Share' : '🔒'}</span></button>
-{/* FAVORITE AFTER SHARE - FOR EVERYONE */}
 <button onClick={(e)=>{e.stopPropagation(); handleFavorite(v.id)}} style={{background:'none', border:'none', color: favorites[v.id] ? '#FFD700' : '#fff', display:'flex', flexDirection:'column', alignItems:'center'}}><span style={{fontSize:'22px'}}>{favorites[v.id] ? '★' : '☆'}</span><span style={{fontSize:'10px'}}>{favorites[v.id] ? 'Saved' : 'Fav'}</span></button>
 </div>
 </div>
@@ -216,41 +215,44 @@ return(
 
 {page==='muzika' && (
 <div style={{flex:1, overflowY:'auto', padding:'16px'}}>
-<div style={{fontWeight:'700', fontSize:'18px', marginBottom:'4px'}}>Muzika {isOwner ? '— Owner Upload' : '— Watch Only'}</div>
-<div style={{fontSize:'12px', color:'#888', marginBottom:'16px'}}>{isOwner ? 'Only you (komenierashid@gmail.com) can post/upload here' : 'Only Katongole Rashid can post in Muzika. You can watch.'}</div>
-{isOwner && (
-<div style={{background:'#121212', border:'1px solid #00D632', borderRadius:'12px', padding:'12px', marginBottom:'16px'}}>
-<div style={{fontWeight:'700', fontSize:'13px', color:'#00D632'}}>Owner Muzika Upload</div>
-<button onClick={()=>setShowUpload(true)} style={{marginTop:'8px', background:'#FF0024', color:'#fff', border:'none', padding:'8px 16px', borderRadius:'20px', fontSize:'12px', fontWeight:'700'}}>+ Upload Muzika Video</button>
-</div>
-)}
-<div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
+<div style={{fontWeight:'700', fontSize:'18px'}}>Muzika {isOwner ? '— Owner Upload' : '— Watch Only'}</div>
+<div style={{fontSize:'12px', color:'#888', marginBottom:'16px'}}>{isOwner ? 'Only you can upload' : 'Only Katongole Rashid can post — You watch'}</div>
+{isOwner && <button onClick={()=>setShowUpload(true)} style={{background:'#FF0024', color:'#fff', border:'none', padding:'8px 16px', borderRadius:'20px', fontSize:'12px', marginBottom:'16px'}}>+ Upload Muzika</button>}
 {muzikaVideos.map(v=>(
-<div key={v.id} style={{background:'#121212', border:'1px solid #1e1e1e', borderRadius:'14px', padding:'14px'}}>
-<div style={{fontWeight:'600'}}>{v.user} {v.verified && <span style={{color:'#1D9BF0'}}>✓</span>}</div>
-<div style={{fontSize:'13px', color:'#ccc', marginTop:'6px'}}>{v.caption}</div>
-<div style={{marginTop:'10px', background:'#000', height:'160px', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center', color:'#333'}}>▶ Muzika Video</div>
+<div key={v.id} style={{background:'#121212', border:'1px solid #1e1e1e', borderRadius:'14px', padding:'14px', marginBottom:'10px'}}>
+<div style={{fontWeight:'600'}}>{v.user} ✓</div><div style={{fontSize:'13px', color:'#ccc', marginTop:'6px'}}>{v.caption}</div><div style={{marginTop:'10px', background:'#000', height:'140px', borderRadius:'10px', display:'flex', alignItems:'center', justifyContent:'center'}}>▶</div>
 </div>
 ))}
-</div>
 </div>
 )}
 
 {page==='following' && (
 <div style={{flex:1, overflowY:'auto', padding:'16px'}}>
-<div style={{fontWeight:'700', fontSize:'18px', marginBottom:'16px'}}>People who joined</div>
+<div style={{fontWeight:'700', fontSize:'18px', marginBottom:'16px'}}>People</div>
 <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
-{allUsers.map(u=>(
-<div key={u.id} style={{background:'#121212', border:'1px solid #1e1e1e', borderRadius:'14px', padding:'14px', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-<div style={{display:'flex', gap:'12px', alignItems:'center'}}>
-<div style={{width:'44px', height:'44px', borderRadius:'50%', background:'#222', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'700'}}>{u.name[0]}</div>
-<div><div style={{fontWeight:'600', fontSize:'14px', display:'flex', gap:'4px', alignItems:'center'}}>{u.name} {u.verified && <span style={{width:'14px', height:'14px', background:'#1D9BF0', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center'}}><svg width="8" height="8" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>}</div><div style={{fontSize:'11px', color:'#888'}}>{u.username}</div></div>
-</div>
-<button onClick={()=>handleFollow(u.username)} style={{background: follows[u.username]==='following' ? '#fff' : '#FF0024', color: follows[u.username]==='following' ? '#000' : '#fff', border:'none', padding:'8px 16px', borderRadius:'20px', fontSize:'12px', fontWeight:'700'}}>
-{follows[u.username]==='following' ? 'Following ✓' : 'Follow +'}
-</button>
-</div>
-))}
+{allUsers.map(u=>{
+  const isKatongole = u.username==='@katongole' || u.isOwner
+  if(isKatongole && !isOwner){
+    return (
+      <div key={u.id} style={{background:'#0a0a0a', border:'1px solid #222', borderRadius:'14px', padding:'14px', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+        <div style={{display:'flex', gap:'12px', alignItems:'center'}}>
+          <div style={{width:'44px', height:'44px', borderRadius:'50%', background:'#111', display:'flex', alignItems:'center', justifyContent:'center'}}>🔒</div>
+          <div><div style={{fontWeight:'600', fontSize:'14px'}}>Private Account 🔒</div><div style={{fontSize:'11px', color:'#555'}}>Confidential — Owner only</div></div>
+        </div>
+        <div style={{fontSize:'11px', color:'#555', background:'#1a1a1a', padding:'6px 12px', borderRadius:'20px'}}>🔒 Private</div>
+      </div>
+    )
+  }
+  return (
+    <div key={u.id} style={{background:'#121212', border:'1px solid #1e1e1e', borderRadius:'14px', padding:'14px', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+      <div style={{display:'flex', gap:'12px', alignItems:'center'}}>
+        <div style={{width:'44px', height:'44px', borderRadius:'50%', background:'#222', display:'flex', alignItems:'center', justifyContent:'center'}}>{u.name[0]}</div>
+        <div><div style={{fontWeight:'600', fontSize:'14px', display:'flex', gap:'4px', alignItems:'center'}}>{u.name} {u.verified && <span style={{width:'14px', height:'14px', background:'#1D9BF0', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center'}}><svg width="8" height="8" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>}</div><div style={{fontSize:'11px', color:'#888'}}>{u.username}</div></div>
+      </div>
+      <button onClick={()=>handleFollow(u.username)} style={{background: follows[u.username]==='following' ? '#fff' : '#FF0024', color: follows[u.username]==='following' ? '#000' : '#fff', border:'none', padding:'8px 16px', borderRadius:'20px', fontSize:'12px', fontWeight:'700'}}>{follows[u.username]==='following' ? 'Following ✓' : 'Follow +'}</button>
+    </div>
+  )
+})}
 </div>
 </div>
 )}
@@ -258,65 +260,50 @@ return(
 {page==='inbox' && (
 <div style={{flex:1, overflowY:'auto', padding:'16px'}}>
 <div style={{fontWeight:'700', marginBottom:'16px', textAlign:'center'}}>Inbox — Notifications</div>
-
-{/* NOTIFICATIONS FOR CURRENT USER */}
 {notifications.filter(n=> n.toEmail===user?.email || n.toEmail===user?.username).map(notif=>(
 <div key={notif.id} style={{background: notif.type==='verified' ? '#0a2a12' : '#121212', border: notif.type==='verified' ? '1px solid #00D632' : '1px solid #222', borderRadius:'14px', padding:'14px', marginBottom:'10px'}}>
 <div style={{fontSize:'13px', color: notif.type==='verified' ? '#00D632' : '#fff', fontWeight:'600'}}>{notif.text}</div>
 </div>
 ))}
-
 {isOwner ? (
 <div>
 <div style={{background:'#121212', border:'1px solid #1D9BF0', borderRadius:'14px', padding:'14px', marginBottom:'16px'}}>
-<div style={{fontWeight:'700', color:'#1D9BF0'}}>UPTOWN BOARD - Owner Only (komenierashid@gmail.com)</div>
-<div style={{fontSize:'11px', color:'#888', marginTop:'4px'}}>Only you can approve blue tick</div>
+<div style={{fontWeight:'700', color:'#1D9BF0'}}>UPTOWN BOARD — Owner Only</div>
 <div style={{marginTop:'12px', display:'flex', gap:'8px'}}>
-<button onClick={sendInviteToUnverified} style={{background:'#333', color:'#fff', border:'none', padding:'8px 12px', borderRadius:'20px', fontSize:'11px', fontWeight:'700'}}>📢 Send Invite to Request Blue Tick</button>
-<button onClick={()=>{const nv=!allowPosting; setAllowPosting(nv); localStorage.setItem('uptown_allow_posting', nv?'true':'false')}} style={{background: allowPosting ? '#00D632' : '#333', color: allowPosting?'#000':'#fff', border:'none', padding:'8px 12px', borderRadius:'20px', fontSize:'11px'}}>Posting: {allowPosting ? 'ON' : 'OFF'}</button>
+<button onClick={sendInviteToUnverified} style={{background:'#333', color:'#fff', border:'none', padding:'8px 12px', borderRadius:'20px', fontSize:'11px'}}>📢 Invite Unverified</button>
 </div>
 </div>
-{blueBoard.length===0 ? <div style={{textAlign:'center', color:'#666', marginTop:'20px'}}>No blue tick requests yet</div> : blueBoard.map(r=>(
+{blueBoard.length===0 ? <div style={{textAlign:'center', color:'#666'}}>No requests</div> : blueBoard.map(r=>(
 <div key={r.id} style={{background:'#121212', border:'1px solid #222', borderRadius:'14px', padding:'14px', marginBottom:'10px'}}>
-<div style={{display:'flex', gap:'10px'}}><div style={{width:'40px', height:'40px', borderRadius:'50%', background:'#222', display:'flex', alignItems:'center', justifyContent:'center'}}>{r.name[0]}</div><div><div style={{fontWeight:'600'}}>{r.name} {r.status==='accepted' && <span style={{color:'#00D632'}}>✓ Verified</span>}</div><div style={{fontSize:'11px', color:'#888'}}>{r.username} • {r.email}</div><div style={{fontSize:'12px', color:'#aaa', marginTop:'4px'}}>{r.message}</div></div></div>
+<div style={{display:'flex', gap:'10px'}}><div style={{width:'40px', height:'40px', borderRadius:'50%', background:'#222', display:'flex', alignItems:'center', justifyContent:'center'}}>{r.name[0]}</div><div><div style={{fontWeight:'600'}}>{r.name} {r.status==='accepted' && <span style={{color:'#00D632'}}>✓</span>}</div><div style={{fontSize:'11px', color:'#888'}}>{r.username}</div></div></div>
 <div style={{display:'flex', gap:'8px', marginTop:'12px'}}>
-<button onClick={()=>setChatUser(r)} style={{flex:1, background:'#1a1a1a', border:'1px solid #333', color:'#fff', padding:'8px', borderRadius:'10px', fontSize:'12px'}}>💬 Chat</button>
-{r.status==='pending' ? <button onClick={()=>acceptBlueTick(r.id)} style={{flex:1, background:'#1D9BF0', color:'#fff', border:'none', padding:'8px', borderRadius:'10px', fontSize:'12px', fontWeight:'700'}}>✓ Accept & Verify</button> : <div style={{flex:1, background:'#00D632', color:'#000', padding:'8px', borderRadius:'10px', textAlign:'center', fontSize:'12px', fontWeight:'700'}}>✓ Accepted — Blue Tick Added</div>}
+<button onClick={()=>setChatUser(r)} style={{flex:1, background:'#1a1a1a', border:'1px solid #333', color:'#fff', padding:'8px', borderRadius:'10px'}}>💬 Chat</button>
+{r.status==='pending' ? <button onClick={()=>acceptBlueTick(r.id)} style={{flex:1, background:'#1D9BF0', color:'#fff', border:'none', padding:'8px', borderRadius:'10px', fontWeight:'700'}}>✓ Accept</button> : <div style={{flex:1, background:'#00D632', color:'#000', padding:'8px', borderRadius:'10px', textAlign:'center', fontWeight:'700'}}>✓ Verified</div>}
 </div>
 </div>
 ))}
 </div>
 ) : (
-<div>
 <div style={{background:'#121212', border:'1px solid #1D9BF0', borderRadius:'14px', padding:'20px', textAlign:'center'}}>
-<div style={{fontSize:'24px'}}>🔔</div>
-<div style={{fontWeight:'700', marginTop:'8px'}}>Blue Tick Verification</div>
-<div style={{fontSize:'12px', color:'#888', marginTop:'6px'}}>Tap below to request blue tick<br/>Only Katongole Rashid can approve</div>
-<button onClick={requestBlueTick} style={{marginTop:'14px', background:'#1D9BF0', color:'#fff', border:'none', padding:'10px 20px', borderRadius:'20px', fontSize:'13px', fontWeight:'700'}}>✓ Request Blue Tick</button>
-</div>
-<div style={{marginTop:'16px', background:'#1a1a1a', padding:'12px', borderRadius:'12px', textAlign:'center', fontSize:'12px', color:'#666'}}>
-Your requests and verification notifications appear here
-</div>
+<div style={{fontWeight:'700'}}>Blue Tick Verification</div>
+<div style={{fontSize:'12px', color:'#888', marginTop:'6px'}}>Only Katongole Rashid approves</div>
+<button onClick={requestBlueTick} style={{marginTop:'14px', background:'#1D9BF0', color:'#fff', border:'none', padding:'10px 20px', borderRadius:'20px', fontWeight:'700'}}>✓ Request Blue Tick</button>
 </div>
 )}
 </div>
 )}
 
 {page==='you' && (
-<div style={{padding:'20px', overflowY:'auto', height:'100%'}}>
+<div style={{padding:'20px'}}>
 <div style={{display:'flex', gap:'16px', alignItems:'center'}}>
 <div style={{width:'72px', height:'72px', borderRadius:'50%', background:'#fff', color:'#000', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:'900'}}>UP</div>
-<div><div style={{fontWeight:'700', display:'flex', gap:'6px', alignItems:'center'}}>{user?.name || 'My Page'} {allUsers.find(u=>u.username===user?.username)?.verified && <span style={{width:'18px', height:'18px', background:'#1D9BF0', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center'}}><svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>} {isOwner && <span style={{background:'#00D632', color:'#000', fontSize:'10px', padding:'2px 8px', borderRadius:'10px'}}>OWNER</span>}</div><div style={{fontSize:'12px', color:'#888'}}>{user?.username} • {user?.email}</div></div>
-</div>
-<div style={{marginTop:'20px', display:'flex', flexDirection:'column', gap:'10px'}}>
-<button onClick={handleInstall} style={{background:'#fff', color:'#000', border:'none', padding:'14px', borderRadius:'12px', fontWeight:'700'}}>📲 Install UPTOWN App</button>
-<button onClick={()=>{localStorage.removeItem('uptown_user'); localStorage.removeItem('uptown_is_owner'); setShowAuth(true); setAuthMode('login')}} style={{background:'#1a1a1a', border:'1px solid #2a2a2a', color:'#fff', padding:'12px', borderRadius:'12px'}}>Switch / Login on other phone</button>
+<div><div style={{fontWeight:'700', display:'flex', gap:'6px', alignItems:'center'}}>{user?.name} {allUsers.find(u=>u.username===user?.username)?.verified && <span style={{width:'18px', height:'18px', background:'#1D9BF0', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center'}}><svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>} {isOwner && <span style={{background:'#00D632', color:'#000', fontSize:'10px', padding:'2px 8px', borderRadius:'10px'}}>OWNER</span>}</div><div style={{fontSize:'12px', color:'#888'}}>{user?.username}</div></div>
 </div>
 </div>
 )}
 
 {showBlocked && (
-<div style={{position:'fixed', top:'50%', left:'50%', transform:'translate(-50%, -50%)', background:'#1a1a1a', border:'1px solid #333', padding:'18px 22px', borderRadius:'14px', zIndex:80, textAlign:'center', maxWidth:'80%'}}>
+<div style={{position:'fixed', top:'50%', left:'50%', transform:'translate(-50%, -50%)', background:'#1a1a1a', border:'1px solid #333', padding:'18px 22px', borderRadius:'14px', zIndex:80, textAlign:'center', maxWidth:'85%'}}>
 <div style={{fontWeight:'700', fontSize:'14px'}}>{blockedMsg}</div>
 </div>
 )}
@@ -324,8 +311,8 @@ Your requests and verification notifications appear here
 {chatUser && (
 <div style={{position:'fixed', inset:0, background:'#000', zIndex:70, display:'flex', flexDirection:'column'}}>
 <div style={{padding:'14px', borderBottom:'1px solid #1a1a1a', display:'flex', gap:'12px', alignItems:'center'}}><button onClick={()=>setChatUser(null)} style={{background:'none', border:'none', color:'#fff', fontSize:'20px'}}>←</button><div style={{fontWeight:'600'}}>{chatUser.name}</div></div>
-<div style={{flex:1, padding:'16px'}}><div style={{background:'#1a1a1a', padding:'10px 14px', borderRadius:'14px', maxWidth:'80%', fontSize:'13px'}}>{chatUser.message}</div></div>
-{isOwner && <div style={{padding:'12px', borderTop:'1px solid #1a1a1a', display:'flex', gap:'8px'}}><button onClick={()=>acceptBlueTick(chatUser.id)} style={{flex:1, background:'#1D9BF0', color:'#fff', border:'none', padding:'12px', borderRadius:'20px', fontWeight:'700'}}>✓ Accept — Give Blue Tick + Send Congratulations</button></div>}
+<div style={{flex:1, padding:'16px'}}><div style={{background:'#1a1a1a', padding:'10px 14px', borderRadius:'14px', maxWidth:'80%'}}>{chatUser.message}</div></div>
+{isOwner && <div style={{padding:'12px'}}><button onClick={()=>acceptBlueTick(chatUser.id)} style={{width:'100%', background:'#1D9BF0', color:'#fff', border:'none', padding:'12px', borderRadius:'20px', fontWeight:'700'}}>✓ Accept & Verify</button></div>}
 </div>
 )}
 </div>
@@ -333,30 +320,16 @@ Your requests and verification notifications appear here
 {showUpload && (
 <div style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.8)', zIndex:50, display:'flex', alignItems:'flex-end'}} onClick={()=>setShowUpload(false)}>
 <div style={{background:'#121212', width:'100%', borderTopLeftRadius:'24px', borderTopRightRadius:'24px', padding:'30px 20px', textAlign:'center'}} onClick={e=>e.stopPropagation()}>
-{isOwner ? (
-<div>
-<div style={{fontSize:'18px', fontWeight:'700', color:'#00D632'}}>✓ Upload — Owner Only in Muzika</div>
-<div style={{fontSize:'13px', color:'#888', marginTop:'8px'}}>{page==='muzika' ? 'Uploading to Muzika (Only you can)' : 'You can post to For You'}</div>
-<div style={{marginTop:'16px'}}>
-<input placeholder="Write caption..." onChange={e=>{}} style={{background:'#1a1a1a', border:'1px solid #222', borderRadius:'10px', padding:'12px', width:'100%', color:'#fff'}}/>
-<button onClick={()=>{
-  const newV={id:Date.now(), user:'Katongole Rashid', username:'@katongole', verified:true, caption:'New Muzika Video 🔥', isOwner:true}
-  const newM=[newV, ...muzikaVideos]; saveMuzika(newM); setShowUpload(false); setPage('muzika')
-}} style={{marginTop:'12px', background:'#FF0024', color:'#fff', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:'700'}}>Post to {page==='muzika' ? 'Muzika' : 'For You'}</button>
-</div>
-</div>
-) : (
-<div><div style={{fontSize:'30px'}}>🔒</div><div style={{fontSize:'18px', fontWeight:'700', marginTop:'10px'}}>Posting Locked</div><div style={{fontSize:'13px', color:'#888', marginTop:'8px'}}>Only Katongole Rashid can upload in Muzika<br/>You can watch videos</div></div>
-)}
+{isOwner ? <div><div style={{fontWeight:'700', color:'#00D632'}}>✓ Owner Upload</div><button onClick={()=>{const newV={id:Date.now(), user:'Katongole Rashid', username:'@katongole', verified:true, caption:'New Muzika 🔥', isOwner:true}; saveMuzika([newV, ...muzikaVideos]); setShowUpload(false)}} style={{marginTop:'12px', background:'#FF0024', color:'#fff', border:'none', padding:'12px', borderRadius:'12px', width:'100%', fontWeight:'700'}}>Post to Muzika</button></div> : <div><div style={{fontSize:'30px'}}>🔒</div><div style={{fontWeight:'700', marginTop:'10px'}}>Only Owner Can Upload in Muzika</div></div>}
 </div>
 </div>
 )}
 
 <div style={{display:'flex', justifyContent:'space-around', padding:'10px 0', borderTop:'1px solid #1a1a1a', background:'#000'}}>
-<button onClick={()=>setPage('foryou')} style={{background:'none', border:'none', color: page==='foryou'?'#fff':'#666', fontSize:'10px', fontWeight:'600'}}>⌂<br/>Home</button>
+<button onClick={()=>setPage('foryou')} style={{background:'none', border:'none', color: page==='foryou'?'#fff':'#666', fontSize:'10px'}}>⌂<br/>Home</button>
 <button onClick={()=>setPage('muzika')} style={{background:'none', border:'none', color: page==='muzika'?'#fff':'#666', fontSize:'10px'}}>♫<br/>Muzika</button>
 <button onClick={()=>setShowUpload(true)} style={{background:'#FF0024', border:'none', width:'48px', height:'32px', borderRadius:'10px', color:'#fff', fontSize:'22px'}}>+</button>
-<button onClick={()=>setPage('inbox')} style={{background:'none', border:'none', color: page==='inbox'?'#fff':'#666', fontSize:'10px', position:'relative'}}>✉<br/>Inbox {blueBoard.filter(b=>b.status==='pending').length>0 && isOwner && <span style={{position:'absolute', top:'-4px', right:'0', background:'#FF0024', width:'14px', height:'14px', borderRadius:'50%', fontSize:'9px', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center'}}>{blueBoard.filter(b=>b.status==='pending').length}</span>}</button>
+<button onClick={()=>setPage('inbox')} style={{background:'none', border:'none', color: page==='inbox'?'#fff':'#666', fontSize:'10px', position:'relative'}}>✉<br/>Inbox {isOwner && blueBoard.filter(b=>b.status==='pending').length>0 && <span style={{position:'absolute', top:'-4px', right:'0', background:'#FF0024', width:'14px', height:'14px', borderRadius:'50%', fontSize:'9px', color:'#fff', display:'flex', alignItems:'center', justifyContent:'center'}}>{blueBoard.filter(b=>b.status==='pending').length}</span>}</button>
 <button onClick={()=>setPage('you')} style={{background:'none', border:'none', color: page==='you'?'#fff':'#666', fontSize:'10px'}}>○<br/>You</button>
 </div>
 </div>
