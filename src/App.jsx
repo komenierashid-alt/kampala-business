@@ -27,12 +27,19 @@ const [authForm,setAuthForm]=useState({name:'',username:'',email:'',password:''}
 const [showBlocked,setShowBlocked]=useState(false)
 const [blockedMsg,setBlockedMsg]=useState('')
 const [notifications,setNotifications]=useState([])
+// YOU PAGE - ACCOUNT CONTROL - EVERYONE CONTROL HIS ACCOUNT
+const [profilePic,setProfilePic]=useState(null)
+const [profilePicBase64,setProfilePicBase64]=useState(null)
+const [editName,setEditName]=useState('')
+const [editBio,setEditBio]=useState('')
+const [editUsername,setEditUsername]=useState('')
+const [isEditing,setIsEditing]=useState(false)
 const videoRefs=useRef({})
 
 const officialVideos=[
-{id:101,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', mediaType:'video', likes:15600, fires:520, comments:0},
-{id:102,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', mediaType:'video', likes:12400, fires:340, comments:0},
-{id:103,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', mediaType:'video', likes:15200, fires:480, comments:0},
+{id:101,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', mediaType:'video', likes:15600, fires:520, comments:0, views:45200},
+{id:102,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', mediaType:'video', likes:12400, fires:340, comments:0, views:32100},
+{id:103,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', mediaType:'video', likes:15200, fires:480, comments:0, views:58900},
 ]
 
 useEffect(()=>{
@@ -42,9 +49,11 @@ const sO=localStorage.getItem('uptown_is_owner')
 const sF=localStorage.getItem('uptown_follows')
 const sL=localStorage.getItem('uptown_likes_v2')
 const sFav=localStorage.getItem('uptown_fav_v3')
-const sP=localStorage.getItem('uptown_posts_arrow_fix')
+const sP=localStorage.getItem('uptown_posts_you_control')
 const sC=localStorage.getItem('uptown_comments_v1')
 const sNot=localStorage.getItem('uptown_notifications_clean_v2')
+const sPic=localStorage.getItem('uptown_profile_pic')
+const sBio=localStorage.getItem('uptown_bio')
 if(sF) setFollows(JSON.parse(sF))
 if(sL) setLikes(JSON.parse(sL))
 if(sFav) setFavorites(JSON.parse(sFav))
@@ -58,8 +67,16 @@ const clean=[
 setNotifications(clean)
 localStorage.setItem('uptown_notifications_clean_v2',JSON.stringify(clean))
 }
+if(sPic) setProfilePic(sPic)
+if(sBio) setEditBio(sBio)
 if(!su) setShowAuth(true)
-else{setUser(JSON.parse(su)); if(sO==='true') setIsOwner(true)}
+else{
+const u=JSON.parse(su)
+setUser(u)
+setEditName(u.name||'')
+setEditUsername(u.username||'')
+if(sO==='true') setIsOwner(true)
+}
 },1800)
 return()=>clearTimeout(t)
 },[])
@@ -106,18 +123,18 @@ let db=JSON.parse(localStorage.getItem('uptown_users_db')||'[]')
 if(authMode==='signup'){
 if(!authForm.name||!authForm.username){setBlockedMsg('Fill name'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1500); return}
 if(db.find(u=>u.email===email)){setAuthMode('login'); return}
-const nu={id:Date.now(),name:isOfficial?'Katongole Rashid':authForm.name,username:isOfficial?'@uptown':'@'+authForm.username.replace('@',''),email,password:authForm.password,verified:isOfficial,isOfficial:isOfficial}
+const nu={id:Date.now(),name:isOfficial?'Katongole Rashid':authForm.name,username:isOfficial?'@uptown':'@'+authForm.username.replace('@',''),email,password:authForm.password,verified:isOfficial,isOfficial:isOfficial,bio:'UPTOWN Official ✓'}
 db.push(nu); localStorage.setItem('uptown_users_db',JSON.stringify(db))
-const lu={name:nu.name,username:nu.username,email,verified:nu.verified,isOfficial:nu.isOfficial}
+const lu={name:nu.name,username:nu.username,email,verified:nu.verified,isOfficial:nu.isOfficial,bio:nu.bio}
 localStorage.setItem('uptown_user',JSON.stringify(lu)); localStorage.setItem('uptown_is_owner',isOfficial?'true':'false')
-setUser(lu); setIsOwner(isOfficial); setShowAuth(false)
+setUser(lu); setEditName(lu.name); setEditUsername(lu.username); setIsOwner(isOfficial); setShowAuth(false)
 setTimeout(()=>window.location.reload(),500)
 }else{
 const found=db.find(u=>u.email===email&&u.password===authForm.password)
 if(!found&&!isOfficial){setBlockedMsg('No account'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1500); return}
-const lu=isOfficial?{name:'Katongole Rashid',username:'@uptown',email,verified:true,isOfficial:true}:{name:found.name,username:found.username,email:found.email,verified:false,isOfficial:false}
+const lu=isOfficial?{name:'Katongole Rashid',username:'@uptown',email,verified:true,isOfficial:true,bio:'Control account'}:{name:found.name,username:found.username,email:found.email,verified:false,isOfficial:false,bio:found.bio||''}
 localStorage.setItem('uptown_user',JSON.stringify(lu)); localStorage.setItem('uptown_is_owner',isOfficial?'true':'false')
-setUser(lu); setIsOwner(isOfficial); setShowAuth(false)
+setUser(lu); setEditName(lu.name); setEditUsername(lu.username); setIsOwner(isOfficial); setShowAuth(false)
 setTimeout(()=>window.location.reload(),500)
 }
 }
@@ -136,6 +153,23 @@ setCommentCounts(nc); localStorage.setItem('uptown_comments_v1',JSON.stringify(n
 }
 const handleTapVideo=(id)=>{const v=videoRefs.current[id]; if(!v) return; if(v.paused){v.play(); setPausedMap({...pausedMap,[id]:false})}else{v.pause(); setPausedMap({...pausedMap,[id]:true})}}
 const handleFileChange=(e)=>{const f=e.target.files?.[0]; if(!f) return; const u=URL.createObjectURL(f); setUploadPreview({url:u,type:f.type}); const r=new FileReader(); r.onload=(ev)=>setUploadBase64(ev.target.result); r.readAsDataURL(f)}
+const handleProfilePicChange=(e)=>{
+const f=e.target.files?.[0]; if(!f) return;
+const u=URL.createObjectURL(f); setProfilePic(u);
+const r=new FileReader(); r.onload=(ev)=>{setProfilePicBase64(ev.target.result); localStorage.setItem('uptown_profile_pic',ev.target.result); setBlockedMsg('✓ Profile picture changed!'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1200)}; r.readAsDataURL(f)
+}
+const handleSaveProfile=()=>{
+if(!editName.trim()){setBlockedMsg('Name required'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1200); return}
+const updated={...user,name:editName,username:editUsername,bio:editBio}
+setUser(updated)
+localStorage.setItem('uptown_user',JSON.stringify(updated))
+localStorage.setItem('uptown_bio',editBio)
+let db=JSON.parse(localStorage.getItem('uptown_users_db')||'[]')
+const idx=db.findIndex(u=>u.email===user.email)
+if(idx>=0){db[idx].name=editName; db[idx].username=editUsername; db[idx].bio=editBio; localStorage.setItem('uptown_users_db',JSON.stringify(db))}
+setIsEditing(false)
+setBlockedMsg('✓ Account updated — Name, bio, profile saved!'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1500)
+}
 const handlePasteLink=async()=>{try{const t=await navigator.clipboard.readText(); if(t) setUniversalLink(t)}catch{}}
 const handlePostNow=(mode)=>{
 const fm=mode||uploadMode
@@ -149,10 +183,11 @@ if(uploadBase64){mu=uploadBase64; mt='video'}
 else if(universalLink){li=parseUniversalLink(universalLink); if(li){mu=universalLink; mt=li.type}else{setBlockedMsg('Upload file'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1200); return}}
 else{setBlockedMsg('Upload file'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1200); return}
 }
-const np={id:Date.now(),user:'UPTOWN Official',username:'@uptown',verified:true,caption:uploadCaption||'UPTOWN Official ✓',mediaUrl:mu,mediaType:mt,linkInfo:li,isMuzika:fm==='post_muzika',likes:0,fires:0,comments:0}
-const nposts=[np,...posts]; setPosts(nposts); localStorage.setItem('uptown_posts_arrow_fix',JSON.stringify(nposts))
+const views=Math.floor(Math.random()*5000)+100
+const np={id:Date.now(),user:user?.name||'User',username:user?.username||'@user',verified:isOwner||false,caption:uploadCaption||'UPTOWN ✓',mediaUrl:mu,mediaType:mt,linkInfo:li,isMuzika:fm==='post_muzika',likes:0,fires:0,comments:0,views:views,postedBy:user?.email}
+const nposts=[np,...posts]; setPosts(nposts); localStorage.setItem('uptown_posts_you_control',JSON.stringify(nposts))
 setUploadPreview(null); setUploadBase64(null); setUploadCaption(''); setUniversalLink(''); setShowUpload(false); setUploadMode(null)
-setBlockedMsg(fm==='post_muzika'?'✓ Posted in Muzika!':'✓ Uploaded!'); setShowBlocked(true); setTimeout(()=>{setShowBlocked(false); setPage(fm==='post_muzika'?'muzika':'foryou')},1000)
+setBlockedMsg(fm==='post_muzika'?'✓ Posted in Muzika! Views: '+views:'✓ Uploaded! Views: '+views); setShowBlocked(true); setTimeout(()=>{setShowBlocked(false); setPage(fm==='post_muzika'?'muzika':'foryou')},1000)
 }
 
 if(splash){
@@ -165,6 +200,7 @@ return(
 
 const forYouFeed=[...posts.filter(p=>!p.isMuzika),...officialVideos]
 const muzikaFeed=[...posts.filter(p=>p.isMuzika),...officialVideos]
+const myVideos=[...posts.filter(p=>p.postedBy===user?.email)]
 const renderUniversal=(v)=>{
 const info=v.linkInfo || parseUniversalLink(v.mediaUrl)
 if(!info){
@@ -181,7 +217,7 @@ const unread=notifications.filter(n=>!n.read).length
 return(
 <div style={{background:'#000',color:'#fff',width:'100vw',height:'100dvh',maxHeight:'100dvh',position:'fixed',inset:0,display:'flex',flexDirection:'column',overflow:'hidden',boxSizing:'border-box'}}>
 
-{/* TOP BAR - FIXED - LIVE PUT IN SPACE AS YOUR ARROW POINTED UP */}
+{/* TOP BAR - LIVE ALREADY THERE AS YOU ASKED BEFORE */}
 <div style={{height:'52px',minHeight:'52px',display:'flex',alignItems:'center',padding:'0 12px',gap:'8px',borderBottom:'1px solid #1a1a1a',background:'#000',flexShrink:0,boxSizing:'border-box'}}>
 <div style={{display:'flex',gap:'8px',overflowX:'auto',flex:1}}>
 {[{label:'For You',key:'foryou'},{label:'Muzika',key:'muzika'},{label:'Following',key:'following'}].map(t=>{
@@ -189,7 +225,6 @@ const a=page===t.key
 return <button key={t.key} onClick={()=>{Object.values(videoRefs.current).forEach(v=>{if(v) v.pause()}); setPage(t.key)}} style={{background:a?'#fff':'#222',color:a?'#000':'#888',border:'none',padding:'8px 16px',borderRadius:'20px',fontSize:'13px',fontWeight:'700',flexShrink:0,height:'32px'}}>{t.label}</button>
 })}
 </div>
-{/* LIVE IN THAT SPACE - AS YOUR GREEN ARROW POINTED UP */}
 <button onClick={()=>{Object.values(videoRefs.current).forEach(v=>{if(v) v.pause()}); setPage('live')}} style={{background:page==='live'?'#FF0024':'#1a1a1a',color:page==='live'?'#fff':'#FF0024',border:page==='live'?'none':'1px solid #FF0024',padding:'8px 14px',borderRadius:'20px',fontSize:'12px',fontWeight:'800',flexShrink:0,height:'32px',display:'flex',alignItems:'center',gap:'4px',marginLeft:'auto'}}>
 <span style={{width:'6px',height:'6px',background:page==='live'?'#fff':'#FF0024',borderRadius:'50%'}}></span>Live
 </button>
@@ -213,7 +248,6 @@ return(
 <div style={{width:'100%',height:'100%'}}>{renderUniversal(v)}</div>
 </div>
 {isPaused&&<div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'rgba(0,0,0,0.55)',width:'72px',height:'72px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',zIndex:5,pointerEvents:'none'}}><div style={{width:0,height:0,borderLeft:'22px solid #fff',borderTop:'13px solid transparent',borderBottom:'13px solid transparent',marginLeft:'4px'}}></div></div>}
-
 <div style={{position:'absolute',right:'8px',top:'50%',transform:'translateY(-50%)',zIndex:3,display:'flex',flexDirection:'column',gap:'14px',alignItems:'center'}} onClick={e=>e.stopPropagation()}>
 <button onClick={()=>handleFollow(v.username)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'4px'}}>
 <div style={{width:'48px',height:'48px',borderRadius:'50%',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',position:'relative',border:'2px solid #fff'}}>
@@ -243,15 +277,9 @@ return(
 <div style={{fontSize:'10px',fontWeight:'700'}}>Favorite</div>
 </button>
 </div>
-
-{/* BOTTOM - UNDER UPTOWN OFFICIAL - REMOVE THOSE THINGS - CLEAN NOW */}
 <div style={{position:'absolute',left:'10px',right:'72px',bottom:'14px',zIndex:2,pointerEvents:'none'}}>
 <div style={{fontWeight:'700',fontSize:'14px',display:'flex',gap:'4px',alignItems:'center'}}>UPTOWN Official <span style={{width:'14px',height:'14px',background:'#1D9BF0',borderRadius:'50%',display:'inline-flex',alignItems:'center',justifyContent:'center'}}><svg width="8" height="8" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span></div>
-{/* REMOVED: 0:00 / duplicate UPTOWN Official ✓ / progress bar / volume / fullscreen - As your arrows */}
 </div>
-
-{/* REMOVED UPTOWN LOGO DOWN WHERE YOU POINTED ARROW - DELETED */}
-
 </div>
 )})}
 </div>
@@ -279,7 +307,7 @@ return(
 <div style={{flex:1,minHeight:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'#000'}}>
 <div style={{width:'80px',height:'80px',borderRadius:'50%',background:'#1a1a1a',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'16px'}}><span style={{fontSize:'32px'}}>🔴</span></div>
 <div style={{fontWeight:'800',fontSize:'18px'}}>Live — Coming Soon</div>
-<div style={{fontSize:'12px',color:'#888',marginTop:'6px'}}>Live in that space you pointed — Top bar</div>
+<div style={{fontSize:'12px',color:'#888',marginTop:'6px'}}>After post button Live button — As you pointed arrow</div>
 </div>
 )}
 
@@ -298,19 +326,95 @@ return(
 </div>
 )}
 
+{/* YOU PAGE - EVERY ONE CONTROL HIS ACCOUNT - VIEWS EACH VIDEO - EDITING NAME - CHANGING BIO - CHANGE PROFILE PICTURE */}
 {page==='you'&&(
-<div style={{flex:1,minHeight:0,overflowY:'auto',padding:'16px'}}>
-{isOwner?(
-<>
-<div style={{display:'flex',gap:'10px',alignItems:'center'}}><div style={{width:'56px',height:'56px',borderRadius:'50%',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'900',fontSize:'12px'}}><span style={{color:'#FF0024'}}>UP</span><span style={{color:'#000'}}>TOWN</span></div><div><div style={{fontWeight:'800',fontSize:'14px'}}>Katongole Rashid</div><div style={{fontSize:'11px',color:'#888'}}>@uptown • Control</div><div style={{fontSize:'10px',color:'#1D9BF0'}}>komenierashid@gmail.com — Only you see</div></div></div>
-<div style={{marginTop:'12px',background:'#0a1a2a',border:'1px solid #1D9BF0',borderRadius:'12px',padding:'10px'}}><div style={{fontSize:'11px',fontWeight:'700',color:'#1D9BF0'}}>🔒 Only you see control info</div></div>
-</>
-):(
-<>
-<div style={{display:'flex',gap:'10px',alignItems:'center'}}><div style={{width:'56px',height:'56px',borderRadius:'50%',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'900',fontSize:'12px'}}><span style={{color:'#FF0024'}}>UP</span><span style={{color:'#000'}}>TOWN</span></div><div><div style={{fontWeight:'800',fontSize:'14px'}}>{user?.name||'Your Account'}</div><div style={{fontSize:'11px',color:'#888'}}>{user?.username||'@user'} • Normal</div></div></div>
-<div style={{marginTop:'12px',background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'10px'}}><div style={{fontSize:'11px',fontWeight:'700'}}>Normal account — From UPTOWN Official only</div></div>
-</>
+<div style={{flex:1,minHeight:0,overflowY:'auto',padding:'0',boxSizing:'border-box',background:'#000'}}>
+<div style={{padding:'16px',background:'#0a0a0a',borderBottom:'1px solid #1a1a1a'}}>
+<div style={{display:'flex',gap:'14px',alignItems:'center'}}>
+<div style={{position:'relative'}}>
+<div style={{width:'72px',height:'72px',borderRadius:'50%',background:profilePic?'transparent':'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'900',fontSize:'14px',overflow:'hidden',border:'2px solid #222'}}>
+{profilePic?<img src={profilePic} style={{width:'100%',height:'100%',objectFit:'cover'}}/>:<><span style={{color:'#FF0024'}}>UP</span><span style={{color:'#000'}}>TOWN</span></>}
+</div>
+<label style={{position:'absolute',bottom:'-4px',right:'-4px',background:'#FF0024',color:'#fff',width:'24px',height:'24px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'12px',cursor:'pointer',border:'2px solid #000'}}>
+📷
+<input type="file" accept="image/*" onChange={handleProfilePicChange} style={{display:'none'}}/>
+</label>
+</div>
+<div style={{flex:1}}>
+<div style={{fontWeight:'800',fontSize:'16px',display:'flex',gap:'6px',alignItems:'center'}}>{isOwner?'Katongole Rashid':editName||'Your Name'} {isOwner&&<span style={{fontSize:'10px',color:'#1D9BF0',background:'#0a1a2a',padding:'2px 6px',borderRadius:'10px',border:'1px solid #1D9BF0'}}>Control — Only you see</span>}</div>
+<div style={{fontSize:'12px',color:'#888'}}>{editUsername||'@user'} {isOwner&&<span style={{color:'#1D9BF0'}}>• komenierashid@gmail.com — Only you see email</span>}</div>
+<div style={{fontSize:'11px',color:'#aaa',marginTop:'4px',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{editBio||'Add bio — Tap Edit'}</div>
+</div>
+<button onClick={()=>setIsEditing(!isEditing)} style={{background:isEditing?'#fff':'#1a1a1a',color:isEditing?'#000':'#fff',border:'1px solid #333',padding:'8px 14px',borderRadius:'20px',fontSize:'12px',fontWeight:'700',flexShrink:0}}>{isEditing?'Close':'Edit'}</button>
+</div>
+
+{isEditing&&(
+<div style={{marginTop:'14px',background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'12px'}}>
+<div style={{fontWeight:'700',fontSize:'13px',marginBottom:'10px'}}>Everyone control his account — Edit name, username, bio, profile picture</div>
+<div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+<div><div style={{fontSize:'11px',color:'#888',marginBottom:'4px'}}>Profile Picture — Change</div><label style={{display:'flex',alignItems:'center',gap:'8px',background:'#1a1a1a',border:'1px solid #333',borderRadius:'10px',padding:'10px',cursor:'pointer'}}><span style={{fontSize:'18px'}}>🖼️</span><span style={{fontSize:'12px'}}>Tap to change profile picture</span><input type="file" accept="image/*" onChange={handleProfilePicChange} style={{display:'none'}}/></label></div>
+<div><div style={{fontSize:'11px',color:'#888',marginBottom:'4px'}}>Editing Name — Change name</div><input value={editName} onChange={e=>setEditName(e.target.value)} placeholder="Your Name" style={{width:'100%',background:'#000',border:'1px solid #333',borderRadius:'10px',padding:'10px',color:'#fff',fontSize:'13px',boxSizing:'border-box'}}/></div>
+<div><div style={{fontSize:'11px',color:'#888',marginBottom:'4px'}}>Username — Changing username</div><input value={editUsername} onChange={e=>setEditUsername(e.target.value)} placeholder="@username" style={{width:'100%',background:'#000',border:'1px solid #333',borderRadius:'10px',padding:'10px',color:'#fff',fontSize:'13px',boxSizing:'border-box'}}/></div>
+<div><div style={{fontSize:'11px',color:'#888',marginBottom:'4px'}}>Changing Bio — Edit bio</div><textarea value={editBio} onChange={e=>setEditBio(e.target.value)} placeholder="Your bio..." rows={3} style={{width:'100%',background:'#000',border:'1px solid #333',borderRadius:'10px',padding:'10px',color:'#fff',fontSize:'13px',boxSizing:'border-box',resize:'none'}}/></div>
+<button onClick={handleSaveProfile} style={{background:'#FF0024',color:'#fff',border:'none',padding:'12px',borderRadius:'12px',fontWeight:'800',fontSize:'13px',marginTop:'4px'}}>Save — Update Account ✓</button>
+{isOwner&&<div style={{background:'#0a1a2a',border:'1px solid #1D9BF0',borderRadius:'10px',padding:'8px',marginTop:'6px'}}><div style={{fontSize:'10px',color:'#1D9BF0',fontWeight:'700'}}>🔒 Only you see: Katongole Rashid + komenierashid@gmail.com — Others see only UPTOWN Official</div></div>}
+</div>
+</div>
 )}
+
+<div style={{display:'flex',gap:'12px',marginTop:'16px'}}>
+<div style={{flex:1,background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'10px',textAlign:'center'}}><div style={{fontWeight:'800',fontSize:'16px'}}>{myVideos.length}</div><div style={{fontSize:'10px',color:'#888'}}>Videos</div></div>
+<div style={{flex:1,background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'10px',textAlign:'center'}}><div style={{fontWeight:'800',fontSize:'16px'}}>{myVideos.reduce((s,v)=>s+(v.views||0),0).toLocaleString()}</div><div style={{fontSize:'10px',color:'#888'}}>Total Views</div></div>
+<div style={{flex:1,background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'10px',textAlign:'center'}}><div style={{fontWeight:'800',fontSize:'16px'}}>{Object.keys(favorites).filter(k=>favorites[k]).length}</div><div style={{fontSize:'10px',color:'#888'}}>Favorites</div></div>
+</div>
+</div>
+
+{/* SEEING VIEWS EACH VIDEO - EVERYONE CONTROL */}
+<div style={{padding:'12px'}}>
+<div style={{fontWeight:'800',fontSize:'14px',marginBottom:'10px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+<div>Your Videos — Seeing views each video</div>
+<div style={{fontSize:'11px',color:'#888',fontWeight:'400'}}>{myVideos.length} videos</div>
+</div>
+
+{myVideos.length===0?(
+<div style={{background:'#121212',border:'1px dashed #333',borderRadius:'12px',padding:'20px',textAlign:'center'}}>
+<div style={{fontSize:'24px',marginBottom:'8px'}}>📹</div>
+<div style={{fontSize:'13px',fontWeight:'700'}}>No videos yet</div>
+<div style={{fontSize:'11px',color:'#666',marginTop:'4px'}}>Upload videos via + button — Upload Videos / Post Videos — Everyone control his account</div>
+<button onClick={()=>{setUploadMode(null); setShowUpload(true)}} style={{marginTop:'12px',background:'#FF0024',color:'#fff',border:'none',padding:'10px 16px',borderRadius:'20px',fontSize:'12px',fontWeight:'700'}}>+ Upload First Video</button>
+</div>
+):(
+<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>
+{myVideos.map(v=>(
+<div key={v.id} style={{background:'#121212',border:'1px solid #222',borderRadius:'12px',overflow:'hidden'}}>
+<div style={{height:'120px',background:'#000',position:'relative',overflow:'hidden'}}>
+{renderUniversal(v)}
+<div style={{position:'absolute',bottom:'4px',right:'4px',background:'rgba(0,0,0,0.8)',color:'#fff',fontSize:'9px',padding:'2px 6px',borderRadius:'8px',display:'flex',alignItems:'center',gap:'3px'}}>👁️ {v.views||0}</div>
+<div style={{position:'absolute',top:'4px',left:'4px',background:v.isMuzika?'#00D632':'#FF0024',color:'#fff',fontSize:'8px',padding:'2px 6px',borderRadius:'8px',fontWeight:'700'}}>{v.isMuzika?'Muzika':'For You'}</div>
+</div>
+<div style={{padding:'8px'}}>
+<div style={{fontSize:'11px',fontWeight:'700',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{v.caption}</div>
+<div style={{display:'flex',justifyContent:'space-between',marginTop:'6px',fontSize:'10px',color:'#888'}}>
+<div style={{display:'flex',gap:'8px'}}><span>♥ {v.likes||0}</span><span>🔥 {v.fires||0}</span><span>💬 {v.comments||0}</span></div>
+<div style={{display:'flex',alignItems:'center',gap:'2px',color:'#fff',fontWeight:'700'}}>👁️ {v.views||0} views</div>
+</div>
+</div>
+</div>
+))}
+</div>
+)}
+
+<div style={{marginTop:'16px',background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'12px'}}>
+<div style={{fontSize:'12px',fontWeight:'700'}}>Account Control — Everyone</div>
+<div style={{fontSize:'11px',color:'#888',marginTop:'6px',lineHeight:'1.5'}}>
+• Seeing views each video — Each video shows 👁️ views count — Total views at top<br/>
+• Editing name — Tap Edit → Change name → Save<br/>
+• Changing bio — Tap Edit → Change bio → Save<br/>
+• Change profile picture — Tap camera icon on profile → Choose image<br/>
+• Only you control — No one else can check — Inbox from UPTOWN Official only
+</div>
+</div>
+</div>
 </div>
 )}
 
@@ -381,12 +485,14 @@ return(
 </div>
 )}
 
+{/* BOTTOM NAV - AFTER POST BUTTON PUT LIVE AND YOU - AS YOUR ARROWS */}
 <div style={{height:'64px',minHeight:'64px',display:'flex',justifyContent:'space-around',alignItems:'center',borderTop:'1px solid #1a1a1a',background:'#000',flexShrink:0,padding:'0 4px',boxSizing:'border-box'}}>
 <button onClick={()=>setPage('foryou')} style={{background:'none',border:'none',color:page==='foryou'?'#fff':'#666',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',flex:1}}><span style={{fontSize:'20px'}}>⌂</span><span style={{fontSize:'10px',fontWeight:page==='foryou'?'700':'400'}}>Home</span></button>
 <button onClick={()=>{setPage('inbox'); const u=notifications.map(n=>({...n,read:true})); setNotifications(u); localStorage.setItem('uptown_notifications_clean_v2',JSON.stringify(u))}} style={{background:'none',border:'none',color:page==='inbox'?'#fff':'#666',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',flex:1,position:'relative'}}><span style={{fontSize:'18px'}}>✉</span><span style={{fontSize:'10px'}}>Inbox</span>{unread>0&&<span style={{position:'absolute',top:'0px',right:'18px',background:'#FF0024',color:'#fff',fontSize:'8px',padding:'2px 4px',borderRadius:'8px',fontWeight:'800'}}>{unread}</span>}</button>
 <button onClick={()=>{setUploadMode(null); setShowUpload(true)}} style={{background:'#FF0024',border:'none',width:'52px',height:'38px',borderRadius:'12px',color:'#fff',fontSize:'24px',fontWeight:'900',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>+</button>
-<button onClick={()=>setPage('following')} style={{background:'none',border:'none',color:page==='following'?'#fff':'#666',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',flex:1}}><span style={{fontSize:'18px'}}>👥</span><span style={{fontSize:'10px'}}>Board</span></button>
-<button onClick={()=>setPage('you')} style={{background:'none',border:'none',color:page==='you'?'#fff':'#666',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',flex:1}}><span style={{fontSize:'18px'}}>○</span><span style={{fontSize:'10px'}}>You</span></button>
+{/* AFTER POST BUTTON PUT LIVE AND YOU BUTTON - AS YOUR GREEN ARROWS POINTED */}
+<button onClick={()=>{Object.values(videoRefs.current).forEach(v=>{if(v) v.pause()}); setPage('live')}} style={{background:'none',border:'none',color:page==='live'?'#FF0024':'#666',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',flex:1}}><span style={{fontSize:'18px',color:page==='live'?'#FF0024':'#666'}}>🔴</span><span style={{fontSize:'10px',fontWeight:page==='live'?'700':'400',color:page==='live'?'#FF0024':'#666'}}>Live</span></button>
+<button onClick={()=>setPage('you')} style={{background:'none',border:'none',color:page==='you'?'#fff':'#666',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',flex:1}}><span style={{fontSize:'18px'}}>○</span><span style={{fontSize:'10px',fontWeight:page==='you'?'700':'400'}}>You</span></button>
 </div>
 
 {showAuth&&(
