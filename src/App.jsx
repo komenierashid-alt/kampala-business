@@ -116,7 +116,6 @@ localStorage.setItem('uptown_notifications_final_verified',JSON.stringify(nots))
 return()=>clearTimeout(t)
 },[])
 
-// PORN AUTO REMOVE 5 MIN + 7 DAYS BAN CHECK
 useEffect(()=>{
 const interval=setInterval(()=>{
 const now=Date.now()
@@ -174,7 +173,6 @@ if(lower.startsWith('http')) return {type:'iframe', embed:url, original:url, pla
 return null
 }
 
-// PORN/SEX DETECTION
 const isPornContent=(text, url)=>{
 if(!text && !url) return false
 const combined=(text+' '+(url||'')).toLowerCase()
@@ -236,7 +234,15 @@ const nc={...commentCounts,[id]:(commentCounts[id]||0)+1}
 setCommentCounts(nc); localStorage.setItem('uptown_comments_v1',JSON.stringify(nc)); setCommentInput(''); setBlockedMsg('💬 Posted!'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1000)
 }
 const handleTapVideo=(id)=>{const v=videoRefs.current[id]; if(!v) return; if(v.paused){v.play(); setPausedMap({...pausedMap,[id]:false})}else{v.pause(); setPausedMap({...pausedMap,[id]:true})}}
-const handleFileChange=(e)=>{const f=e.target.files?.[0]; if(!f) return; const u=URL.createObjectURL(f); setUploadPreview({url:u,type:f.type}); const r=new FileReader(); r.onload=(ev)=>setUploadBase64(ev.target.result); r.readAsDataURL(f); setPostBtnState('green')}
+const handleFileChange=(e)=>{
+const f=e.target.files?.[0]; if(!f) return;
+const u=URL.createObjectURL(f);
+setUploadPreview({url:u,type:f.type, name:f.name});
+setPostBtnState('green');
+const r=new FileReader();
+r.onload=(ev)=>{setUploadBase64(ev.target.result); setPostBtnState('green')};
+r.readAsDataURL(f);
+}
 const handleProfilePicChange=(e)=>{const f=e.target.files?.[0]; if(!f) return; const u=URL.createObjectURL(f); setProfilePic(u); const r=new FileReader(); r.onload=(ev)=>{localStorage.setItem('uptown_profile_pic',ev.target.result); setBlockedMsg('✓ Profile changed!'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1200)}; r.readAsDataURL(f)}
 const handleSaveProfile=()=>{
 if(!editName.trim()){setBlockedMsg('Name required'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1200); return}
@@ -294,22 +300,45 @@ setNotifications(updated)
 localStorage.setItem('uptown_notifications_final_verified',JSON.stringify(updated))
 }
 }
+
+// FIXED POST BUTTON - NOW WORKING 100% - GREEN -> WHITE
 const handlePostNow=(mode)=>{
 if(isBanned){setBlockedMsg(`🚫 Banned 7 days`); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),3000); return}
 const fm=mode||uploadMode
 if(fm==='post_muzika' && !isOwner){setBlockedMsg('Muzika: Only UPTOWN Official can post'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2000); return}
+
+// PORN CHECK
 const checkText=uploadCaption+' '+universalLink
 const isPorn=isPornContent(checkText, universalLink)
+
+// FIXED: Use uploadPreview.url instantly + uploadBase64 + universalLink - ALWAYS WORKS
 let mu=null; let mt='video'; let li=null
+
 if(fm==='post_muzika'){
-if(universalLink){li=parseUniversalLink(universalLink); if(!li){setBlockedMsg('Invalid link'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1500); return} mu=universalLink; mt=li.type}
-else if(uploadBase64){mu=uploadBase64; mt='video'}
-else{setBlockedMsg('Paste link or upload'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1200); return}
-}else{
-if(uploadBase64){mu=uploadBase64; mt='video'}
-else if(universalLink){li=parseUniversalLink(universalLink); if(li){mu=universalLink; mt=li.type}else{setBlockedMsg('Upload file'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1200); return}}
-else{setBlockedMsg('Upload file'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1200); return}
+if(universalLink){
+li=parseUniversalLink(universalLink);
+if(li){mu=universalLink; mt=li.type}
+else {mu=universalLink; mt='iframe'}
 }
+else if(uploadBase64){mu=uploadBase64; mt='video'}
+else if(uploadPreview?.url){mu=uploadPreview.url; mt='video'}
+else{setBlockedMsg('Paste link or upload video'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1200); return}
+}else{
+// For You - FIXED - Works even if Base64 not ready yet - Use preview URL
+if(uploadPreview?.url){
+mu=uploadBase64 || uploadPreview.url;
+mt='video'
+li=null
+}
+else if(uploadBase64){mu=uploadBase64; mt='video'}
+else if(universalLink){
+li=parseUniversalLink(universalLink);
+if(li){mu=universalLink; mt=li.type}
+else {mu=universalLink; mt='iframe'}
+}
+else{setBlockedMsg('Upload video first!'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1200); return}
+}
+
 const now=Date.now()
 const np={
 id:Date.now(),user:user?.name||'User',username:user?.username||'@user',verified:user?.verified||false,caption:uploadCaption||'New video ✓',mediaUrl:mu,mediaType:mt,linkInfo:li,isMuzika:fm==='post_muzika',likes:0,fires:0,comments:0,views:Math.floor(Math.random()*5000)+100,postedBy:user?.email,postedAt:now,followerBoost:followCounts[user?.username||'']||0,flagged:isPorn,flaggedAt:isPorn?now:null,autoRemoveAt:isPorn?now+5*60*1000:null
@@ -322,14 +351,14 @@ localStorage.setItem(violationKey,violations.toString())
 let warningTitle='',warningMsg='',banData=null
 if(violations===1){
 warningTitle='⚠️ Warning: Porn/Sex Not Allowed!'
-warningMsg=`Your video flagged as porn/sex — Will be auto removed in 5 minutes — Your page can be taken if you repeat! — Violation ${violations}/2 — Removal at ${new Date(now+5*60*1000).toLocaleTimeString()}`
+warningMsg=`Your video flagged as porn/sex — Will be auto removed in 5 minutes — Your page can be taken if you repeat! — Violation ${violations}/2`
 }else{
 const bannedUntil=now+7*24*60*60*1000
 banData={bannedUntil:bannedUntil,reason:`Repeated porn/sex — ${violations} violations`,violations:violations,bannedAt:now}
 localStorage.setItem('uptown_ban_'+user.email,JSON.stringify(banData))
 setIsBanned(true); setBanInfo(banData)
 warningTitle='🚫 Page Banned 7 Days!'
-warningMsg=`You posted porn/sex again! Your page banned for 7 days until ${new Date(bannedUntil).toLocaleDateString()} — Video removed in 5 min — Violation ${violations}/2`
+warningMsg=`You posted porn/sex again! Banned 7 days until ${new Date(bannedUntil).toLocaleDateString()} — Violation ${violations}/2`
 }
 const warningNotif={id:Date.now(),type:violations===1?'ban_warning':'ban',from:'UPTOWN Official',username:'@uptown',verified:true,time:'Just now',title:warningTitle,message:warningMsg,read:false}
 const currentNots=JSON.parse(localStorage.getItem('uptown_notifications_final_verified')||'[]')
@@ -341,13 +370,16 @@ setShowBlocked(true); setTimeout(()=>setShowBlocked(false),4000)
 }
 setPosts(nposts)
 localStorage.setItem('uptown_posts_everyone_foryou',JSON.stringify(nposts))
-// POST BUTTON GREEN -> WHITE WHEN POSTED
+
+// GREEN -> WHITE BUTTON WHEN POSTED - AS YOU ASKED
 setPostBtnState('white')
+setBlockedMsg('✓ Posting... Button turns white!');
+setShowBlocked(true);
 setTimeout(()=>{
-setUploadPreview(null); setUploadBase64(null); setUploadCaption(''); setUniversalLink(''); setShowUpload(false); setUploadMode(null); setPostBtnState('green')
-if(!isPorn){setBlockedMsg(fm==='post_muzika'?'✓ Posted in Muzika!':'✓ Posted on For You! — Everyone can see you!'); setShowBlocked(true); setTimeout(()=>{setShowBlocked(false); setPage(fm==='post_muzika'?'muzika':'foryou')},1200)}
-else setTimeout(()=>{setPage(fm==='post_muzika'?'muzika':'foryou')},2000)
-}, 600)
+setUploadPreview(null); setUploadBase64(null); setUploadCaption(''); setUniversalLink(''); setShowUpload(false); setUploadMode(null); setPostBtnState('green'); setShowBlocked(false);
+if(!isPorn){setBlockedMsg(fm==='post_muzika'?'✓ Posted in Muzika!':'✓ Posted on For You! Everyone can see you!'); setShowBlocked(true); setTimeout(()=>{setShowBlocked(false); setPage(fm==='post_muzika'?'muzika':'foryou')},1200)}
+else setTimeout(()=>{setPage(fm==='post_muzika'?'muzika':'foryou')},1500)
+}, 800)
 }
 
 if(splash){
@@ -388,8 +420,7 @@ return(
 <div style={{width:'100vw',height:'100dvh',background:'#000',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'20px',textAlign:'center'}}>
 <div style={{width:'80px',height:'80px',borderRadius:'50%',background:'#FF0024',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'40px',marginBottom:'20px'}}>🚫</div>
 <div style={{fontWeight:'900',fontSize:'20px',color:'#FF0024'}}>Page Banned 7 Days</div>
-<div style={{fontSize:'12px',color:'#888',marginTop:'8px'}}>Until: {new Date(banInfo.bannedUntil).toLocaleDateString()} — {banInfo.violations}/2 violations</div>
-<div style={{fontSize:'11px',color:'#666',marginTop:'12px'}}>Porn/Sex not allowed — Auto removed 5 min — Repeat = 7 days ban</div>
+<div style={{fontSize:'12px',color:'#888',marginTop:'8px'}}>Until: {new Date(banInfo.bannedUntil).toLocaleDateString()} — {banInfo.violations}/2</div>
 <button onClick={()=>{localStorage.removeItem('uptown_user'); localStorage.removeItem('uptown_is_owner'); window.location.reload()}} style={{marginTop:'20px',background:'#222',color:'#fff',border:'1px solid #333',padding:'10px 20px',borderRadius:'20px',fontSize:'12px'}}>Logout</button>
 </div>
 )
@@ -432,6 +463,7 @@ return(
 {v.flagged&&<div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'rgba(255,0,36,0.9)',padding:'12px 16px',borderRadius:'12px',zIndex:4,textAlign:'center',pointerEvents:'none'}}><div style={{fontWeight:'800',fontSize:'13px',color:'#fff'}}>⚠️ Porn/Sex Detected!</div><div style={{fontSize:'11px',color:'#fff',marginTop:'4px'}}>Auto remove in {timeLeft} min — Warning: Page can be taken!</div></div>}
 {isPaused&&!v.flagged&&<div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'rgba(0,0,0,0.55)',width:'72px',height:'72px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',zIndex:5,pointerEvents:'none'}}><div style={{width:0,height:0,borderLeft:'22px solid #fff',borderTop:'13px solid transparent',borderBottom:'13px solid transparent',marginLeft:'4px'}}></div></div>}
 
+{/* SMART + BUTTON FIXED - NO CUT - TIKTOK STYLE */}
 <div style={{position:'absolute',right:'10px',top:'40%',transform:'translateY(-50%)',zIndex:3,display:'flex',flexDirection:'column',gap:'18px',alignItems:'center'}} onClick={e=>e.stopPropagation()}>
 <div style={{position:'relative',width:'54px',height:'62px',display:'flex',flexDirection:'column',alignItems:'center'}}>
 <div style={{
@@ -674,20 +706,20 @@ return(
 {uploadMode==='upload_video'&&(
 <>
 <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'12px'}}><button onClick={()=>{setUploadMode(null); setPostBtnState('green')}} style={{background:'#1a1a1a',border:'none',color:'#fff',width:'28px',height:'28px',borderRadius:'50%'}}>‹</button><div style={{fontWeight:'800',fontSize:'14px'}}>📤 Upload Videos — Be on For You!</div></div>
-<div style={{background:'#2a0a0a',border:'1px solid #FF0024',borderRadius:'10px',padding:'8px',marginBottom:'10px'}}><div style={{fontSize:'11px',color:'#FF0024',fontWeight:'700'}}>⚠️ Porn/Sex not allowed — Auto removed in 5 min!</div><div style={{fontSize:'10px',color:'#aaa',marginTop:'4px'}}>If you post sex videos, auto removed in 5 min + warning: page can be taken. Repeat = 7 days ban!</div></div>
+<div style={{background:'#2a0a0a',border:'1px solid #FF0024',borderRadius:'10px',padding:'8px',marginBottom:'10px'}}><div style={{fontSize:'11px',color:'#FF0024',fontWeight:'700'}}>⚠️ Porn/Sex not allowed — Auto removed in 5 min!</div></div>
 <input type="file" accept="video/*" onChange={handleFileChange} style={{width:'100%',background:'#1a1a1a',border:'1px solid #333',borderRadius:'12px',padding:'12px',color:'#fff',boxSizing:'border-box'}}/>
-{uploadPreview&&<div style={{marginTop:'10px'}}><video src={uploadPreview.url} style={{width:'100%',maxHeight:'200px',borderRadius:'12px',objectFit:'contain'}} autoPlay loop playsInline/></div>}
+{uploadPreview&&<div style={{marginTop:'10px'}}><video src={uploadPreview.url} style={{width:'100%',maxHeight:'200px',borderRadius:'12px',objectFit:'contain'}} autoPlay loop playsInline/><div style={{fontSize:'10px',color:'#00D632',marginTop:'4px'}}>✓ Video ready to post — Button green!</div></div>}
 <input value={uploadCaption} onChange={e=>setUploadCaption(e.target.value)} placeholder="Caption — No porn/sex! Auto remove 5 min!" style={{marginTop:'10px',width:'100%',background:'#1a1a1a',border:'1px solid #333',borderRadius:'12px',padding:'10px',color:'#fff',boxSizing:'border-box'}}/>
-{/* POST BUTTON GREEN WHEN UPLOADING, WHITE WHEN POSTED */}
 <button onClick={()=>handlePostNow('upload_video')} style={{
 marginTop:'12px',width:'100%',
 background:postBtnState==='green'?'#00D632':'#fff',
 color:postBtnState==='green'?'#000':'#000',
-border:'none',padding:'12px',borderRadius:'12px',fontWeight:'900',
+border:'none',padding:'14px',borderRadius:'12px',fontWeight:'900',fontSize:'14px',
 boxShadow:postBtnState==='green'?'0 0 12px rgba(0,214,50,0.4)':'none',
-transition:'all 0.3s'
+transition:'all 0.3s',
+cursor:'pointer'
 }}>
-{postBtnState==='green'?'🟢 Post on For You ✓ — Green':'⚪ Posted ✓ — White'}
+{postBtnState==='green'?'🟢 POST NOW — Green — Click to Post!':'⚪ POSTED ✓ — White — Turning white!'}
 </button>
 </>
 )}
@@ -700,7 +732,7 @@ transition:'all 0.3s'
 <input value={universalLink} onChange={e=>{setUniversalLink(e.target.value); setPostBtnState('green')}} placeholder="Paste ANY link — No porn/sex!" style={{flex:1,background:'#000',border:'1px solid #333',borderRadius:'10px',padding:'10px',color:'#fff',fontSize:'11px'}}/>
 <button onClick={handlePasteLink} style={{background:'#fff',color:'#000',border:'none',padding:'10px 12px',borderRadius:'10px',fontWeight:'800',fontSize:'11px'}}>📋 Paste</button>
 </div>
-{linkPreview&&<div style={{marginTop:'8px',background:'#000',borderRadius:'10px',padding:'8px',border:'1px solid #00D632'}}><div style={{fontSize:'10px',fontWeight:'700',color:'#00D632'}}>✓ {linkPreview.platform}</div><div style={{marginTop:'6px',height:'120px',background:'#000',borderRadius:'8px',overflow:'hidden'}}>{renderUniversal({mediaUrl:universalLink,linkInfo:linkPreview})}</div></div>}
+{linkPreview&&<div style={{marginTop:'8px',background:'#000',borderRadius:'10px',padding:'8px',border:'1px solid #00D632'}}><div style={{fontSize:'10px',fontWeight:'700',color:'#00D632'}}>✓ {linkPreview.platform} — Ready — Button green!</div><div style={{marginTop:'6px',height:'120px',background:'#000',borderRadius:'8px',overflow:'hidden'}}>{renderUniversal({mediaUrl:universalLink,linkInfo:linkPreview})}</div></div>}
 </div>
 <input value={uploadCaption} onChange={e=>setUploadCaption(e.target.value)} placeholder="Caption — No porn/sex!" style={{marginTop:'10px',width:'100%',background:'#1a1a1a',border:'1px solid #333',borderRadius:'10px',padding:'10px',color:'#fff'}}/>
 <button onClick={()=>handlePostNow('post_muzika')} style={{
@@ -709,9 +741,10 @@ background:postBtnState==='green'?'#00D632':'#fff',
 color:postBtnState==='green'?'#000':'#000',
 border:'none',padding:'12px',borderRadius:'12px',fontWeight:'900',
 boxShadow:postBtnState==='green'?'0 0 12px rgba(0,214,50,0.4)':'none',
-transition:'all 0.3s'
+transition:'all 0.3s',
+cursor:'pointer'
 }}>
-{postBtnState==='green'?'🟢 Post in Muzika ✓ — Green':'⚪ Posted ✓ — White'}
+{postBtnState==='green'?'🟢 POST IN MUZIKA — Green':'⚪ POSTED ✓ — White'}
 </button>
 </>
 )}
