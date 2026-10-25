@@ -52,7 +52,7 @@ const sF=localStorage.getItem('uptown_follows')
 const sFC=localStorage.getItem('uptown_follow_counts')
 const sL=localStorage.getItem('uptown_likes_v2')
 const sFav=localStorage.getItem('uptown_fav_v3')
-const sP=localStorage.getItem('uptown_posts_ban_system')
+const sP=localStorage.getItem('uptown_posts_plus_fixed')
 const sC=localStorage.getItem('uptown_comments_v1')
 const sNot=localStorage.getItem('uptown_notifications_ban_system')
 const sReq=localStorage.getItem('uptown_verification_requests')
@@ -69,11 +69,7 @@ if(sPic) setProfilePic(sPic)
 if(sBio) setEditBio(sBio)
 let nots=[]
 if(sNot) nots=JSON.parse(sNot)
-else{
-nots=[
-{id:1,type:'general',from:'UPTOWN Official',username:'@uptown',verified:true,time:'2m ago',title:'Welcome ✓',message:'Welcome to UPTOWN ✓ Porn/Sex videos not allowed!',read:false},
-]
-}
+else nots=[{id:1,type:'general',from:'UPTOWN Official',username:'@uptown',verified:true,time:'2m ago',title:'Welcome ✓',message:'Welcome to UPTOWN ✓',read:false}]
 if(!su) setShowAuth(true)
 else{
 const u=JSON.parse(su)
@@ -81,28 +77,11 @@ setUser(u)
 setEditName(u.name||'')
 setEditUsername(u.username||'')
 if(sO==='true') setIsOwner(true)
-// CHECK IF BANNED 7 DAYS
 const banKey='uptown_ban_'+u.email
 const banData=localStorage.getItem(banKey)
 if(banData){
 const ban=JSON.parse(banData)
-if(ban.bannedUntil>Date.now()){
-setIsBanned(true)
-setBanInfo(ban)
-const banNotif={
-id:Date.now(),
-type:'ban',
-from:'UPTOWN Official',
-username:'@uptown',
-verified:true,
-time:'Now',
-title:'🚫 Page Banned 7 Days',
-message:`Your page banned for 7 days — Reason: Repeated porn/sex videos — Until ${new Date(ban.bannedUntil).toLocaleDateString()} — ${ban.reason}`,
-read:false
-}
-nots=[banNotif,...nots]
-}else{
-localStorage.removeItem(banKey)
+if(ban.bannedUntil>Date.now()){setIsBanned(true); setBanInfo(ban)}
 }
 const today=new Date().getDate()
 const isVerificationDay=today===10 || today===26 || true
@@ -112,18 +91,7 @@ const lastOfferKey=localStorage.getItem('uptown_last_verify_offer_'+u.email+'_'+
 if(isVerificationDay && isNotVerified && !lastOfferKey){
 const alreadyHasOffer=nots.some(n=>n.type==='verification_offer' && !n.read)
 if(!alreadyHasOffer){
-const offerNotif={
-id:Date.now(),
-type:'verification_offer',
-from:'UPTOWN Official',
-username:'@uptown',
-verified:true,
-time:'Just now',
-title:'Get Verified ✓ — Blue Tick?',
-message:'UPTOWN Official is asking if you want to be verified with blue tick ✓ — Tap here to request!',
-read:false,
-}
-nots=[offerNotif,...nots]
+nots=[{id:Date.now(),type:'verification_offer',from:'UPTOWN Official',username:'@uptown',verified:true,time:'Just now',title:'Get Verified ✓ — Blue Tick?',message:'UPTOWN Official is asking if you want blue tick ✓ — Tap to request!',read:false},...nots]
 localStorage.setItem('uptown_last_verify_offer_'+u.email+'_'+monthKey+'_'+today,'sent')
 }
 }
@@ -144,53 +112,26 @@ localStorage.setItem('uptown_notifications_ban_system',JSON.stringify(nots))
 return()=>clearTimeout(t)
 },[])
 
-// AUTO REMOVE SEX/PORN VIDEOS IN 5 MINUTES + WARNING + 7 DAYS BAN CHECK
 useEffect(()=>{
 const interval=setInterval(()=>{
 const now=Date.now()
 let updated=false
 let newPosts=posts.filter(p=>{
-if(p.flagged && p.autoRemoveAt && now>=p.autoRemoveAt){
-updated=true
-return false // Remove
-}
+if(p.flagged && p.autoRemoveAt && now>=p.autoRemoveAt){updated=true; return false}
 return true
 })
-if(updated){
-setPosts(newPosts)
-localStorage.setItem('uptown_posts_ban_system',JSON.stringify(newPosts))
-}
-
-// Check bans expired
+if(updated){setPosts(newPosts); localStorage.setItem('uptown_posts_plus_fixed',JSON.stringify(newPosts))}
 if(user){
 const banKey='uptown_ban_'+user.email
 const banData=localStorage.getItem(banKey)
 if(banData){
 const ban=JSON.parse(banData)
-if(now>=ban.bannedUntil){
-localStorage.removeItem(banKey)
-setIsBanned(false)
-setBanInfo(null)
-const unbanNotif={
-id:Date.now(),
-type:'general',
-from:'UPTOWN Official',
-username:'@uptown',
-verified:true,
-time:'Just now',
-title:'✓ Page Unbanned',
-message:'Your page unbanned after 7 days — Please follow rules — No porn/sex videos!',
-read:false
-}
-const newNots=[unbanNotif,...notifications]
-setNotifications(newNots)
-localStorage.setItem('uptown_notifications_ban_system',JSON.stringify(newNots))
+if(now>=ban.bannedUntil){localStorage.removeItem(banKey); setIsBanned(false); setBanInfo(null)}
 }
 }
-}
-}, 10000) // Check every 10 seconds for demo - in production 60 seconds
+}, 10000)
 return()=>clearInterval(interval)
-},[posts, user, notifications])
+},[posts, user])
 
 useEffect(()=>{
 if(page!=='foryou' && page!=='muzika' && page!=='live') return
@@ -217,23 +158,16 @@ const lower=url.toLowerCase()
 const ytReg=/(?:youtube\.com\/(?:.*v=|.*\/|.*embed\/|.*shorts\/)|youtu\.be\/)([^"&?\/\s]{11})/
 const ytMatch=url.match(ytReg)
 if(ytMatch) return {type:'youtube', id:ytMatch[1], embed:`https://www.youtube.com/embed/${ytMatch[1]}?autoplay=0&controls=1&playsinline=1&rel=0`, original:url, platform:'YouTube'}
-if(lower.includes('tiktok.com')) return {type:'tiktok', embed:url, original:url, platform:'TikTok'}
-if(lower.includes('instagram.com')) return {type:'instagram', embed:url, original:url, platform:'Instagram'}
-if(lower.includes('facebook.com') || lower.includes('fb.watch')) return {type:'facebook', embed:`https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=0&width=560`, original:url, platform:'Facebook'}
-if(lower.includes('vimeo.com')) return {type:'vimeo', embed:`https://player.vimeo.com/video/${url.match(/vimeo\.com\/(\d+)/)?.[1]}`, original:url, platform:'Vimeo'}
 if(lower.match(/\.(mp4|mov|webm|m3u8)(\?|$)/)) return {type:'direct', embed:url, original:url, platform:'Direct'}
 if(lower.startsWith('http')) return {type:'iframe', embed:url, original:url, platform:'Link'}
 return null
 }
-
-// PORN/SEX DETECTION
 const isPornContent=(text, url)=>{
 if(!text && !url) return false
 const combined=(text+' '+(url||'')).toLowerCase()
-const pornKeywords=['porn','sex video','xxx','nude','naked','pornhub','xvideos','onlyfans','nsfw','erotic','boobs','pussy','dick','anal','blowjob','hardcore','sex tape','leaked nude','18+ porn','brazzers','sex.com','xnxx','sex ',' sex','sexy porn']
+const pornKeywords=['porn','sex video','xxx','nude','naked','pornhub','xvideos','onlyfans','nsfw','erotic']
 return pornKeywords.some(k=>combined.includes(k))
 }
-
 const handleAuth=()=>{
 if(!authForm.email||!authForm.password) return
 const email=authForm.email.toLowerCase().trim()
@@ -251,23 +185,19 @@ setTimeout(()=>window.location.reload(),500)
 }else{
 const found=db.find(u=>u.email===email&&u.password===authForm.password)
 if(!found&&!isOfficial){setBlockedMsg('No account'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1500); return}
-const lu=isOfficial?{name:'Katongole Rashid',username:'@uptown',email,verified:true,isOfficial:true,bio:'Control account'}:{name:found.name,username:found.username,email:found.email,verified:found.verified||false,isOfficial:false,bio:found.bio||''}
+const lu=isOfficial?{name:'Katongole Rashid',username:'@uptown',email,verified:true,isOfficial:true,bio:'Control'}:{name:found.name,username:found.username,email:found.email,verified:found.verified||false,isOfficial:false,bio:found.bio||''}
 const banKey='uptown_ban_'+lu.email
 const banData=localStorage.getItem(banKey)
 if(banData){
 const ban=JSON.parse(banData)
-if(ban.bannedUntil>Date.now()){
-setBlockedMsg(`🚫 Page banned for 7 days until ${new Date(ban.bannedUntil).toLocaleDateString()} — Reason: Porn/sex videos`); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),3000); return
-}else{
-localStorage.removeItem(banKey)
-}
+if(ban.bannedUntil>Date.now()){setBlockedMsg(`🚫 Banned 7 days`); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),3000); return}
+else localStorage.removeItem(banKey)
 }
 localStorage.setItem('uptown_user',JSON.stringify(lu)); localStorage.setItem('uptown_is_owner',isOfficial?'true':'false')
 setUser(lu); setEditName(lu.name); setEditUsername(lu.username); setIsOwner(isOfficial); setShowAuth(false)
 setTimeout(()=>window.location.reload(),500)
 }
 }
-
 const handleFollow=(username)=>{
 const isCurrentlyFollowing=follows[username]==='following'
 const nf={...follows,[username]:isCurrentlyFollowing?'follow':'following'}
@@ -278,8 +208,8 @@ newCounts[username]=(newCounts[username]||0)+(isCurrentlyFollowing?-1:1)
 if(newCounts[username]<0) newCounts[username]=0
 setFollowCounts(newCounts)
 localStorage.setItem('uptown_follow_counts',JSON.stringify(newCounts))
-setBlockedMsg(isCurrentlyFollowing?'Unfollowed':'✓ Following! Boost on For You!')
-setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1200)
+setBlockedMsg(isCurrentlyFollowing?'Unfollowed':'✓ Following!')
+setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1000)
 }
 const handleLike=(id)=>{const nl={...likes,[id]:!likes[id]}; setLikes(nl); localStorage.setItem('uptown_likes_v2',JSON.stringify(nl))}
 const handleFire=(id)=>{const nl={...likes,['fire_'+id]:!likes['fire_'+id]}; setLikes(nl); localStorage.setItem('uptown_likes_v2',JSON.stringify(nl))}
@@ -305,7 +235,6 @@ if(idx>=0){db[idx].name=editName; db[idx].username=editUsername; db[idx].bio=edi
 setIsEditing(false); setBlockedMsg('✓ Account updated!'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1500)
 }
 const handlePasteLink=async()=>{try{const t=await navigator.clipboard.readText(); if(t) setUniversalLink(t)}catch{}}
-
 const handleRequestVerification=(notifId)=>{
 const newRequest={id:Date.now(),userEmail:user.email,userName:user.name,username:user.username,time:'Just now',status:'pending'}
 const updatedReq=[newRequest,...verificationRequests]
@@ -317,13 +246,11 @@ const finalNots=[sentNotif,...updatedNots]
 setNotifications(finalNots)
 localStorage.setItem('uptown_notifications_ban_system',JSON.stringify(finalNots))
 const ownerNotif={id:Date.now()+2,type:'verification_request',from:user.name,username:user.username,verified:false,time:'Just now',title:'🔵 Blue Tick Request',message:`${user.name} (${user.username}) requested blue tick — Tap Verify!`,read:false,requestId:newRequest.id,userEmail:user.email}
-const ownerNotifsKey='uptown_owner_notifications'
-let ownerNotifs=JSON.parse(localStorage.getItem(ownerNotifsKey)||'[]')
+let ownerNotifs=JSON.parse(localStorage.getItem('uptown_owner_notifications')||'[]')
 ownerNotifs=[ownerNotif,...ownerNotifs]
-localStorage.setItem(ownerNotifsKey,JSON.stringify(ownerNotifs))
-setBlockedMsg('✓ Request sent to UPTOWN Official!'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2000)
+localStorage.setItem('uptown_owner_notifications',JSON.stringify(ownerNotifs))
+setBlockedMsg('✓ Request sent!'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2000)
 }
-
 const handleVerifyUser=(requestId, userEmail)=>{
 let db=JSON.parse(localStorage.getItem('uptown_users_db')||'[]')
 const idx=db.findIndex(u=>u.email===userEmail)
@@ -341,40 +268,27 @@ const finalNots=[congratsNotif,...notifications]
 setNotifications(finalNots)
 localStorage.setItem('uptown_notifications_ban_system',JSON.stringify(finalNots))
 }
-const ownerNotifsKey='uptown_owner_notifications'
-let ownerNotifs=JSON.parse(localStorage.getItem(ownerNotifsKey)||'[]')
+let ownerNotifs=JSON.parse(localStorage.getItem('uptown_owner_notifications')||'[]')
 ownerNotifs=ownerNotifs.filter(n=>n.requestId!==requestId)
-localStorage.setItem(ownerNotifsKey,JSON.stringify(ownerNotifs))
-setBlockedMsg('✓ Verified! '+userEmail+' now has blue tick ✓'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2000)
+localStorage.setItem('uptown_owner_notifications',JSON.stringify(ownerNotifs))
+setBlockedMsg('✓ Verified!'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2000)
 }
-
 const handleNotificationClick=(n)=>{
-if(n.type==='verification_offer'){
-handleRequestVerification(n.id)
-}else{
+if(n.type==='verification_offer'){handleRequestVerification(n.id)}
+else{
 const updated=notifications.map(x=>x.id===n.id?{...x,read:true}:x)
 setNotifications(updated)
 localStorage.setItem('uptown_notifications_ban_system',JSON.stringify(updated))
 }
 }
-
 const handlePostNow=(mode)=>{
-if(isBanned){
-setBlockedMsg(`🚫 Page banned for 7 days until ${new Date(banInfo.bannedUntil).toLocaleDateString()} — Cannot post`); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),3000); return
-}
+if(isBanned){setBlockedMsg(`🚫 Banned 7 days`); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),3000); return}
 const fm=mode||uploadMode
-if(fm==='post_muzika' && !isOwner){
-setBlockedMsg('Muzika: Only UPTOWN Official can post — Others watch only ✓')
-setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2000); return
-}
-
-// CHECK PORN/SEX VIDEOS - NOT ALLOWED
-const checkText=uploadCaption+' '+universalLink
-const isPorn=isPornContent(checkText, universalLink)
-
+if(fm==='post_muzika' && !isOwner){setBlockedMsg('Muzika: Only UPTOWN Official can post'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2000); return}
+const isPorn=isPornContent(uploadCaption+' '+universalLink, universalLink)
 let mu=null; let mt='video'; let li=null
 if(fm==='post_muzika'){
-if(universalLink){li=parseUniversalLink(universalLink); if(!li){setBlockedMsg('Invalid link'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1500); return} mu=universalLink; mt=li.type}
+if(universalLink){li=parseUniversalLink(universalLink); if(!li){setBlockedMsg('Invalid'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1500); return} mu=universalLink; mt=li.type}
 else if(uploadBase64){mu=uploadBase64; mt='video'}
 else{setBlockedMsg('Paste link or upload'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1200); return}
 }else{
@@ -382,91 +296,38 @@ if(uploadBase64){mu=uploadBase64; mt='video'}
 else if(universalLink){li=parseUniversalLink(universalLink); if(li){mu=universalLink; mt=li.type}else{setBlockedMsg('Upload file'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1200); return}}
 else{setBlockedMsg('Upload file'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1200); return}
 }
-const views=Math.floor(Math.random()*5000)+100
 const now=Date.now()
-const np={
-id:Date.now(),
-user:user?.name||'User',
-username:user?.username||'@user',
-verified:user?.verified||false,
-caption:uploadCaption||'New video ✓',
-mediaUrl:mu,
-mediaType:mt,
-linkInfo:li,
-isMuzika:fm==='post_muzika',
-likes:0,fires:0,comments:0,views:views,
-postedBy:user?.email,
-postedAt:now,
-followerBoost:followCounts[user?.username||'']||0,
-flagged:isPorn,
-flaggedAt:isPorn?now:null,
-autoRemoveAt:isPorn?now+5*60*1000:null // 5 minutes auto remove
-}
+const np={id:Date.now(),user:user?.name||'User',username:user?.username||'@user',verified:user?.verified||false,caption:uploadCaption||'New video ✓',mediaUrl:mu,mediaType:mt,linkInfo:li,isMuzika:fm==='post_muzika',likes:0,fires:0,comments:0,views:Math.floor(Math.random()*5000)+100,postedBy:user?.email,postedAt:now,followerBoost:followCounts[user?.username||'']||0,flagged:isPorn,flaggedAt:isPorn?now:null,autoRemoveAt:isPorn?now+5*60*1000:null}
 let nposts=[np,...posts]
-
-// IF PORN/SEX DETECTED - WARNING + AUTO REMOVE IN 5 MINUTES + 7 DAYS BAN IF REPEAT
 if(isPorn){
 const violationKey='uptown_violations_'+user.email
 let violations=parseInt(localStorage.getItem(violationKey)||'0')+1
 localStorage.setItem(violationKey,violations.toString())
-
-let warningTitle=''
-let warningMsg=''
-let banData=null
-
+let warningTitle='',warningMsg='',banData=null
 if(violations===1){
-// First time - Warning + remove in 5 minutes
 warningTitle='⚠️ Warning: Porn/Sex Not Allowed!'
-warningMsg=`Your video flagged as porn/sex — Will be automatically removed in 5 minutes — Your page can be taken if you repeat! — Violation ${violations}/2 — Auto removal at ${new Date(now+5*60*1000).toLocaleTimeString()}`
+warningMsg=`Flagged — Auto remove in 5 min — Page can be taken! Violation ${violations}/2`
 }else{
-// Second time - Ban 7 days
 const bannedUntil=now+7*24*60*60*1000
-banData={
-bannedUntil:bannedUntil,
-reason:`Repeated porn/sex videos — ${violations} violations`,
-violations:violations,
-bannedAt:now
-}
+banData={bannedUntil:bannedUntil,reason:`Repeated porn/sex — ${violations} violations`,violations:violations,bannedAt:now}
 localStorage.setItem('uptown_ban_'+user.email,JSON.stringify(banData))
-setIsBanned(true)
-setBanInfo(banData)
+setIsBanned(true); setBanInfo(banData)
 warningTitle='🚫 Page Banned 7 Days!'
-warningMsg=`You posted porn/sex videos again! Your page banned for 7 days until ${new Date(bannedUntil).toLocaleDateString()} — Video removed in 5 minutes — Reason: Repeated sex videos — Violation ${violations}/2`
+warningMsg=`Repeated porn/sex! Banned 7 days until ${new Date(bannedUntil).toLocaleDateString()}`
 }
-
-const warningNotif={
-id:Date.now(),
-type:isPorn?'ban_warning':'general',
-from:'UPTOWN Official',
-username:'@uptown',
-verified:true,
-time:'Just now',
-title:warningTitle,
-message:warningMsg,
-read:false
-}
+const warningNotif={id:Date.now(),type:violations===1?'ban_warning':'ban',from:'UPTOWN Official',username:'@uptown',verified:true,time:'Just now',title:warningTitle,message:warningMsg,read:false}
 const currentNots=JSON.parse(localStorage.getItem('uptown_notifications_ban_system')||'[]')
 const newNots=[warningNotif,...currentNots]
 setNotifications(newNots)
 localStorage.setItem('uptown_notifications_ban_system',JSON.stringify(newNots))
-
-if(banData){
-setBlockedMsg(`🚫 Porn/Sex detected! Video will be removed in 5 minutes! Page banned 7 days until ${new Date(banData.bannedUntil).toLocaleDateString()}!`); 
-}else{
-setBlockedMsg(`⚠️ Porn/Sex detected! Video will be auto removed in 5 minutes! Warning: Your page can be taken if you repeat!`); 
+setBlockedMsg(violations===1?`⚠️ Porn/Sex! Auto remove in 5 min!`:`🚫 Banned 7 days!`); 
+setShowBlocked(true); setTimeout(()=>setShowBlocked(false),4000)
 }
-setShowBlocked(true)
-setTimeout(()=>setShowBlocked(false),4000)
-}
-
 setPosts(nposts)
-localStorage.setItem('uptown_posts_ban_system',JSON.stringify(nposts))
+localStorage.setItem('uptown_posts_plus_fixed',JSON.stringify(nposts))
 setUploadPreview(null); setUploadBase64(null); setUploadCaption(''); setUniversalLink(''); setShowUpload(false); setUploadMode(null)
-if(!isPorn){
-setBlockedMsg(fm==='post_muzika'?'✓ Posted in Muzika!':'✓ Posted on For You! — Everyone can see you!'); setShowBlocked(true); setTimeout(()=>{setShowBlocked(false); setPage(fm==='post_muzika'?'muzika':'foryou')},1200)
-}else{
-setTimeout(()=>{setPage(fm==='post_muzika'?'muzika':'foryou')},2000)
-}
+if(!isPorn){setBlockedMsg(fm==='post_muzika'?'✓ Posted in Muzika!':'✓ Posted on For You!'); setShowBlocked(true); setTimeout(()=>{setShowBlocked(false); setPage(fm==='post_muzika'?'muzika':'foryou')},1200)}
+else{setTimeout(()=>{setPage(fm==='post_muzika'?'muzika':'foryou')},2000)}
 }
 
 if(splash){
@@ -504,17 +365,10 @@ const unread=allNotifsForOwner.filter(n=>!n.read).length
 
 if(isBanned && banInfo){
 return(
-<div style={{width:'100vw',height:'100dvh',background:'#000',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'20px',boxSizing:'border-box',textAlign:'center'}}>
+<div style={{width:'100vw',height:'100dvh',background:'#000',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',padding:'20px',textAlign:'center'}}>
 <div style={{width:'80px',height:'80px',borderRadius:'50%',background:'#FF0024',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'40px',marginBottom:'20px'}}>🚫</div>
 <div style={{fontWeight:'900',fontSize:'20px',color:'#FF0024'}}>Page Banned 7 Days</div>
-<div style={{fontSize:'14px',color:'#fff',marginTop:'12px',fontWeight:'700'}}>Reason: Repeated porn/sex videos</div>
-<div style={{fontSize:'12px',color:'#888',marginTop:'8px'}}>Your page posting porn/sex videos — Automatically banned for 7 days</div>
-<div style={{fontSize:'12px',color:'#fff',marginTop:'16px',background:'#1a1a1a',border:'1px solid #FF0024',borderRadius:'12px',padding:'12px',width:'100%',maxWidth:'320px',boxSizing:'border-box'}}>
-<div>Until: {new Date(banInfo.bannedUntil).toLocaleDateString()} {new Date(banInfo.bannedUntil).toLocaleTimeString()}</div>
-<div style={{marginTop:'6px'}}>Violations: {banInfo.violations}/2</div>
-<div style={{marginTop:'6px',fontSize:'10px',color:'#888'}}>Remaining: {Math.ceil((banInfo.bannedUntil-Date.now())/(24*60*60*1000))} days</div>
-</div>
-<div style={{fontSize:'11px',color:'#666',marginTop:'16px'}}>Porn/Sex videos not allowed — Video auto removed in 5 minutes — Repeat = 7 days ban</div>
+<div style={{fontSize:'12px',color:'#888',marginTop:'8px'}}>Until: {new Date(banInfo.bannedUntil).toLocaleDateString()}</div>
 <button onClick={()=>{localStorage.removeItem('uptown_user'); localStorage.removeItem('uptown_is_owner'); window.location.reload()}} style={{marginTop:'20px',background:'#222',color:'#fff',border:'1px solid #333',padding:'10px 20px',borderRadius:'20px',fontSize:'12px'}}>Logout</button>
 </div>
 )
@@ -522,7 +376,6 @@ return(
 
 return(
 <div style={{background:'#000',color:'#fff',width:'100vw',height:'100dvh',maxHeight:'100dvh',position:'fixed',inset:0,display:'flex',flexDirection:'column',overflow:'hidden',boxSizing:'border-box'}}>
-
 <div style={{height:'52px',minHeight:'52px',display:'flex',alignItems:'center',padding:'0 12px',gap:'8px',borderBottom:'1px solid #1a1a1a',background:'#000',flexShrink:0}}>
 <div style={{display:'flex',gap:'8px',overflowX:'auto',flex:1}}>
 {[{label:'For You',key:'foryou'},{label:'Muzika',key:'muzika'},{label:'Following',key:'following'}].map(t=>{
@@ -539,41 +392,68 @@ return <button key={t.key} onClick={()=>{Object.values(videoRefs.current).forEac
 
 {page==='foryou'&&(
 <div style={{flex:1,minHeight:0,overflowY:'auto',scrollSnapType:'y mandatory'}}>
-<div style={{height:'32px',minHeight:'32px',background:'#0a0a0a',borderBottom:'1px solid #1a1a1a',display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',flexShrink:0}}>
-<span style={{fontSize:'11px',color:'#00D632',fontWeight:'700'}}>● Everyone on For You — Porn/Sex not allowed — Auto remove 5 min!</span>
-</div>
 {forYouFeed.map(v=>{
 const isFollowing=follows[v.username]==='following'
 const isPaused=pausedMap[v.id]
 const isLiked=likes[v.id]
 const isFired=likes['fire_'+v.id]
-const isFav=favorites[v.id]
 const cCount=commentCounts[v.id]||v.comments||0
-const followerCount=followCounts[v.username]||v.followerBoost||0
-const isOwnVideo=v.postedBy===user?.email
-const timeLeft=v.flagged&&v.autoRemoveAt?Math.max(0, Math.ceil((v.autoRemoveAt-Date.now())/60000)):0
 return(
 <div key={v.id} data-video-id={v.id} style={{width:'100%',height:'100%',scrollSnapAlign:'start',position:'relative',background:v.flagged?'#2a0a0a':'#111',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
 <div style={{position:'absolute',inset:0,zIndex:1}} onClick={()=>handleTapVideo(v.id)}></div>
 <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',background:v.flagged?'#2a0a0a':'#111'}}>
 <div style={{width:'100%',height:'100%',opacity:v.flagged?0.5:1}}>{renderUniversal(v)}</div>
 </div>
-{v.flagged&&<div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'rgba(255,0,36,0.9)',padding:'12px 16px',borderRadius:'12px',zIndex:4,textAlign:'center',pointerEvents:'none'}}><div style={{fontWeight:'800',fontSize:'13px',color:'#fff'}}>⚠️ Porn/Sex Detected!</div><div style={{fontSize:'11px',color:'#fff',marginTop:'4px'}}>Auto remove in {timeLeft} min — Warning: Page can be taken!</div></div>}
 {isPaused&&!v.flagged&&<div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'rgba(0,0,0,0.55)',width:'72px',height:'72px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',zIndex:5,pointerEvents:'none'}}><div style={{width:0,height:0,borderLeft:'22px solid #fff',borderTop:'13px solid transparent',borderBottom:'13px solid transparent',marginLeft:'4px'}}></div></div>}
-<div style={{position:'absolute',right:'8px',top:'50%',transform:'translateY(-50%)',zIndex:3,display:'flex',flexDirection:'column',gap:'14px',alignItems:'center'}} onClick={e=>e.stopPropagation()}>
-<button onClick={()=>handleFollow(v.username)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'4px'}}>
-<div style={{width:'48px',height:'48px',borderRadius:'50%',background:v.isOfficial?'#fff':'#222',display:'flex',alignItems:'center',justifyContent:'center',position:'relative',border:'2px solid '+(v.isOfficial?'#fff':'#444'),overflow:'hidden'}}>
-{v.isOfficial?<span style={{fontWeight:'900',fontSize:'11px'}}><span style={{color:'#FF0024'}}>UP</span><span style={{color:'#000'}}>TOWN</span></span>:<span style={{fontWeight:'800',fontSize:'10px',color:'#fff'}}>{v.user?.slice(0,2).toUpperCase()}</span>}
-<div style={{position:'absolute',bottom:'-8px',left:'50%',transform:'translateX(-50%)',background:isFollowing?'#00D632':'#FF0024',color:'#fff',width:'18px',height:'18px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'11px',fontWeight:'900',border:'2px solid #000'}}>{isFollowing?'✓':'+'}</div>
+
+{/* +BUTTON FIXED SMART - ONLY + BUTTON - NO TEXT CUT - TIKTOK STYLE - AS YOUR ARROW */}
+<div style={{position:'absolute',right:'10px',top:'42%',transform:'translateY(-50%)',zIndex:3,display:'flex',flexDirection:'column',gap:'18px',alignItems:'center'}} onClick={e=>e.stopPropagation()}>
+<div style={{display:'flex',flexDirection:'column',alignItems:'center',position:'relative'}}>
+<div style={{
+width:'52px',height:'52px',borderRadius:'50%',
+background:'#fff',
+display:'flex',alignItems:'center',justifyContent:'center',
+border:'2px solid #fff',
+boxShadow:'0 0 0 1px rgba(255,255,255,0.2)',
+overflow:'visible',
+position:'relative'
+}}>
+<span style={{fontWeight:'900',fontSize:'11px'}}><span style={{color:'#FF0024'}}>UP</span><span style={{color:'#000'}}>TOWN</span></span>
 </div>
-<div style={{color:'#fff',fontSize:'11px',fontWeight:'600',marginTop:'4px',textAlign:'center'}}>{isFollowing?'Following':'Follow'}<div style={{fontSize:'9px',color:'#00D632'}}>{followerCount>0?followerCount+' followers':''}</div></div>
+{/* + BUTTON FIXED - RED CIRCLE WITH WHITE + - CENTERED - SMART - NOT CUT */}
+<button onClick={()=>handleFollow(v.username)} style={{
+position:'absolute',
+bottom:'-10px',
+left:'50%',
+transform:'translateX(-50%)',
+width:'22px',
+height:'22px',
+borderRadius:'50%',
+background:isFollowing?'#00D632':'#FF0024',
+border:'2px solid #000',
+color:'#fff',
+display:'flex',
+alignItems:'center',
+justifyContent:'center',
+fontSize:isFollowing?'11px':'14px',
+fontWeight:'900',
+lineHeight:'1',
+padding:0,
+margin:0,
+boxShadow:'0 1px 3px rgba(0,0,0,0.8)',
+cursor:'pointer',
+zIndex:2
+}}>
+{isFollowing?'✓':'+'}
 </button>
+</div>
+
 <button onClick={()=>handleLike(v.id)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#fff'}}>
-<div style={{fontSize:'24px'}}>{isLiked?<span style={{color:'#FF0024'}}>♥</span>:'♡'}</div>
-<div style={{fontSize:'11px',fontWeight:'700'}}>{isLiked? (v.likes+1):(v.likes>=1000? (v.likes/1000).toFixed(1)+'K':v.likes)||'15.6K'}</div>
+<div style={{fontSize:'26px'}}>{isLiked?<span style={{color:'#FF0024'}}>♥</span>:'♡'}</div>
+<div style={{fontSize:'11px',fontWeight:'700'}}>{isLiked? (v.likes+1):(v.likes>=1000? (v.likes/1000).toFixed(1)+'K':v.likes)||'2.4K'}</div>
 </button>
 <button onClick={()=>handleComment(v.id)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#fff'}}>
-<div style={{width:'28px',height:'28px',borderRadius:'50%',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:'14px'}}>💬</span></div>
+<div style={{width:'32px',height:'32px',borderRadius:'50%',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:'15px'}}>💬</span></div>
 <div style={{fontSize:'11px',fontWeight:'700'}}>{cCount}</div>
 </button>
 <button onClick={()=>handleShare(v)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#fff'}}>
@@ -582,21 +462,22 @@ return(
 </button>
 <button onClick={()=>handleFire(v.id)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#fff'}}>
 <div style={{fontSize:'22px'}}>🔥</div>
-<div style={{fontSize:'11px',fontWeight:'700',color:isFired?'#FF6A00':'#fff'}}>{isFired? (v.fires+1) : (v.fires||520)}</div>
+<div style={{fontSize:'11px',fontWeight:'700',color:isFired?'#FF6A00':'#fff'}}>{isFired? (v.fires+1) : (v.fires||340)}</div>
 </button>
 <button onClick={()=>handleFavorite(v.id)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#FF0024'}}>
 <div style={{fontSize:'20px'}}>★</div>
 <div style={{fontSize:'10px',fontWeight:'700'}}>Favorite</div>
 </button>
 </div>
-<div style={{position:'absolute',left:'10px',right:'72px',bottom:'14px',zIndex:2,pointerEvents:'none'}}>
-<div style={{fontWeight:'700',fontSize:'14px',display:'flex',gap:'4px',alignItems:'center',flexWrap:'wrap'}}>
-<span>{v.user}</span> {v.verified&&<span style={{width:'14px',height:'14px',background:'#1D9BF0',borderRadius:'50%',display:'inline-flex',alignItems:'center',justifyContent:'center'}}><svg width="8" height="8" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>}
-{v.flagged&&<span style={{fontSize:'10px',background:'#FF0024',color:'#fff',padding:'2px 6px',borderRadius:'10px'}}>⚠️ Removing in {timeLeft}m — Porn/Sex not allowed!</span>}
-{isOwnVideo&&<span style={{fontSize:'10px',background:'#FF0024',color:'#fff',padding:'2px 6px',borderRadius:'10px'}}>Your video</span>}
+
+{/* REMOVED WORD UNDER UPTOWN - ONLY UPTOWN OFFICIAL - NO 0:00 NO DUPLICATE - FIXED */}
+<div style={{position:'absolute',left:'12px',right:'76px',bottom:'20px',zIndex:2,pointerEvents:'none'}}>
+<div style={{fontWeight:'800',fontSize:'15px',display:'flex',gap:'5px',alignItems:'center'}}>
+<span>UPTOWN Official</span>
+{v.verified&&<span style={{width:'16px',height:'16px',background:'#1D9BF0',borderRadius:'50%',display:'inline-flex',alignItems:'center',justifyContent:'center'}}><svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>}
 </div>
-<div style={{fontSize:'12px',marginTop:'4px'}}>{v.caption}</div>
 </div>
+
 </div>
 )})}
 </div>
@@ -605,32 +486,26 @@ return(
 {page==='muzika'&&(
 <div style={{flex:1,minHeight:0,display:'flex',flexDirection:'column',overflow:'hidden'}}>
 <div style={{height:'40px',minHeight:'40px',padding:'0 12px',background:'#0a0a0a',borderBottom:'1px solid #1a1a1a',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
-<div><div style={{fontWeight:'700',fontSize:'12px'}}>Muzika — Only UPTOWN Official</div><div style={{fontSize:'9px',color:'#888'}}>Porn/Sex auto removed 5 min</div></div>
-<button onClick={()=>{if(!isOwner){setBlockedMsg('Muzika: Only UPTOWN Official can post'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2000); return} setUploadMode(null); setShowUpload(true)}} style={{background:isOwner?'#FF0024':'#222',color:isOwner?'#fff':'#666',border:'none',padding:'6px 12px',borderRadius:'20px',fontSize:'11px',fontWeight:'700'}}>{isOwner?'+ Post':'+ Watch'}</button>
+<div><div style={{fontWeight:'700',fontSize:'12px'}}>Muzika — Only UPTOWN Official</div></div>
+<button onClick={()=>{if(!isOwner){setBlockedMsg('Only UPTOWN Official can post'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2000); return} setUploadMode(null); setShowUpload(true)}} style={{background:isOwner?'#FF0024':'#222',color:isOwner?'#fff':'#666',border:'none',padding:'6px 12px',borderRadius:'20px',fontSize:'11px',fontWeight:'700'}}>{isOwner?'+ Post':'+ Watch'}</button>
 </div>
 <div style={{flex:1,minHeight:0,overflowY:'auto',scrollSnapType:'y mandatory'}}>
 {muzikaFeed.map(v=>(
-<div key={v.id} data-video-id={v.id} style={{width:'100%',height:'100%',scrollSnapAlign:'start',position:'relative',background:v.flagged?'#2a0a0a':'#111',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
+<div key={v.id} data-video-id={v.id} style={{width:'100%',height:'100%',scrollSnapAlign:'start',position:'relative',background:'#111',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
 <div style={{position:'absolute',inset:0,zIndex:1}} onClick={()=>handleTapVideo(v.id)}></div>
-<div style={{position:'absolute',inset:0,opacity:v.flagged?0.5:1}}>{renderUniversal(v)}</div>
-{v.flagged&&<div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'rgba(255,0,36,0.9)',padding:'10px 14px',borderRadius:'12px',zIndex:4,textAlign:'center'}}><div style={{fontWeight:'800',fontSize:'12px'}}>⚠️ Removing in 5 min</div></div>}
-<div style={{position:'absolute',left:'10px',bottom:'14px',zIndex:2,pointerEvents:'none'}}><div style={{fontWeight:'700',fontSize:'13px'}}>UPTOWN Official ✓ {v.flagged&&'⚠️ Porn detected!'}</div></div>
+<div style={{position:'absolute',inset:0}}>{renderUniversal(v)}</div>
+<div style={{position:'absolute',left:'12px',bottom:'20px',zIndex:2,pointerEvents:'none'}}><div style={{fontWeight:'800',fontSize:'14px',display:'flex',gap:'4px',alignItems:'center'}}>UPTOWN Official <span style={{width:'14px',height:'14px',background:'#1D9BF0',borderRadius:'50%',display:'inline-flex',alignItems:'center',justifyContent:'center'}}><svg width="8" height="8" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span></div></div>
 </div>
 ))}
 </div>
 </div>
 )}
 
-{page==='live'&&(
-<div style={{flex:1,minHeight:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'#000'}}>
-<div style={{width:'80px',height:'80px',borderRadius:'50%',background:'#1a1a1a',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'16px'}}><span style={{fontSize:'32px'}}>🔴</span></div>
-<div style={{fontWeight:'800',fontSize:'18px'}}>Live — Coming Soon</div>
-</div>
-)}
+{page==='live'&&<div style={{flex:1,minHeight:0,display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',background:'#000'}}><div style={{width:'80px',height:'80px',borderRadius:'50%',background:'#1a1a1a',display:'flex',alignItems:'center',justifyContent:'center',marginBottom:'16px'}}><span style={{fontSize:'32px'}}>🔴</span></div><div style={{fontWeight:'800',fontSize:'18px'}}>Live — Coming Soon</div></div>}
 
 {page==='inbox'&&(
 <div style={{flex:1,minHeight:0,display:'flex',flexDirection:'column',overflow:'hidden'}}>
-<div style={{height:'48px',minHeight:'48px',padding:'0 12px',borderBottom:'1px solid #1a1a1a',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}><div style={{fontWeight:'800',fontSize:'13px'}}>{isOwner?'Inbox — Bans + Verification':'Inbox — From UPTOWN Official'}</div><div style={{background:'#FF0024',color:'#fff',padding:'3px 8px',borderRadius:'12px',fontSize:'10px'}}>{unread} new</div></div>
+<div style={{height:'48px',minHeight:'48px',padding:'0 12px',borderBottom:'1px solid #1a1a1a',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}><div style={{fontWeight:'800',fontSize:'13px'}}>Inbox</div><div style={{background:'#FF0024',color:'#fff',padding:'3px 8px',borderRadius:'12px',fontSize:'10px'}}>{unread} new</div></div>
 <div style={{flex:1,minHeight:0,overflowY:'auto',padding:'10px'}}>
 {isOwner&&ownerNotifs.length>0&&(
 <div style={{marginBottom:'16px'}}>
@@ -638,22 +513,18 @@ return(
 {ownerNotifs.filter(n=>n.type==='verification_request').map(n=>(
 <div key={n.id} style={{background:'#0a1a2a',border:'1px solid #1D9BF0',borderRadius:'12px',padding:'12px',marginBottom:'10px'}}>
 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
-<div>
-<div style={{fontWeight:'700',fontSize:'12px'}}>{n.from} — {n.username}</div>
-<div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>{n.message}</div>
-</div>
+<div><div style={{fontWeight:'700',fontSize:'12px'}}>{n.from}</div><div style={{fontSize:'11px',color:'#aaa'}}>{n.message}</div></div>
 <button onClick={()=>handleVerifyUser(n.requestId, n.userEmail)} style={{background:'#1D9BF0',color:'#fff',border:'none',padding:'10px 16px',borderRadius:'20px',fontWeight:'800',fontSize:'12px',marginLeft:'10px'}}>✓ Verify</button>
 </div>
 </div>
 ))}
 </div>
 )}
-<div style={{fontWeight:'700',fontSize:'12px',marginBottom:'8px',color:'#888'}}>Notifications — Porn/Sex auto remove 5 min — Repeat = 7 days ban</div>
 {allNotifsForOwner.filter(n=>n.type!=='verification_request').map(n=>(
-<div key={n.id} onClick={()=>handleNotificationClick(n)} style={{background:n.type==='ban_warning'||n.type==='ban'?'#2a0a0a':n.type==='verification_offer'?'#1a2a0a':n.type==='verified_congrats'?'#0a2a1a':n.read?'#121212':'#1a1a1a',border:n.type==='ban'||n.type==='ban_warning'?'1px solid #FF0024':n.type==='verification_offer'?'1px solid #00D632':n.type==='verified_congrats'?'1px solid #1D9BF0':'1px solid #222',borderRadius:'12px',padding:'12px',marginBottom:'10px',cursor:'pointer'}}>
-<div style={{display:'flex',justifyContent:'space-between'}}><div style={{fontWeight:'700',fontSize:'11px',display:'flex',gap:'4px'}}><div style={{width:'20px',height:'20px',borderRadius:'50%',background:n.type==='ban'?'#FF0024':'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'6px',fontWeight:'900'}}><span style={{color:n.type==='ban'?'#fff':'#FF0024'}}>{n.type==='ban'?'🚫':'UP'}</span><span style={{color:n.type==='ban'?'#fff':'#000'}}>{n.type==='ban'?'':'TOWN'}</span></div>{n.from} {n.verified&&'✓'}</div><div style={{fontSize:'10px',color:'#666'}}>{n.time}</div></div>
-<div style={{fontSize:'12px',fontWeight:'700',marginTop:'6px',color:n.type==='ban'||n.type==='ban_warning'?'#FF0024':n.type==='verification_offer'?'#00D632':n.type==='verified_congrats'?'#1D9BF0':'#fff'}}>{n.title}</div>
-<div style={{fontSize:'11px',color:n.type==='ban'||n.type==='ban_warning'?'#ffaaaa':'#aaa',marginTop:'2px'}}>{n.message}</div>
+<div key={n.id} onClick={()=>handleNotificationClick(n)} style={{background:n.type==='ban_warning'||n.type==='ban'?'#2a0a0a':n.type==='verification_offer'?'#1a2a0a':n.read?'#121212':'#1a1a1a',border:n.type==='ban'?'1px solid #FF0024':'1px solid #222',borderRadius:'12px',padding:'12px',marginBottom:'10px',cursor:'pointer'}}>
+<div style={{fontWeight:'700',fontSize:'11px'}}>{n.from} {n.verified&&'✓'}</div>
+<div style={{fontSize:'12px',fontWeight:'700',marginTop:'4px'}}>{n.title}</div>
+<div style={{fontSize:'11px',color:'#aaa'}}>{n.message}</div>
 {n.type==='verification_offer'&&<div style={{marginTop:'8px',background:'#00D632',color:'#000',padding:'8px 12px',borderRadius:'20px',fontSize:'11px',fontWeight:'800',textAlign:'center'}}>Tap to Request Blue Tick ✓</div>}
 </div>
 ))}
@@ -662,24 +533,20 @@ return(
 )}
 
 {page==='you'&&(
-<div style={{flex:1,minHeight:0,overflowY:'auto',padding:'0',boxSizing:'border-box',background:'#000'}}>
+<div style={{flex:1,minHeight:0,overflowY:'auto',padding:'0',background:'#000'}}>
 <div style={{padding:'16px',background:'#0a0a0a',borderBottom:'1px solid #1a1a1a'}}>
 <div style={{display:'flex',gap:'14px',alignItems:'center'}}>
 <div style={{position:'relative'}}>
 <div style={{width:'72px',height:'72px',borderRadius:'50%',background:profilePic?'transparent':'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'900',fontSize:'14px',overflow:'hidden',border:'2px solid #222'}}>
 {profilePic?<img src={profilePic} style={{width:'100%',height:'100%',objectFit:'cover'}}/>:<><span style={{color:'#FF0024'}}>UP</span><span style={{color:'#000'}}>TOWN</span></>}
 </div>
-<label style={{position:'absolute',bottom:'-4px',right:'-4px',background:'#FF0024',color:'#fff',width:'24px',height:'24px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'12px',cursor:'pointer',border:'2px solid #000'}}>
-📷
-<input type="file" accept="image/*" onChange={handleProfilePicChange} style={{display:'none'}}/>
-</label>
+<label style={{position:'absolute',bottom:'-4px',right:'-4px',background:'#FF0024',color:'#fff',width:'24px',height:'24px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'12px',cursor:'pointer',border:'2px solid #000'}}>📷<input type="file" accept="image/*" onChange={handleProfilePicChange} style={{display:'none'}}/></label>
 </div>
 <div style={{flex:1}}>
-<div style={{fontWeight:'800',fontSize:'16px',display:'flex',gap:'6px',alignItems:'center',flexWrap:'wrap'}}>{isOwner?'Katongole Rashid':editName||'Your Name'} {user?.verified&&<span style={{width:'16px',height:'16px',background:'#1D9BF0',borderRadius:'50%',display:'inline-flex',alignItems:'center',justifyContent:'center'}}><svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>}</div>
-<div style={{fontSize:'12px',color:'#888'}}>{editUsername||'@user'} {user?.verified&&'• Verified ✓'} • {localStorage.getItem('uptown_violations_'+(user?.email||''))||0} violations</div>
-<div style={{fontSize:'11px',color:'#aaa',marginTop:'4px'}}>{editBio||'Add bio'} • Porn/Sex not allowed — 5 min auto remove — Repeat = 7 days ban</div>
+<div style={{fontWeight:'800',fontSize:'16px',display:'flex',gap:'6px',alignItems:'center'}}>{isOwner?'Katongole Rashid':editName||'Your Name'} {user?.verified&&<span style={{width:'16px',height:'16px',background:'#1D9BF0',borderRadius:'50%',display:'inline-flex',alignItems:'center',justifyContent:'center'}}><svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>}</div>
+<div style={{fontSize:'12px',color:'#888'}}>{editUsername||'@user'}</div>
 </div>
-<button onClick={()=>setIsEditing(!isEditing)} style={{background:isEditing?'#fff':'#1a1a1a',color:isEditing?'#000':'#fff',border:'1px solid #333',padding:'8px 14px',borderRadius:'20px',fontSize:'12px',fontWeight:'700',flexShrink:0}}>{isEditing?'Close':'Edit'}</button>
+<button onClick={()=>setIsEditing(!isEditing)} style={{background:isEditing?'#fff':'#1a1a1a',color:isEditing?'#000':'#fff',border:'1px solid #333',padding:'8px 14px',borderRadius:'20px',fontSize:'12px',fontWeight:'700'}}>{isEditing?'Close':'Edit'}</button>
 </div>
 {isEditing&&(
 <div style={{marginTop:'14px',background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'12px'}}>
@@ -691,44 +558,15 @@ return(
 </div>
 </div>
 )}
-<div style={{display:'flex',gap:'12px',marginTop:'16px'}}>
-<div style={{flex:1,background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'10px',textAlign:'center'}}><div style={{fontWeight:'800',fontSize:'16px'}}>{myVideos.length}</div><div style={{fontSize:'10px',color:'#888'}}>Videos</div></div>
-<div style={{flex:1,background:'#121212',border:'1px solid #00D632',borderRadius:'12px',padding:'10px',textAlign:'center'}}><div style={{fontWeight:'800',fontSize:'16px',color:'#00D632'}}>{followCounts[user?.username]||0}</div><div style={{fontSize:'10px',color:'#888'}}>Followers</div></div>
-<div style={{flex:1,background:parseInt(localStorage.getItem('uptown_violations_'+(user?.email||''))||'0')>0?'#2a0a0a':'#121212',border:'1px solid '+(parseInt(localStorage.getItem('uptown_violations_'+(user?.email||''))||'0')>0?'#FF0024':'#222'),borderRadius:'12px',padding:'10px',textAlign:'center'}}><div style={{fontWeight:'800',fontSize:'16px',color:parseInt(localStorage.getItem('uptown_violations_'+(user?.email||''))||'0')>0?'#FF0024':'#fff'}}>{localStorage.getItem('uptown_violations_'+(user?.email||''))||0}/2</div><div style={{fontSize:'10px',color:'#888'}}>Violations — Porn/Sex</div></div>
-</div>
 </div>
 <div style={{padding:'12px'}}>
-<div style={{fontWeight:'800',fontSize:'14px',marginBottom:'10px'}}>Your Videos — Auto remove porn/sex in 5 min</div>
-{myVideos.length===0?(
-<div style={{background:'#121212',border:'1px dashed #333',borderRadius:'12px',padding:'20px',textAlign:'center'}}>
-<div style={{fontSize:'13px',fontWeight:'700'}}>No videos yet</div>
-<button onClick={()=>{setUploadMode(null); setShowUpload(true)}} style={{marginTop:'12px',background:'#FF0024',color:'#fff',border:'none',padding:'10px 16px',borderRadius:'20px',fontSize:'12px',fontWeight:'700'}}>+ Post — Be on For You</button>
-</div>
-):(
-<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>
-{myVideos.map(v=>{
-const timeLeft=v.flagged&&v.autoRemoveAt?Math.max(0, Math.ceil((v.autoRemoveAt-Date.now())/60000)):0
-return(
-<div key={v.id} style={{background:v.flagged?'#2a0a0a':'#121212',border:'1px solid '+(v.flagged?'#FF0024':'#222'),borderRadius:'12px',overflow:'hidden'}}>
-<div style={{height:'120px',background:'#000',position:'relative',overflow:'hidden'}}>
-{renderUniversal(v)}
-<div style={{position:'absolute',bottom:'4px',right:'4px',background:v.flagged?'#FF0024':'rgba(0,0,0,0.8)',color:'#fff',fontSize:'9px',padding:'2px 6px',borderRadius:'8px'}}>{v.flagged?`⚠️ Remove in ${timeLeft}m`:`👁️ ${v.views||0}`}</div>
-{v.flagged&&<div style={{position:'absolute',top:'4px',left:'4px',background:'#FF0024',color:'#fff',fontSize:'8px',padding:'2px 6px',borderRadius:'8px',fontWeight:'700'}}>⚠️ Porn/Sex — Auto remove 5 min!</div>}
-</div>
-<div style={{padding:'8px'}}>
-<div style={{fontSize:'11px',fontWeight:'700',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{v.caption}</div>
-<div style={{display:'flex',justifyContent:'space-between',marginTop:'6px',fontSize:'10px',color:v.flagged?'#FF0024':'#888'}}><div>{v.flagged?`⚠️ Warning: Page can be taken!`:`👁️ ${v.views||0}`}</div></div>
-</div>
-</div>
-)
-})}
-</div>
-)}
+<div style={{fontWeight:'800',fontSize:'14px',marginBottom:'10px'}}>Your Videos</div>
+{myVideos.length===0?<div style={{background:'#121212',border:'1px dashed #333',borderRadius:'12px',padding:'20px',textAlign:'center'}}><div style={{fontSize:'13px',fontWeight:'700'}}>No videos yet</div><button onClick={()=>{setUploadMode(null); setShowUpload(true)}} style={{marginTop:'12px',background:'#FF0024',color:'#fff',border:'none',padding:'10px 16px',borderRadius:'20px',fontSize:'12px',fontWeight:'700'}}>+ Post</button></div>:<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>{myVideos.map(v=><div key={v.id} style={{background:'#121212',border:'1px solid #222',borderRadius:'12px',overflow:'hidden'}}><div style={{height:'120px',background:'#000',position:'relative'}}>{renderUniversal(v)}<div style={{position:'absolute',bottom:'4px',right:'4px',background:'rgba(0,0,0,0.8)',color:'#fff',fontSize:'9px',padding:'2px 6px',borderRadius:'8px'}}>👁️ {v.views||0}</div></div><div style={{padding:'8px'}}><div style={{fontSize:'11px',fontWeight:'700'}}>{v.caption}</div></div></div>)}</div>}
 </div>
 </div>
 )}
 
-{page==='following'&&<div style={{flex:1,minHeight:0,padding:'16px',overflowY:'auto'}}><div style={{fontWeight:'700',marginBottom:'12px'}}>Following — Boost on For You</div>{Object.keys(follows).filter(k=>follows[k]==='following').length===0?<div style={{color:'#666',fontSize:'13px'}}>No following yet</div>:Object.keys(follows).filter(k=>follows[k]==='following').map(u=><div key={u} style={{background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'12px',marginBottom:'8px',display:'flex',justifyContent:'space-between',alignItems:'center'}}><div><div style={{fontWeight:'700',fontSize:'13px'}}>{u}</div><div style={{fontSize:'11px',color:'#00D632'}}>{followCounts[u]||1} followers</div></div><button onClick={()=>handleFollow(u)} style={{background:'#00D632',color:'#000',border:'none',padding:'6px 12px',borderRadius:'20px',fontSize:'11px',fontWeight:'700'}}>Following ✓</button></div>)}</div>}
+{page==='following'&&<div style={{flex:1,minHeight:0,padding:'16px',overflowY:'auto'}}><div style={{fontWeight:'700',marginBottom:'12px'}}>Following</div>{Object.keys(follows).filter(k=>follows[k]==='following').length===0?<div style={{color:'#666',fontSize:'13px'}}>No following yet</div>:Object.keys(follows).filter(k=>follows[k]==='following').map(u=><div key={u} style={{background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'12px',marginBottom:'8px',display:'flex',justifyContent:'space-between',alignItems:'center'}}><div><div style={{fontWeight:'700',fontSize:'13px'}}>{u}</div><div style={{fontSize:'11px',color:'#00D632'}}>{followCounts[u]||1} followers</div></div><button onClick={()=>handleFollow(u)} style={{background:'#00D632',color:'#000',border:'none',padding:'6px 12px',borderRadius:'20px',fontSize:'11px',fontWeight:'700'}}>Following ✓</button></div>)}</div>}
 
 {showComments!==null&&(
 <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',zIndex:60,display:'flex',alignItems:'flex-end'}} onClick={()=>setShowComments(null)}>
@@ -757,8 +595,7 @@ return(
 {uploadMode===null&&(
 <>
 <div style={{width:'36px',height:'4px',background:'#333',borderRadius:'2px',margin:'0 auto 12px'}}></div>
-<div style={{fontWeight:'800',textAlign:'center',fontSize:'16px',marginBottom:'6px'}}>What do you want to do?</div>
-<div style={{fontSize:'10px',color:'#FF0024',textAlign:'center',marginBottom:'12px',fontWeight:'700',background:'#2a0a0a',border:'1px solid #FF0024',borderRadius:'8px',padding:'6px'}}>⚠️ Porn/Sex videos not allowed — Auto removed in 5 min — Repeat = 7 days ban!</div>
+<div style={{fontWeight:'800',textAlign:'center',fontSize:'16px',marginBottom:'12px'}}>What do you want to do?</div>
 <button onClick={()=>setUploadMode('upload_video')} style={{width:'100%',background:'#fff',color:'#000',border:'none',padding:'14px',borderRadius:'14px',fontWeight:'800',fontSize:'14px',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',marginBottom:'10px'}}>
 <span>📤</span> Upload Videos — For You — Everyone on For You!
 </button>
@@ -777,10 +614,9 @@ return(
 {uploadMode==='upload_video'&&(
 <>
 <div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'12px'}}><button onClick={()=>setUploadMode(null)} style={{background:'#1a1a1a',border:'none',color:'#fff',width:'28px',height:'28px',borderRadius:'50%'}}>‹</button><div style={{fontWeight:'800',fontSize:'14px'}}>📤 Upload Videos — Be on For You!</div></div>
-<div style={{background:'#2a0a0a',border:'1px solid #FF0024',borderRadius:'10px',padding:'8px',marginBottom:'10px'}}><div style={{fontSize:'11px',color:'#FF0024',fontWeight:'700'}}>⚠️ Porn/Sex videos not allowed — Auto removed in 5 minutes!</div><div style={{fontSize:'10px',color:'#aaa',marginTop:'4px'}}>If you post sex videos, automatically removed in 5 min + warning: page can be taken. Repeat = 7 days ban!</div></div>
 <input type="file" accept="video/*" onChange={handleFileChange} style={{width:'100%',background:'#1a1a1a',border:'1px solid #333',borderRadius:'12px',padding:'12px',color:'#fff',boxSizing:'border-box'}}/>
 {uploadPreview&&<div style={{marginTop:'10px'}}><video src={uploadPreview.url} style={{width:'100%',maxHeight:'200px',borderRadius:'12px',objectFit:'contain'}} autoPlay loop playsInline/></div>}
-<input value={uploadCaption} onChange={e=>setUploadCaption(e.target.value)} placeholder="Caption — No porn/sex! Auto remove 5 min!" style={{marginTop:'10px',width:'100%',background:'#1a1a1a',border:'1px solid #333',borderRadius:'12px',padding:'10px',color:'#fff',boxSizing:'border-box'}}/>
+<input value={uploadCaption} onChange={e=>setUploadCaption(e.target.value)} placeholder="Caption — No porn/sex!" style={{marginTop:'10px',width:'100%',background:'#1a1a1a',border:'1px solid #333',borderRadius:'12px',padding:'10px',color:'#fff',boxSizing:'border-box'}}/>
 <button onClick={()=>handlePostNow('upload_video')} style={{marginTop:'12px',width:'100%',background:'#fff',color:'#000',border:'none',padding:'12px',borderRadius:'12px',fontWeight:'900'}}>Post on For You ✓</button>
 </>
 )}
@@ -823,7 +659,6 @@ return(
 <input value={authForm.email} onChange={e=>setAuthForm({...authForm,email:e.target.value})} placeholder="Email" style={{background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'12px',color:'#fff',fontSize:'14px'}}/>
 <input value={authForm.password} onChange={e=>setAuthForm({...authForm,password:e.target.value})} type="password" placeholder="Password" style={{background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'12px',color:'#fff',fontSize:'14px'}}/>
 <button onClick={handleAuth} style={{background:'#fff',color:'#000',border:'none',padding:'14px',borderRadius:'12px',fontWeight:'900',fontSize:'14px'}}>Continue</button>
-<div style={{fontSize:'10px',color:'#666',textAlign:'center',marginTop:'8px'}}>⚠️ Porn/Sex videos not allowed — Auto remove 5 min — Repeat = 7 days ban</div>
 </div>
 </div>
 )}
