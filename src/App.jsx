@@ -15,6 +15,7 @@ const [universalLink,setUniversalLink]=useState('')
 const [uploadPreview,setUploadPreview]=useState(null)
 const [uploadBase64,setUploadBase64]=useState(null)
 const [follows,setFollows]=useState({})
+const [followCounts,setFollowCounts]=useState({})
 const [likes,setLikes]=useState({})
 const [favorites,setFavorites]=useState({})
 const [comments,setComments]=useState({})
@@ -36,8 +37,8 @@ const [isEditing,setIsEditing]=useState(false)
 const videoRefs=useRef({})
 
 const officialVideos=[
-{id:101,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', mediaType:'video', likes:15600, fires:520, comments:0, views:45200},
-{id:102,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', mediaType:'video', likes:12400, fires:340, comments:0, views:32100},
+{id:9001,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', mediaType:'video', likes:15600, fires:520, comments:0, views:45200, isOfficial:true},
+{id:9002,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', mediaType:'video', likes:12400, fires:340, comments:0, views:32100, isOfficial:true},
 ]
 
 useEffect(()=>{
@@ -46,15 +47,17 @@ setSplash(false)
 const su=localStorage.getItem('uptown_user')
 const sO=localStorage.getItem('uptown_is_owner')
 const sF=localStorage.getItem('uptown_follows')
+const sFC=localStorage.getItem('uptown_follow_counts')
 const sL=localStorage.getItem('uptown_likes_v2')
 const sFav=localStorage.getItem('uptown_fav_v3')
-const sP=localStorage.getItem('uptown_posts_final_verified_flow')
+const sP=localStorage.getItem('uptown_posts_everyone_foryou')
 const sC=localStorage.getItem('uptown_comments_v1')
 const sNot=localStorage.getItem('uptown_notifications_final_verified')
 const sReq=localStorage.getItem('uptown_verification_requests')
 const sPic=localStorage.getItem('uptown_profile_pic')
 const sBio=localStorage.getItem('uptown_bio')
 if(sF) setFollows(JSON.parse(sF))
+if(sFC) setFollowCounts(JSON.parse(sFC))
 if(sL) setLikes(JSON.parse(sL))
 if(sFav) setFavorites(JSON.parse(sFav))
 if(sP) setPosts(JSON.parse(sP))
@@ -62,15 +65,13 @@ if(sC) setCommentCounts(JSON.parse(sC))
 if(sReq) setVerificationRequests(JSON.parse(sReq))
 if(sPic) setProfilePic(sPic)
 if(sBio) setEditBio(sBio)
-
 let nots=[]
 if(sNot) nots=JSON.parse(sNot)
 else{
 nots=[
-{id:1,type:'general',from:'UPTOWN Official',username:'@uptown',verified:true,time:'2m ago',title:'Welcome ✓',message:'Welcome to UPTOWN Official ✓',read:false},
+{id:1,type:'general',from:'UPTOWN Official',username:'@uptown',verified:true,time:'2m ago',title:'Welcome ✓',message:'Welcome to UPTOWN ✓ Everyone can be on For You as long as you post!',read:false},
 ]
 }
-
 if(!su) setShowAuth(true)
 else{
 const u=JSON.parse(su)
@@ -78,14 +79,11 @@ setUser(u)
 setEditName(u.name||'')
 setEditUsername(u.username||'')
 if(sO==='true') setIsOwner(true)
-
-// EVERY 10th AND 26th - EVERY ONE NOT VERIFIED GETS NOTIFICATION FROM UPTOWN OFFICIAL ASKING BLUE TICK
 const today=new Date().getDate()
-const isVerificationDay=today===10 || today===26 || true // true for testing so you see it now - remove true to make only 10th & 26th
+const isVerificationDay=today===10 || today===26 || true
 const isNotVerified=!u.verified && !u.isOfficial && sO!=='true'
 const monthKey=new Date().getMonth()+'-'+new Date().getFullYear()
 const lastOfferKey=localStorage.getItem('uptown_last_verify_offer_'+u.email+'_'+monthKey+'_'+today)
-
 if(isVerificationDay && isNotVerified && !lastOfferKey){
 const alreadyHasOffer=nots.some(n=>n.type==='verification_offer' && !n.read)
 if(!alreadyHasOffer){
@@ -103,36 +101,18 @@ action:'request_verification'
 }
 nots=[offerNotif,...nots]
 localStorage.setItem('uptown_last_verify_offer_'+u.email+'_'+monthKey+'_'+today,'sent')
-
-// Also check pending congrats
+}
+}
 const congratsKey='uptown_congrats_'+u.email
 const congratsData=localStorage.getItem(congratsKey)
 if(congratsData){
 const c=JSON.parse(congratsData)
 nots=[c,...nots]
 localStorage.removeItem(congratsKey)
-const db=JSON.parse(localStorage.getItem('uptown_users_db')||'[]')
-const idx=db.findIndex(x=>x.email===u.email)
-if(idx>=0){db[idx].verified=true; localStorage.setItem('uptown_users_db',JSON.stringify(db))}
 u.verified=true
 localStorage.setItem('uptown_user',JSON.stringify(u))
 setUser(u)
 }
-}
-}
-
-// Check if user got verified while away
-const congratsKey='uptown_congrats_'+u.email
-const congratsData=localStorage.getItem(congratsKey)
-if(congratsData){
-const c=JSON.parse(congratsData)
-nots=[c,...nots]
-localStorage.removeItem(congratsKey)
-u.verified=true
-localStorage.setItem('uptown_user',JSON.stringify(u))
-setUser({...u,verified:true})
-}
-
 setNotifications(nots)
 localStorage.setItem('uptown_notifications_final_verified',JSON.stringify(nots))
 }
@@ -182,7 +162,7 @@ let db=JSON.parse(localStorage.getItem('uptown_users_db')||'[]')
 if(authMode==='signup'){
 if(!authForm.name||!authForm.username){setBlockedMsg('Fill name'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1500); return}
 if(db.find(u=>u.email===email)){setAuthMode('login'); return}
-const nu={id:Date.now(),name:isOfficial?'Katongole Rashid':authForm.name,username:isOfficial?'@uptown':'@'+authForm.username.replace('@',''),email,password:authForm.password,verified:isOfficial,isOfficial:isOfficial,bio:'UPTOWN Official ✓'}
+const nu={id:Date.now(),name:isOfficial?'Katongole Rashid':authForm.name,username:isOfficial?'@uptown':'@'+authForm.username.replace('@',''),email,password:authForm.password,verified:isOfficial,isOfficial:isOfficial,bio:'New on UPTOWN ✓'}
 db.push(nu); localStorage.setItem('uptown_users_db',JSON.stringify(db))
 const lu={name:nu.name,username:nu.username,email,verified:nu.verified,isOfficial:nu.isOfficial,bio:nu.bio}
 localStorage.setItem('uptown_user',JSON.stringify(lu)); localStorage.setItem('uptown_is_owner',isOfficial?'true':'false')
@@ -198,7 +178,25 @@ setTimeout(()=>window.location.reload(),500)
 }
 }
 
-const handleFollow=(u)=>{const nf={...follows,[u]:follows[u]==='following'?'follow':'following'}; setFollows(nf); localStorage.setItem('uptown_follows',JSON.stringify(nf))}
+const handleFollow=(username)=>{
+const isCurrentlyFollowing=follows[username]==='following'
+const nf={...follows,[username]:isCurrentlyFollowing?'follow':'following'}
+setFollows(nf)
+localStorage.setItem('uptown_follows',JSON.stringify(nf))
+// EVERY ONE GET FOLLOWED BY NEW PEOPLE - COUNT FOLLOWERS - BOOST ON FOR YOU
+const newCounts={...followCounts}
+newCounts[username]=(newCounts[username]||0)+(isCurrentlyFollowing?-1:1)
+if(newCounts[username]<0) newCounts[username]=0
+setFollowCounts(newCounts)
+localStorage.setItem('uptown_follow_counts',JSON.stringify(newCounts))
+if(!isCurrentlyFollowing){
+setBlockedMsg('✓ Following! — Now on For You page boost!')
+}else{
+setBlockedMsg('Unfollowed')
+}
+setShowBlocked(true)
+setTimeout(()=>setShowBlocked(false),1200)
+}
 const handleLike=(id)=>{const nl={...likes,[id]:!likes[id]}; setLikes(nl); localStorage.setItem('uptown_likes_v2',JSON.stringify(nl))}
 const handleFire=(id)=>{const nl={...likes,['fire_'+id]:!likes['fire_'+id]}; setLikes(nl); localStorage.setItem('uptown_likes_v2',JSON.stringify(nl))}
 const handleFavorite=(id)=>{const nf={...favorites,[id]:!favorites[id]}; setFavorites(nf); localStorage.setItem('uptown_fav_v3',JSON.stringify(nf)); setBlockedMsg(nf[id]?'★ Favorite':'★ Removed'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1000)}
@@ -224,9 +222,7 @@ setIsEditing(false); setBlockedMsg('✓ Account updated!'); setShowBlocked(true)
 }
 const handlePasteLink=async()=>{try{const t=await navigator.clipboard.readText(); if(t) setUniversalLink(t)}catch{}}
 
-// VERIFICATION FLOW
 const handleRequestVerification=(notifId)=>{
-// When user taps notification asking blue tick - automatically UPTOWN Official receives notification
 const newRequest={
 id:Date.now(),
 userEmail:user.email,
@@ -239,8 +235,6 @@ requestedAt:new Date().toISOString()
 const updatedReq=[newRequest,...verificationRequests]
 setVerificationRequests(updatedReq)
 localStorage.setItem('uptown_verification_requests',JSON.stringify(updatedReq))
-
-// Remove offer notification and add request sent notification
 const updatedNots=notifications.filter(n=>n.id!==notifId)
 const sentNotif={
 id:Date.now()+1,
@@ -256,8 +250,6 @@ read:false
 const finalNots=[sentNotif,...updatedNots]
 setNotifications(finalNots)
 localStorage.setItem('uptown_notifications_final_verified',JSON.stringify(finalNots))
-
-// Create notification for UPTOWN Official owner - stored separately
 const ownerNotif={
 id:Date.now()+2,
 type:'verification_request',
@@ -266,7 +258,7 @@ username:user.username,
 verified:false,
 time:'Just now',
 title:'🔵 Blue Tick Request',
-message:`${user.name} (${user.username}) requested blue tick verification — Tap Verify button to give blue tick!`,
+message:`${user.name} (${user.username}) requested blue tick — Tap Verify!`,
 read:false,
 requestId:newRequest.id,
 userEmail:user.email
@@ -275,21 +267,16 @@ const ownerNotifsKey='uptown_owner_notifications'
 let ownerNotifs=JSON.parse(localStorage.getItem(ownerNotifsKey)||'[]')
 ownerNotifs=[ownerNotif,...ownerNotifs]
 localStorage.setItem(ownerNotifsKey,JSON.stringify(ownerNotifs))
-
-setBlockedMsg('✓ Request sent to UPTOWN Official — Wait for verification!'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2000)
+setBlockedMsg('✓ Request sent to UPTOWN Official!'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2000)
 }
 
 const handleVerifyUser=(requestId, userEmail)=>{
-// When UPTOWN Official taps verified button - automatically person receives blue tick + congratulating notification
 let db=JSON.parse(localStorage.getItem('uptown_users_db')||'[]')
 const idx=db.findIndex(u=>u.email===userEmail)
 if(idx>=0){db[idx].verified=true; localStorage.setItem('uptown_users_db',JSON.stringify(db))}
-
 const updatedReq=verificationRequests.map(r=>r.id===requestId?{...r,status:'verified'}:r)
 setVerificationRequests(updatedReq)
 localStorage.setItem('uptown_verification_requests',JSON.stringify(updatedReq))
-
-// Create congratulating notification for that person - will be delivered next time they login
 const congratsNotif={
 id:Date.now(),
 type:'verified_congrats',
@@ -298,12 +285,10 @@ username:'@uptown',
 verified:true,
 time:'Just now',
 title:'🎉 Congratulations! You are Verified ✓',
-message:'Congratulations! You are now verified with blue tick ✓ — UPTOWN Official verified you! Your profile now has blue tick ✓',
+message:'Congratulations! You are now verified with blue tick ✓ — UPTOWN Official verified you!',
 read:false
 }
 localStorage.setItem('uptown_congrats_'+userEmail,JSON.stringify(congratsNotif))
-
-// If verifying own request (owner verifying themselves is not needed) - but if owner verifies and target is same device, update immediately
 if(user && user.email===userEmail){
 const updatedUser={...user,verified:true}
 setUser(updatedUser)
@@ -312,14 +297,11 @@ const finalNots=[congratsNotif,...notifications]
 setNotifications(finalNots)
 localStorage.setItem('uptown_notifications_final_verified',JSON.stringify(finalNots))
 }
-
-// Remove owner notification
 const ownerNotifsKey='uptown_owner_notifications'
 let ownerNotifs=JSON.parse(localStorage.getItem(ownerNotifsKey)||'[]')
 ownerNotifs=ownerNotifs.filter(n=>n.requestId!==requestId)
 localStorage.setItem(ownerNotifsKey,JSON.stringify(ownerNotifs))
-
-setBlockedMsg('✓ Verified! '+userEmail+' now has blue tick ✓ — Congratulating notification sent!'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2000)
+setBlockedMsg('✓ Verified! '+userEmail+' now has blue tick ✓'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2000)
 }
 
 const handleNotificationClick=(n)=>{
@@ -349,10 +331,28 @@ else if(universalLink){li=parseUniversalLink(universalLink); if(li){mu=universal
 else{setBlockedMsg('Upload file'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1200); return}
 }
 const views=Math.floor(Math.random()*5000)+100
-const np={id:Date.now(),user:user?.name||'UPTOWN Official',username:user?.username||'@user',verified:isOwner||user?.verified||false,caption:uploadCaption||'UPTOWN Official ✓',mediaUrl:mu,mediaType:mt,linkInfo:li,isMuzika:fm==='post_muzika',likes:0,fires:0,comments:0,views:views,postedBy:user?.email}
-const nposts=[np,...posts]; setPosts(nposts); localStorage.setItem('uptown_posts_final_verified_flow',JSON.stringify(nposts))
+// EVERY ONE CAN BE ON FOR YOU PAGE AS LONG AS HE POST NEW VIDEO
+const np={
+id:Date.now(),
+user:user?.name||'User',
+username:user?.username||'@user',
+verified:user?.verified||false,
+caption:uploadCaption||'New video ✓',
+mediaUrl:mu,
+mediaType:mt,
+linkInfo:li,
+isMuzika:fm==='post_muzika',
+likes:0,
+fires:0,
+comments:0,
+views:views,
+postedBy:user?.email,
+postedAt:Date.now(),
+followerBoost:followCounts[user?.username||'']||0
+}
+const nposts=[np,...posts]; setPosts(nposts); localStorage.setItem('uptown_posts_everyone_foryou',JSON.stringify(nposts))
 setUploadPreview(null); setUploadBase64(null); setUploadCaption(''); setUniversalLink(''); setShowUpload(false); setUploadMode(null)
-setBlockedMsg(fm==='post_muzika'?'✓ Posted in Muzika!':'✓ Uploaded!'); setShowBlocked(true); setTimeout(()=>{setShowBlocked(false); setPage(fm==='post_muzika'?'muzika':'foryou')},1000)
+setBlockedMsg(fm==='post_muzika'?'✓ Posted in Muzika — Only UPTOWN Official!':'✓ Posted on For You! — Everyone can see you now — Get followed!'); setShowBlocked(true); setTimeout(()=>{setShowBlocked(false); setPage(fm==='post_muzika'?'muzika':'foryou')},1200)
 }
 
 if(splash){
@@ -363,9 +363,18 @@ return(
 )
 }
 
-const forYouFeed=[...posts.filter(p=>!p.isMuzika),...officialVideos]
-const muzikaFeed=[...posts.filter(p=>p.isMuzika),...officialVideos]
-const myVideos=[...posts.filter(p=>p.postedBy===user?.email)]
+// EVERY ONE CAN BE ON FOR YOU PAGE AS LONG AS HE POST NEW VIDEO AND GET FOLLOWED
+// SORT: Newest first + follower boost
+const allForYouPosts=[...posts.filter(p=>!p.isMuzika)]
+const sortedForYou=allForYouPosts.sort((a,b)=>{
+const aScore=(a.followerBoost||followCounts[a.username||'']||0)*1000 + (a.postedAt||a.id||0)
+const bScore=(b.followerBoost||followCounts[b.username||'']||0)*1000 + (b.postedAt||b.id||0)
+return bScore - aScore
+})
+const forYouFeed=[...sortedForYou,...officialVideos]
+const muzikaFeed=[...posts.filter(p=>p.isMuzika),...officialVideos].sort((a,b)=>(b.postedAt||b.id)-(a.postedAt||a.id))
+const myVideos=[...posts.filter(p=>p.postedBy===user?.email)].sort((a,b)=>(b.postedAt||b.id)-(a.postedAt||a.id))
+
 const renderUniversal=(v)=>{
 const info=v.linkInfo || parseUniversalLink(v.mediaUrl)
 if(!info){
@@ -400,6 +409,10 @@ return <button key={t.key} onClick={()=>{Object.values(videoRefs.current).forEac
 
 {page==='foryou'&&(
 <div style={{flex:1,minHeight:0,overflowY:'auto',scrollSnapType:'y mandatory'}}>
+{/* HEADER INFO - EVERYONE ON FOR YOU */}
+<div style={{height:'32px',minHeight:'32px',background:'#0a0a0a',borderBottom:'1px solid #1a1a1a',display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',flexShrink:0}}>
+<span style={{fontSize:'11px',color:'#00D632',fontWeight:'700'}}>● Everyone can be on For You — Post new video + Get followed = Boost!</span>
+</div>
 {forYouFeed.map(v=>{
 const isFollowing=follows[v.username]==='following'
 const isPaused=pausedMap[v.id]
@@ -407,6 +420,8 @@ const isLiked=likes[v.id]
 const isFired=likes['fire_'+v.id]
 const isFav=favorites[v.id]
 const cCount=commentCounts[v.id]||v.comments||0
+const followerCount=followCounts[v.username]||v.followerBoost||0
+const isOwnVideo=v.postedBy===user?.email
 return(
 <div key={v.id} data-video-id={v.id} style={{width:'100%',height:'100%',scrollSnapAlign:'start',position:'relative',background:'#111',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
 <div style={{position:'absolute',inset:0,zIndex:1}} onClick={()=>handleTapVideo(v.id)}></div>
@@ -416,11 +431,11 @@ return(
 {isPaused&&<div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'rgba(0,0,0,0.55)',width:'72px',height:'72px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',zIndex:5,pointerEvents:'none'}}><div style={{width:0,height:0,borderLeft:'22px solid #fff',borderTop:'13px solid transparent',borderBottom:'13px solid transparent',marginLeft:'4px'}}></div></div>}
 <div style={{position:'absolute',right:'8px',top:'50%',transform:'translateY(-50%)',zIndex:3,display:'flex',flexDirection:'column',gap:'14px',alignItems:'center'}} onClick={e=>e.stopPropagation()}>
 <button onClick={()=>handleFollow(v.username)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'4px'}}>
-<div style={{width:'48px',height:'48px',borderRadius:'50%',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',position:'relative',border:'2px solid #fff'}}>
-<span style={{fontWeight:'900',fontSize:'11px'}}><span style={{color:'#FF0024'}}>UP</span><span style={{color:'#000'}}>TOWN</span></span>
+<div style={{width:'48px',height:'48px',borderRadius:'50%',background:v.isOfficial?'#fff':'#222',display:'flex',alignItems:'center',justifyContent:'center',position:'relative',border:'2px solid '+(v.isOfficial?'#fff':'#444'),overflow:'hidden'}}>
+{v.isOfficial?<span style={{fontWeight:'900',fontSize:'11px'}}><span style={{color:'#FF0024'}}>UP</span><span style={{color:'#000'}}>TOWN</span></span>:<span style={{fontWeight:'800',fontSize:'10px',color:'#fff'}}>{v.user?.slice(0,2).toUpperCase()}</span>}
 <div style={{position:'absolute',bottom:'-8px',left:'50%',transform:'translateX(-50%)',background:isFollowing?'#00D632':'#FF0024',color:'#fff',width:'18px',height:'18px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'11px',fontWeight:'900',border:'2px solid #000'}}>{isFollowing?'✓':'+'}</div>
 </div>
-<div style={{color:'#fff',fontSize:'11px',fontWeight:'600',marginTop:'4px'}}>Follow</div>
+<div style={{color:'#fff',fontSize:'11px',fontWeight:'600',marginTop:'4px',textAlign:'center'}}>{isFollowing?'Following':'Follow'}<div style={{fontSize:'9px',color:'#00D632'}}>{followerCount>0?followerCount+' followers':''}</div></div>
 </button>
 <button onClick={()=>handleLike(v.id)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#fff'}}>
 <div style={{fontSize:'24px'}}>{isLiked?<span style={{color:'#FF0024'}}>♥</span>:'♡'}</div>
@@ -444,7 +459,13 @@ return(
 </button>
 </div>
 <div style={{position:'absolute',left:'10px',right:'72px',bottom:'14px',zIndex:2,pointerEvents:'none'}}>
-<div style={{fontWeight:'700',fontSize:'14px',display:'flex',gap:'4px',alignItems:'center'}}>UPTOWN Official {v.verified&&<span style={{width:'14px',height:'14px',background:'#1D9BF0',borderRadius:'50%',display:'inline-flex',alignItems:'center',justifyContent:'center'}}><svg width="8" height="8" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>}</div>
+<div style={{fontWeight:'700',fontSize:'14px',display:'flex',gap:'4px',alignItems:'center',flexWrap:'wrap'}}>
+<span>{v.user}</span> {v.verified&&<span style={{width:'14px',height:'14px',background:'#1D9BF0',borderRadius:'50%',display:'inline-flex',alignItems:'center',justifyContent:'center'}}><svg width="8" height="8" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>}
+{followerCount>0&&<span style={{fontSize:'10px',background:'#00D632',color:'#000',padding:'2px 6px',borderRadius:'10px',fontWeight:'800'}}>{followerCount} followers = Boost on For You!</span>}
+{isOwnVideo&&<span style={{fontSize:'10px',background:'#FF0024',color:'#fff',padding:'2px 6px',borderRadius:'10px'}}>Your video — On For You!</span>}
+</div>
+<div style={{fontSize:'12px',marginTop:'4px',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden'}}>{v.caption}</div>
+<div style={{fontSize:'10px',color:'#888',marginTop:'4px'}}>@{v.username?.replace('@','')} • 👁️ {v.views||0} views • {v.isOfficial?'UPTOWN Official':'User video — Everyone on For You when post new + followed'}</div>
 </div>
 </div>
 )})}
@@ -454,7 +475,7 @@ return(
 {page==='muzika'&&(
 <div style={{flex:1,minHeight:0,display:'flex',flexDirection:'column',overflow:'hidden'}}>
 <div style={{height:'40px',minHeight:'40px',padding:'0 12px',background:'#0a0a0a',borderBottom:'1px solid #1a1a1a',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
-<div><div style={{fontWeight:'700',fontSize:'12px'}}>Muzika — Only UPTOWN Official posts</div><div style={{fontSize:'9px',color:isOwner?'#00D632':'#888'}}>{isOwner?'You can post — Others watch only':'Others watch only'}</div></div>
+<div><div style={{fontWeight:'700',fontSize:'12px'}}>Muzika — Only UPTOWN Official posts</div><div style={{fontSize:'9px',color:'#888'}}>Others watch only</div></div>
 <button onClick={()=>{if(!isOwner){setBlockedMsg('Muzika: Only UPTOWN Official can post — Others watch only ✓'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2000); return} setUploadMode(null); setShowUpload(true)}} style={{background:isOwner?'#FF0024':'#222',color:isOwner?'#fff':'#666',border:'none',padding:'6px 12px',borderRadius:'20px',fontSize:'11px',fontWeight:'700'}}>{isOwner?'+ Post':'+ Watch'}</button>
 </div>
 <div style={{flex:1,minHeight:0,overflowY:'auto',scrollSnapType:'y mandatory'}}>
@@ -478,20 +499,18 @@ return(
 
 {page==='inbox'&&(
 <div style={{flex:1,minHeight:0,display:'flex',flexDirection:'column',overflow:'hidden'}}>
-<div style={{height:'48px',minHeight:'48px',padding:'0 12px',borderBottom:'1px solid #1a1a1a',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}><div style={{fontWeight:'800',fontSize:'13px'}}>{isOwner?'Inbox — Verification Requests + Notifications':'Inbox — From UPTOWN Official only'}</div><div style={{background:'#FF0024',color:'#fff',padding:'3px 8px',borderRadius:'12px',fontSize:'10px'}}>{unread} new</div></div>
+<div style={{height:'48px',minHeight:'48px',padding:'0 12px',borderBottom:'1px solid #1a1a1a',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}><div style={{fontWeight:'800',fontSize:'13px'}}>{isOwner?'Inbox — Verification + Notifications':'Inbox — From UPTOWN Official'}</div><div style={{background:'#FF0024',color:'#fff',padding:'3px 8px',borderRadius:'12px',fontSize:'10px'}}>{unread} new</div></div>
 <div style={{flex:1,minHeight:0,overflowY:'auto',padding:'10px'}}>
-
-{/* FOR UPTOWN OFFICIAL - SHOW VERIFICATION REQUESTS WITH VERIFY BUTTON */}
 {isOwner&&ownerNotifs.length>0&&(
 <div style={{marginBottom:'16px'}}>
-<div style={{fontWeight:'800',fontSize:'13px',marginBottom:'8px',color:'#1D9BF0'}}>🔵 Blue Tick Requests — Tap Verify to give blue tick</div>
+<div style={{fontWeight:'800',fontSize:'13px',marginBottom:'8px',color:'#1D9BF0'}}>🔵 Blue Tick Requests</div>
 {ownerNotifs.filter(n=>n.type==='verification_request').map(n=>(
 <div key={n.id} style={{background:'#0a1a2a',border:'1px solid #1D9BF0',borderRadius:'12px',padding:'12px',marginBottom:'10px'}}>
 <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
 <div>
 <div style={{fontWeight:'700',fontSize:'12px'}}>{n.from} — {n.username}</div>
 <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>{n.message}</div>
-<div style={{fontSize:'10px',color:'#666',marginTop:'4px'}}>{n.time} • {n.userEmail}</div>
+<div style={{fontSize:'10px',color:'#666',marginTop:'4px'}}>{n.userEmail}</div>
 </div>
 <button onClick={()=>handleVerifyUser(n.requestId, n.userEmail)} style={{background:'#1D9BF0',color:'#fff',border:'none',padding:'10px 16px',borderRadius:'20px',fontWeight:'800',fontSize:'12px',flexShrink:0,marginLeft:'10px'}}>✓ Verify</button>
 </div>
@@ -499,19 +518,15 @@ return(
 ))}
 </div>
 )}
-
-{/* NORMAL NOTIFICATIONS */}
-<div style={{fontWeight:'700',fontSize:'12px',marginBottom:'8px',color:'#888'}}>{isOwner?'All Notifications':'Your Notifications — Tap blue tick offer to request'}</div>
+<div style={{fontWeight:'700',fontSize:'12px',marginBottom:'8px',color:'#888'}}>Notifications</div>
 {allNotifsForOwner.filter(n=>n.type!=='verification_request').map(n=>(
 <div key={n.id} onClick={()=>handleNotificationClick(n)} style={{background:n.type==='verification_offer'?'#1a2a0a':n.type==='verified_congrats'?'#0a2a1a':n.read?'#121212':'#1a1a1a',border:n.type==='verification_offer'?'1px solid #00D632':n.type==='verified_congrats'?'1px solid #1D9BF0':'1px solid #222',borderRadius:'12px',padding:'12px',marginBottom:'10px',cursor:'pointer'}}>
 <div style={{display:'flex',justifyContent:'space-between'}}><div style={{fontWeight:'700',fontSize:'11px',display:'flex',gap:'4px'}}><div style={{width:'20px',height:'20px',borderRadius:'50%',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'6px',fontWeight:'900'}}><span style={{color:'#FF0024'}}>UP</span><span style={{color:'#000'}}>TOWN</span></div>{n.from} {n.verified&&'✓'}</div><div style={{fontSize:'10px',color:'#666'}}>{n.time}</div></div>
 <div style={{fontSize:'12px',fontWeight:'700',marginTop:'6px',color:n.type==='verification_offer'?'#00D632':n.type==='verified_congrats'?'#1D9BF0':'#fff'}}>{n.title}</div>
-<div style={{fontSize:'11px',color:n.type==='verification_offer'?'#aaffaa':n.type==='verified_congrats'?'#88ccff':'#aaa',marginTop:'2px'}}>{n.message}</div>
+<div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>{n.message}</div>
 {n.type==='verification_offer'&&<div style={{marginTop:'8px',background:'#00D632',color:'#000',padding:'8px 12px',borderRadius:'20px',fontSize:'11px',fontWeight:'800',textAlign:'center'}}>Tap to Request Blue Tick ✓</div>}
-{n.type==='verified_congrats'&&<div style={{marginTop:'8px',background:'#1D9BF0',color:'#fff',padding:'8px 12px',borderRadius:'20px',fontSize:'11px',fontWeight:'800',textAlign:'center'}}>🎉 You are now Verified ✓</div>}
 </div>
 ))}
-{allNotifsForOwner.length===0&&<div style={{textAlign:'center',color:'#666',padding:'20px',fontSize:'12px'}}>No notifications</div>}
 </div>
 </div>
 )}
@@ -530,15 +545,14 @@ return(
 </label>
 </div>
 <div style={{flex:1}}>
-<div style={{fontWeight:'800',fontSize:'16px',display:'flex',gap:'6px',alignItems:'center'}}>{isOwner?'Katongole Rashid':editName||'Your Name'} {user?.verified&&<span style={{width:'16px',height:'16px',background:'#1D9BF0',borderRadius:'50%',display:'inline-flex',alignItems:'center',justifyContent:'center'}}><svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>} {isOwner&&<span style={{fontSize:'10px',color:'#1D9BF0',background:'#0a1a2a',padding:'2px 6px',borderRadius:'10px',border:'1px solid #1D9BF0'}}>Control</span>}</div>
-<div style={{fontSize:'12px',color:'#888'}}>{editUsername||'@user'} {isOwner&&<span style={{color:'#1D9BF0'}}>• komenierashid@gmail.com</span>} {user?.verified&&<span style={{color:'#1D9BF0'}}>• Verified ✓</span>}</div>
-<div style={{fontSize:'11px',color:'#aaa',marginTop:'4px'}}>{editBio||'Add bio — Tap Edit'}</div>
+<div style={{fontWeight:'800',fontSize:'16px',display:'flex',gap:'6px',alignItems:'center',flexWrap:'wrap'}}>{isOwner?'Katongole Rashid':editName||'Your Name'} {user?.verified&&<span style={{width:'16px',height:'16px',background:'#1D9BF0',borderRadius:'50%',display:'inline-flex',alignItems:'center',justifyContent:'center'}}><svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>} {followCounts[user?.username]&&<span style={{fontSize:'10px',background:'#00D632',color:'#000',padding:'2px 6px',borderRadius:'10px'}}>{followCounts[user?.username]} followers</span>}</div>
+<div style={{fontSize:'12px',color:'#888'}}>{editUsername||'@user'} {user?.verified&&'• Verified ✓'}</div>
+<div style={{fontSize:'11px',color:'#aaa',marginTop:'4px'}}>{editBio||'Add bio — Tap Edit'} • Everyone can be on For You when post + followed</div>
 </div>
 <button onClick={()=>setIsEditing(!isEditing)} style={{background:isEditing?'#fff':'#1a1a1a',color:isEditing?'#000':'#fff',border:'1px solid #333',padding:'8px 14px',borderRadius:'20px',fontSize:'12px',fontWeight:'700',flexShrink:0}}>{isEditing?'Close':'Edit'}</button>
 </div>
 {isEditing&&(
 <div style={{marginTop:'14px',background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'12px'}}>
-<div style={{fontWeight:'700',fontSize:'13px',marginBottom:'10px'}}>Everyone control his account</div>
 <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
 <input value={editName} onChange={e=>setEditName(e.target.value)} placeholder="Your Name" style={{width:'100%',background:'#000',border:'1px solid #333',borderRadius:'10px',padding:'10px',color:'#fff',fontSize:'13px'}}/>
 <input value={editUsername} onChange={e=>setEditUsername(e.target.value)} placeholder="@username" style={{width:'100%',background:'#000',border:'1px solid #333',borderRadius:'10px',padding:'10px',color:'#fff',fontSize:'13px'}}/>
@@ -548,17 +562,17 @@ return(
 </div>
 )}
 <div style={{display:'flex',gap:'12px',marginTop:'16px'}}>
-<div style={{flex:1,background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'10px',textAlign:'center'}}><div style={{fontWeight:'800',fontSize:'16px'}}>{myVideos.length}</div><div style={{fontSize:'10px',color:'#888'}}>Videos</div></div>
+<div style={{flex:1,background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'10px',textAlign:'center'}}><div style={{fontWeight:'800',fontSize:'16px'}}>{myVideos.length}</div><div style={{fontSize:'10px',color:'#888'}}>Videos — On For You</div></div>
+<div style={{flex:1,background:'#121212',border:'1px solid #00D632',borderRadius:'12px',padding:'10px',textAlign:'center'}}><div style={{fontWeight:'800',fontSize:'16px',color:'#00D632'}}>{followCounts[user?.username]||0}</div><div style={{fontSize:'10px',color:'#888'}}>Followers — Boost</div></div>
 <div style={{flex:1,background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'10px',textAlign:'center'}}><div style={{fontWeight:'800',fontSize:'16px'}}>{myVideos.reduce((s,v)=>s+(v.views||0),0).toLocaleString()}</div><div style={{fontSize:'10px',color:'#888'}}>Views</div></div>
-<div style={{flex:1,background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'10px',textAlign:'center'}}><div style={{fontWeight:'800',fontSize:'16px',display:'flex',alignItems:'center',justifyContent:'center',gap:'2px'}}>{user?.verified&&'✓'} {Object.keys(favorites).filter(k=>favorites[k]).length}</div><div style={{fontSize:'10px',color:'#888'}}>Favs</div></div>
 </div>
 </div>
 <div style={{padding:'12px'}}>
-<div style={{fontWeight:'800',fontSize:'14px',marginBottom:'10px'}}>Your Videos — Views</div>
+<div style={{fontWeight:'800',fontSize:'14px',marginBottom:'10px'}}>Your Videos — Everyone on For You when post + followed</div>
 {myVideos.length===0?(
 <div style={{background:'#121212',border:'1px dashed #333',borderRadius:'12px',padding:'20px',textAlign:'center'}}>
-<div style={{fontSize:'13px',fontWeight:'700'}}>No videos yet</div>
-<button onClick={()=>{setUploadMode(null); setShowUpload(true)}} style={{marginTop:'12px',background:'#FF0024',color:'#fff',border:'none',padding:'10px 16px',borderRadius:'20px',fontSize:'12px',fontWeight:'700'}}>+ Upload</button>
+<div style={{fontSize:'13px',fontWeight:'700'}}>No videos yet — Post new video to be on For You!</div>
+<button onClick={()=>{setUploadMode(null); setShowUpload(true)}} style={{marginTop:'12px',background:'#FF0024',color:'#fff',border:'none',padding:'10px 16px',borderRadius:'20px',fontSize:'12px',fontWeight:'700'}}>+ Post — Be on For You</button>
 </div>
 ):(
 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>
@@ -567,10 +581,11 @@ return(
 <div style={{height:'120px',background:'#000',position:'relative',overflow:'hidden'}}>
 {renderUniversal(v)}
 <div style={{position:'absolute',bottom:'4px',right:'4px',background:'rgba(0,0,0,0.8)',color:'#fff',fontSize:'9px',padding:'2px 6px',borderRadius:'8px'}}>👁️ {v.views||0}</div>
+<div style={{position:'absolute',top:'4px',left:'4px',background:'#00D632',color:'#000',fontSize:'8px',padding:'2px 6px',borderRadius:'8px',fontWeight:'700'}}>On For You!</div>
 </div>
 <div style={{padding:'8px'}}>
 <div style={{fontSize:'11px',fontWeight:'700',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{v.caption}</div>
-<div style={{display:'flex',justifyContent:'space-between',marginTop:'6px',fontSize:'10px',color:'#888'}}><div>👁️ {v.views||0}</div><div>♥ {v.likes||0}</div></div>
+<div style={{display:'flex',justifyContent:'space-between',marginTop:'6px',fontSize:'10px',color:'#888'}}><div>👁️ {v.views||0}</div><div>{followCounts[user?.username]||0} followers boost</div></div>
 </div>
 </div>
 ))}
@@ -580,7 +595,7 @@ return(
 </div>
 )}
 
-{page==='following'&&<div style={{flex:1,minHeight:0,padding:'16px',overflowY:'auto'}}>Following — Same</div>}
+{page==='following'&&<div style={{flex:1,minHeight:0,padding:'16px',overflowY:'auto'}}><div style={{fontWeight:'700',marginBottom:'12px'}}>Following — People you follow appear more on For You</div>{Object.keys(follows).filter(k=>follows[k]==='following').length===0?<div style={{color:'#666',fontSize:'13px'}}>No following yet — Follow people on For You to boost them!</div>:Object.keys(follows).filter(k=>follows[k]==='following').map(u=><div key={u} style={{background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'12px',marginBottom:'8px',display:'flex',justifyContent:'space-between',alignItems:'center'}}><div><div style={{fontWeight:'700',fontSize:'13px'}}>{u}</div><div style={{fontSize:'11px',color:'#00D632'}}>{followCounts[u]||1} followers — Boosted on For You</div></div><button onClick={()=>handleFollow(u)} style={{background:'#00D632',color:'#000',border:'none',padding:'6px 12px',borderRadius:'20px',fontSize:'11px',fontWeight:'700'}}>Following ✓</button></div>)}</div>}
 
 {showComments!==null&&(
 <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',zIndex:60,display:'flex',alignItems:'flex-end'}} onClick={()=>setShowComments(null)}>
@@ -609,9 +624,10 @@ return(
 {uploadMode===null&&(
 <>
 <div style={{width:'36px',height:'4px',background:'#333',borderRadius:'2px',margin:'0 auto 12px'}}></div>
-<div style={{fontWeight:'800',textAlign:'center',fontSize:'16px',marginBottom:'12px'}}>What do you want to do?</div>
+<div style={{fontWeight:'800',textAlign:'center',fontSize:'16px',marginBottom:'6px'}}>What do you want to do?</div>
+<div style={{fontSize:'11px',color:'#00D632',textAlign:'center',marginBottom:'12px',fontWeight:'600'}}>Everyone can be on For You — Post new video + Get followed = Boost!</div>
 <button onClick={()=>setUploadMode('upload_video')} style={{width:'100%',background:'#fff',color:'#000',border:'none',padding:'14px',borderRadius:'14px',fontWeight:'800',fontSize:'14px',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',marginBottom:'10px'}}>
-<span>📤</span> Upload Videos — Any user — For You
+<span>📤</span> Upload Videos — For You — Everyone on For You!
 </button>
 {isOwner?(
 <button onClick={()=>setUploadMode('post_muzika')} style={{width:'100%',background:'#1a1a1a',border:'1px solid #00D632',color:'#fff',padding:'14px',borderRadius:'14px',fontWeight:'800',fontSize:'14px',display:'flex',alignItems:'center',justifyContent:'center',gap:'8px',marginBottom:'10px'}}>
@@ -619,8 +635,8 @@ return(
 </button>
 ):(
 <div style={{width:'100%',background:'#0a0a0a',border:'1px solid #222',padding:'14px',borderRadius:'14px',marginBottom:'10px',textAlign:'center'}}>
-<div style={{fontSize:'12px',fontWeight:'700',color:'#888'}}>🎬 Post Videos — Muzika</div>
-<div style={{fontSize:'11px',color:'#FF0024',marginTop:'4px'}}>Only UPTOWN Official can post — Others watch only ✓</div>
+<div style={{fontSize:'12px',fontWeight:'700',color:'#888'}}>🎬 Muzika — Only UPTOWN Official posts</div>
+<div style={{fontSize:'11px',color:'#888',marginTop:'4px'}}>Others watch only</div>
 </div>
 )}
 <button onClick={()=>{setShowUpload(false); setUploadMode(null)}} style={{width:'100%',background:'transparent',color:'#666',border:'none',padding:'10px',marginTop:'6px',fontSize:'12px'}}>Cancel</button>
@@ -628,11 +644,12 @@ return(
 )}
 {uploadMode==='upload_video'&&(
 <>
-<div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'12px'}}><button onClick={()=>setUploadMode(null)} style={{background:'#1a1a1a',border:'none',color:'#fff',width:'28px',height:'28px',borderRadius:'50%'}}>‹</button><div style={{fontWeight:'800',fontSize:'14px'}}>📤 Upload Videos — For You</div></div>
+<div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'12px'}}><button onClick={()=>setUploadMode(null)} style={{background:'#1a1a1a',border:'none',color:'#fff',width:'28px',height:'28px',borderRadius:'50%'}}>‹</button><div style={{fontWeight:'800',fontSize:'14px'}}>📤 Upload Videos — Be on For You!</div></div>
+<div style={{background:'#0a2a0a',border:'1px solid #00D632',borderRadius:'10px',padding:'8px',marginBottom:'10px'}}><div style={{fontSize:'11px',color:'#00D632',fontWeight:'700'}}>✓ Everyone can be on For You page as long as he post new video and get followed by new people!</div><div style={{fontSize:'10px',color:'#aaa',marginTop:'4px'}}>Post video → Appears on For You → Get followed → Boost to top!</div></div>
 <input type="file" accept="video/*" onChange={handleFileChange} style={{width:'100%',background:'#1a1a1a',border:'1px solid #333',borderRadius:'12px',padding:'12px',color:'#fff',boxSizing:'border-box'}}/>
 {uploadPreview&&<div style={{marginTop:'10px'}}><video src={uploadPreview.url} style={{width:'100%',maxHeight:'200px',borderRadius:'12px',objectFit:'contain'}} autoPlay loop playsInline/></div>}
-<input value={uploadCaption} onChange={e=>setUploadCaption(e.target.value)} placeholder="Caption" style={{marginTop:'10px',width:'100%',background:'#1a1a1a',border:'1px solid #333',borderRadius:'12px',padding:'10px',color:'#fff',boxSizing:'border-box'}}/>
-<button onClick={()=>handlePostNow('upload_video')} style={{marginTop:'12px',width:'100%',background:'#fff',color:'#000',border:'none',padding:'12px',borderRadius:'12px',fontWeight:'900'}}>Upload Videos ✓ — Any user</button>
+<input value={uploadCaption} onChange={e=>setUploadCaption(e.target.value)} placeholder="Caption — Post to be on For You!" style={{marginTop:'10px',width:'100%',background:'#1a1a1a',border:'1px solid #333',borderRadius:'12px',padding:'10px',color:'#fff',boxSizing:'border-box'}}/>
+<button onClick={()=>handlePostNow('upload_video')} style={{marginTop:'12px',width:'100%',background:'#fff',color:'#000',border:'none',padding:'12px',borderRadius:'12px',fontWeight:'900'}}>Post on For You ✓ — Everyone can be on For You!</button>
 </>
 )}
 {uploadMode==='post_muzika'&&(
