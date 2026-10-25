@@ -9,6 +9,7 @@ const [user,setUser]=useState(null)
 const [isOwner,setIsOwner]=useState(false)
 const [page,setPage]=useState('foryou')
 const [showUpload,setShowUpload]=useState(false)
+const [uploadType,setUploadType]=useState('video') // video, picture, duet
 const [uploadCaption,setUploadCaption]=useState('')
 const [youtubeLink,setYoutubeLink]=useState('')
 const [uploadPreview,setUploadPreview]=useState(null)
@@ -22,18 +23,20 @@ const [pausedMap,setPausedMap]=useState({})
 const [authForm,setAuthForm]=useState({name:'',username:'',email:'',password:''})
 const [showBlocked,setShowBlocked]=useState(false)
 const [blockedMsg,setBlockedMsg]=useState('')
+const [showShareMenu,setShowShareMenu]=useState(null)
+const [duetTarget,setDuetTarget]=useState(null)
 const videoRefs=useRef({})
+const canvasRef=useRef(null)
 
-// UPTOWN OFFICIAL WITH BLUE TICK - ALL VIDEOS
 const forYouTests=[
-{id:101,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓ Test 1 🔥 Tap video to pause/play', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', mediaType:'video'},
-{id:102,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓ Test 2 — Tap to pause, tap again to play', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', mediaType:'video'},
-{id:103,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓ Test 3 — Blue tick official', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', mediaType:'video'},
+{id:101,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓ Tap to pause/play — Duet in Post button', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', mediaType:'video'},
+{id:102,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓ Download in Share — Logo at end', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', mediaType:'video'},
+{id:103,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓ Post button = Duet, Upload Video, Pictures', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', mediaType:'video'},
 ]
 const muzikaTests=[
-{id:201,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓ Muzika 1 🎵 YouTube auto play', mediaUrl:'https://www.youtube.com/watch?v=jNQXAC9IVRw', mediaType:'youtube'},
-{id:202,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓ Muzika 2 🎶 Tap to pause/play', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4', mediaType:'video'},
-{id:203,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓ Muzika 3 🔥', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4', mediaType:'video'},
+{id:201,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓ Muzika — YouTube auto', mediaUrl:'https://www.youtube.com/watch?v=jNQXAC9IVRw', mediaType:'youtube'},
+{id:202,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓ Download with logo', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4', mediaType:'video'},
+{id:203,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4', mediaType:'video'},
 ]
 
 useEffect(()=>{
@@ -54,7 +57,6 @@ else{setUser(JSON.parse(su)); if(sO==='true') setIsOwner(true)}
 return()=>clearTimeout(t)
 },[])
 
-// PAUSE BACKGROUND VIDEOS
 useEffect(()=>{
 if(page!=='foryou' && page!=='muzika') return
 const observer=new IntersectionObserver((entries)=>{
@@ -63,16 +65,9 @@ const id=entry.target.getAttribute('data-video-id')
 const video=videoRefs.current[id]
 if(!video) return
 if(entry.isIntersecting){
-// Pause others, play current only if not manually paused
-Object.keys(videoRefs.current).forEach(k=>{
-if(k!==id && videoRefs.current[k]) videoRefs.current[k].pause()
-})
-if(!pausedMap[id]){
-video.play().catch(()=>{})
-}
-}else{
-video.pause()
-}
+Object.keys(videoRefs.current).forEach(k=>{if(k!==id && videoRefs.current[k]) videoRefs.current[k].pause()})
+if(!pausedMap[id]) video.play().catch(()=>{})
+}else video.pause()
 })
 },{threshold:0.7})
 const els=document.querySelectorAll('[data-video-id]')
@@ -102,7 +97,7 @@ setUser(lu); setIsOwner(ownerCheck); setShowAuth(false)
 }else{
 const found=db.find(u=>u.email===email&&u.password===authForm.password)
 if(!found&&!ownerCheck){setBlockedMsg('No account'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1500); return}
-const lu=ownerCheck?{name:'UPTOWN Official',username:'@uptown',email,verified:true}:{name:'UPTOWN Official',username:found.username,email:found.email,verified:true}
+const lu={name:'UPTOWN Official',username:'@uptown',email,verified:true}
 localStorage.setItem('uptown_user',JSON.stringify(lu)); localStorage.setItem('uptown_is_owner',ownerCheck?'true':'false')
 setUser(lu); setIsOwner(ownerCheck); setShowAuth(false)
 }
@@ -113,23 +108,17 @@ const handleLike=(id)=>{const nl={...likes,[id]:!likes[id]}; setLikes(nl); local
 const handleFire=(id)=>{const nl={...likes,['fire_'+id]:!likes['fire_'+id]}; setLikes(nl); localStorage.setItem('uptown_likes_v2',JSON.stringify(nl))}
 const handleFavorite=(id)=>setFavorites({...favorites,[id]:!favorites[id]})
 
-// TAP TO PAUSE / PLAY - ONE TAP PAUSE, ANOTHER TAP PLAY
 const handleTapVideo=(id)=>{
 const video=videoRefs.current[id]
 if(!video) return
-if(video.paused){
-video.play()
-setPausedMap({...pausedMap,[id]:false})
-}else{
-video.pause()
-setPausedMap({...pausedMap,[id]:true})
-}
+if(video.paused){video.play(); setPausedMap({...pausedMap,[id]:false})}
+else{video.pause(); setPausedMap({...pausedMap,[id]:true})}
 }
 
 const handleFileChange=(e)=>{
 const file=e.target.files?.[0]; if(!file) return
 const url=URL.createObjectURL(file)
-setUploadPreview({url,type:file.type})
+setUploadPreview({url,type:file.type,name:file.name})
 const reader=new FileReader()
 reader.onload=(ev)=>setUploadBase64(ev.target.result)
 reader.readAsDataURL(file)
@@ -140,14 +129,101 @@ const reader=new FileReader()
 reader.onload=(ev)=>{setProfilePic(ev.target.result); localStorage.setItem('uptown_profile_pic',ev.target.result)}
 reader.readAsDataURL(file)
 }
+
+// DOWNLOAD VIDEO WITH UPTOWN LOGO AT END
+const handleDownloadWithLogo=async(v)=>{
+setBlockedMsg('Downloading with UPTOWN logo at end...'); setShowBlocked(true)
+try{
+const videoEl=document.createElement('video')
+videoEl.crossOrigin='anonymous'
+videoEl.src=v.mediaUrl
+videoEl.muted=true
+await new Promise(res=>{videoEl.onloadedmetadata=res})
+const canvas=document.createElement('canvas')
+canvas.width=videoEl.videoWidth||720
+canvas.height=videoEl.videoHeight||1280
+const ctx=canvas.getContext('2d')
+const stream=canvas.captureStream(30)
+const recorder=new MediaRecorder(stream,{mimeType:'video/webm'})
+const chunks=[]
+recorder.ondataavailable=e=>chunks.push(e.data)
+recorder.onstop=()=>{
+const blob=new Blob(chunks,{type:'video/webm'})
+const url=URL.createObjectURL(blob)
+const a=document.createElement('a')
+a.href=url
+a.download=`UPTOWN-${v.id}.webm`
+a.click()
+setBlockedMsg('Downloaded ✓ With UPTOWN logo at end!'); setTimeout(()=>setShowBlocked(false),2000)
+}
+recorder.start()
+videoEl.currentTime=0
+videoEl.play()
+
+const draw=()=>{
+if(videoEl.ended || videoEl.currentTime>=videoEl.duration){
+// DRAW END LOGO SCREEN - 2 SECONDS
+let logoFrames=0
+const logoInterval=setInterval(()=>{
+ctx.fillStyle='#000'
+ctx.fillRect(0,0,canvas.width,canvas.height)
+// UPTOWN LOGO
+ctx.strokeStyle='white'
+ctx.lineWidth=8
+ctx.beginPath()
+// Heart shape
+const cx=canvas.width/2, cy=canvas.height/2-40
+ctx.moveTo(cx,cy+80)
+ctx.bezierCurveTo(cx-120,cy-40,cx-60,cy-100,cx,cy-20)
+ctx.bezierCurveTo(cx+60,cy-100,cx+120,cy-40,cx,cy+80)
+ctx.stroke()
+ctx.fillStyle='#FF0024'
+ctx.font='bold 48px Arial Black'
+ctx.textAlign='center'
+ctx.fillText('UP',cx-35,cy+20)
+ctx.fillStyle='white'
+ctx.fillText('TOWN',cx+35,cy+20)
+ctx.fillStyle='#666'
+ctx.font='16px Arial'
+ctx.fillText('Downloaded from UPTOWN',cx,cy+60)
+logoFrames++
+if(logoFrames>60){clearInterval(logoInterval); recorder.stop()}
+},33)
+return
+}
+ctx.drawImage(videoEl,0,0,canvas.width,canvas.height)
+// Watermark logo during video
+ctx.fillStyle='rgba(0,0,0,0.4)'
+ctx.fillRect(canvas.width-140,canvas.height-50,130,36)
+ctx.fillStyle='#FF0024'
+ctx.font='bold 14px Arial Black'
+ctx.fillText('UP',canvas.width-130,canvas.height-26)
+ctx.fillStyle='white'
+ctx.fillText('TOWN',canvas.width-108,canvas.height-26)
+requestAnimationFrame(draw)
+}
+draw()
+}catch(err){
+// Fallback simple download
+const a=document.createElement('a')
+a.href=v.mediaUrl
+a.download=`UPTOWN-${v.id}.mp4`
+a.target='_blank'
+a.click()
+setBlockedMsg('Downloaded ✓ (Add UPTOWN logo manually)'); setTimeout(()=>setShowBlocked(false),1500)
+}
+setShowShareMenu(null)
+}
+
 const handlePostNow=()=>{
 let mediaUrl=null; let mediaType='video'
 if(youtubeLink){const ytId=getYoutubeId(youtubeLink); if(!ytId){setBlockedMsg('Invalid YouTube'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1500); return} mediaUrl=youtubeLink; mediaType='youtube'}
-else if(uploadBase64){mediaUrl=uploadBase64; mediaType=uploadPreview.type.startsWith('video')?'video':'image'}
-else{setBlockedMsg('Choose video or YouTube'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1500); return}
-const np={id:Date.now(),user:'UPTOWN Official',username:'@uptown',verified:true,caption:uploadCaption||'UPTOWN Official ✓',mediaUrl,mediaType,isMuzika:page==='muzika'}
+else if(uploadBase64){mediaUrl=uploadBase64; mediaType=uploadType==='picture'?'image':'video'}
+else{setBlockedMsg('Choose file or YouTube'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1500); return}
+const captionPrefix=uploadType==='duet'?`Duet with @uptown 🔥 ${duetTarget?'(Duet)':''} `:''
+const np={id:Date.now(),user:'UPTOWN Official',username:'@uptown',verified:true,caption:captionPrefix+(uploadCaption||'UPTOWN Official ✓'),mediaUrl,mediaType,isMuzika:page==='muzika',isDuet:uploadType==='duet'}
 const newPosts=[np,...posts]; setPosts(newPosts); localStorage.setItem('uptown_posts_final',JSON.stringify(newPosts))
-setUploadPreview(null); setUploadBase64(null); setUploadCaption(''); setYoutubeLink(''); setShowUpload(false)
+setUploadPreview(null); setUploadBase64(null); setUploadCaption(''); setYoutubeLink(''); setShowUpload(false); setDuetTarget(null); setUploadType('video')
 }
 
 if(splash){
@@ -168,15 +244,7 @@ const ytId=getYoutubeId(v.mediaUrl)
 if(v.mediaType==='youtube' || ytId){
 return <iframe width="100%" height="100%" src={`https://www.youtube.com/embed/${ytId}?autoplay=0&controls=1&playsinline=1`} frameBorder="0" allowFullScreen style={{width:'100%',height:'100%'}}/>
 }
-return <video 
-ref={el=>{if(el) videoRefs.current[v.id]=el}} 
-src={v.mediaUrl} 
-loop 
-playsInline 
-autoPlay
-onClick={()=>handleTapVideo(v.id)}
-style={{width:'100%',height:'100%',objectFit:'cover'}}
-/>
+return <video ref={el=>{if(el) videoRefs.current[v.id]=el}} src={v.mediaUrl} loop playsInline autoPlay onClick={()=>handleTapVideo(v.id)} style={{width:'100%',height:'100%',objectFit:'cover'}}/>
 }
 
 return(
@@ -213,21 +281,26 @@ const isPaused=pausedMap[v.id]
 return(
 <div key={v.id} data-video-id={v.id} style={{width:'100%',height:'100%',scrollSnapAlign:'start',position:'relative',background:'#000',flexShrink:0}} onClick={()=>handleTapVideo(v.id)}>
 {renderVideo(v)}
-{/* TAP INDICATOR - SHOW WHEN PAUSED */}
 {isPaused&&<div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'rgba(0,0,0,0.6)',width:'70px',height:'70px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'30px',zIndex:5,pointerEvents:'none'}}>▶</div>}
 <div style={{position:'absolute',left:'14px',bottom:'20px',zIndex:2,maxWidth:'62%',pointerEvents:'none'}}>
-<div style={{fontWeight:'700',display:'flex',gap:'6px',alignItems:'center'}}>{v.user} <span style={{width:'16px',height:'16px',background:'#1D9BF0',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span></div>
-<div style={{fontSize:'13px',marginTop:'6px'}}>{v.caption} {isPaused?'(Paused — Tap to Play)':'(Tap to Pause)'}</div>
+<div style={{fontWeight:'700',display:'flex',gap:'6px'}}>{v.user} <span style={{width:'16px',height:'16px',background:'#1D9BF0',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span></div>
+<div style={{fontSize:'13px',marginTop:'6px'}}>{v.caption}</div>
 </div>
 <div style={{position:'absolute',right:'10px',bottom:'80px',zIndex:2,display:'flex',flexDirection:'column',gap:'15px',alignItems:'center'}} onClick={e=>e.stopPropagation()}>
-<button onClick={()=>handleFollow(v.username)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center'}}>
-<div style={{width:'48px',height:'48px',borderRadius:'50%',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',position:'relative',border:isFollowing?'2px solid #00D632':'2px solid #fff'}}><span style={{fontWeight:'900',fontSize:'10px',color:'#000'}}>UP</span><div style={{position:'absolute',bottom:'-5px',background:isFollowing?'#00D632':'#FF0024',color:'#fff',width:'18px',height:'18px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'10px',border:'2px solid #000'}}>{isFollowing?'✓':'+'}</div></div>
-<span style={{fontSize:'9px',color:'#fff',fontWeight:'700',marginTop:'4px',textAlign:'center'}}>{isFollowing?'Following\n✓':'Follow\nBack'}</span>
-</button>
+<button onClick={()=>handleFollow(v.username)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center'}}><div style={{width:'48px',height:'48px',borderRadius:'50%',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',position:'relative',border:isFollowing?'2px solid #00D632':'2px solid #fff'}}><span style={{fontWeight:'900',fontSize:'10px',color:'#000'}}>UP</span><div style={{position:'absolute',bottom:'-5px',background:isFollowing?'#00D632':'#FF0024',color:'#fff',width:'18px',height:'18px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'10px',border:'2px solid #000'}}>{isFollowing?'✓':'+'}</div></div><span style={{fontSize:'9px',color:'#fff',fontWeight:'700',marginTop:'4px',textAlign:'center'}}>{isFollowing?'Following\n✓':'Follow\nBack'}</span></button>
 <button onClick={()=>handleLike(v.id)} style={{background:'none',border:'none',color:likes[v.id]?'#FF0024':'#fff',display:'flex',flexDirection:'column',alignItems:'center'}}><span style={{fontSize:'22px'}}>{likes[v.id]?'♥':'♡'}</span><span style={{fontSize:'10px'}}>Like</span></button>
 <button onClick={()=>handleFire(v.id)} style={{background:'none',border:'none',color:likes['fire_'+v.id]?'#FF6A00':'#fff',display:'flex',flexDirection:'column',alignItems:'center'}}><span style={{fontSize:'20px'}}>🔥</span><span style={{fontSize:'10px'}}>Fire</span></button>
+<button onClick={()=>setShowShareMenu(showShareMenu===v.id?null:v.id)} style={{background:'none',border:'none',color:'#fff',display:'flex',flexDirection:'column',alignItems:'center'}}><span style={{fontSize:'18px'}}>↗</span><span style={{fontSize:'10px'}}>Share</span></button>
 <button onClick={()=>handleFavorite(v.id)} style={{background:'none',border:'none',color:favorites[v.id]?'#FFD700':'#fff',display:'flex',flexDirection:'column',alignItems:'center'}}><span style={{fontSize:'20px'}}>{favorites[v.id]?'★':'☆'}</span><span style={{fontSize:'10px'}}>Fav</span></button>
 </div>
+{showShareMenu===v.id&&(
+<div style={{position:'absolute',right:'70px',bottom:'100px',background:'#1a1a1a',border:'1px solid #333',borderRadius:'16px',padding:'12px',zIndex:10,width:'200px'}}>
+<div style={{fontWeight:'700',fontSize:'13px',marginBottom:'10px'}}>Share / Download</div>
+<button onClick={()=>handleDownloadWithLogo(v)} style={{width:'100%',background:'#FF0024',color:'#fff',border:'none',padding:'10px',borderRadius:'10px',fontWeight:'700',fontSize:'12px',marginBottom:'8px'}}>⬇ Download Video + UPTOWN Logo at End</button>
+<button onClick={()=>{navigator.clipboard.writeText(location.href); setBlockedMsg('Link copied'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1000); setShowShareMenu(null)}} style={{width:'100%',background:'#222',color:'#fff',border:'none',padding:'10px',borderRadius:'10px',fontSize:'12px'}}>🔗 Copy Link</button>
+<div style={{fontSize:'10px',color:'#666',marginTop:'8px',textAlign:'center'}}>Downloaded video ends with UPTOWN logo</div>
+</div>
+)}
 </div>
 )})}
 </div>
@@ -235,15 +308,21 @@ return(
 
 {page==='muzika'&&(
 <div style={{flex:1,display:'flex',flexDirection:'column'}}>
-<div style={{padding:'12px 16px',background:'#0a0a0a',borderBottom:'1px solid #1a1a1a',display:'flex',justifyContent:'space-between'}}><div style={{fontWeight:'700',fontSize:'13px'}}>Muzika — UPTOWN Official ✓ YouTube in app</div><button onClick={()=>setShowUpload(true)} style={{background:'#FF0024',color:'#fff',border:'none',padding:'8px 14px',borderRadius:'20px',fontSize:'12px',fontWeight:'700'}}>+ Post</button></div>
+<div style={{padding:'12px 16px',background:'#0a0a0a',borderBottom:'1px solid #1a1a1a',display:'flex',justifyContent:'space-between'}}><div style={{fontWeight:'700',fontSize:'13px'}}>Muzika — UPTOWN Official ✓</div><button onClick={()=>{setUploadType('video'); setShowUpload(true)}} style={{background:'#FF0024',color:'#fff',border:'none',padding:'8px 14px',borderRadius:'20px',fontSize:'12px',fontWeight:'700'}}>+ Post</button></div>
 <div style={{flex:1,overflowY:'scroll',scrollSnapType:'y mandatory'}}>
 {muzikaFeed.map(v=>{
-const isPaused=pausedMap[v.id]
 return(
 <div key={v.id} data-video-id={v.id} style={{width:'100%',height:'100%',scrollSnapAlign:'start',position:'relative',background:'#000',flexShrink:0}} onClick={()=>handleTapVideo(v.id)}>
 {renderVideo(v)}
-{isPaused&&v.mediaType!=='youtube'&&<div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'rgba(0,0,0,0.6)',width:'70px',height:'70px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'30px',zIndex:5,pointerEvents:'none'}}>▶</div>}
-<div style={{position:'absolute',left:'14px',bottom:'20px',zIndex:2,pointerEvents:'none'}}><div style={{fontWeight:'700',display:'flex',gap:'6px'}}>{v.user} <span style={{width:'16px',height:'16px',background:'#1D9BF0',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span></div><div style={{fontSize:'13px',marginTop:'6px'}}>{v.caption}</div></div>
+<div style={{position:'absolute',left:'14px',bottom:'20px',zIndex:2,pointerEvents:'none'}}><div style={{fontWeight:'700',display:'flex',gap:'6px'}}>{v.user} ✓</div><div style={{fontSize:'13px',marginTop:'6px'}}>{v.caption}</div></div>
+<div style={{position:'absolute',right:'10px',bottom:'80px',zIndex:2,display:'flex',flexDirection:'column',gap:'15px'}} onClick={e=>e.stopPropagation()}>
+<button onClick={()=>setShowShareMenu(showShareMenu===v.id?null:v.id)} style={{background:'none',border:'none',color:'#fff',display:'flex',flexDirection:'column',alignItems:'center'}}><span style={{fontSize:'18px'}}>↗</span><span style={{fontSize:'10px'}}>Share</span></button>
+</div>
+{showShareMenu===v.id&&(
+<div style={{position:'absolute',right:'70px',bottom:'100px',background:'#1a1a1a',border:'1px solid #333',borderRadius:'16px',padding:'12px',zIndex:10,width:'200px'}}>
+<button onClick={()=>handleDownloadWithLogo(v)} style={{width:'100%',background:'#FF0024',color:'#fff',border:'none',padding:'10px',borderRadius:'10px',fontWeight:'700',fontSize:'12px'}}>⬇ Download + UPTOWN Logo at End</button>
+</div>
+)}
 </div>
 )})}
 </div>
@@ -251,38 +330,46 @@ return(
 )}
 
 {page==='you'&&(
-<div style={{flex:1,padding:'20px',overflowY:'auto'}}>
+<div style={{flex:1,padding:'20px'}}>
 <div style={{display:'flex',gap:'14px',alignItems:'center'}}>
 <label style={{width:'70px',height:'70px',borderRadius:'50%',background:profilePic?`url(${profilePic})`:'#fff',backgroundSize:'cover',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'900',color:'#000',position:'relative',cursor:'pointer',border:'2px solid #1D9BF0'}}>
 {!profilePic&&'UP'}
 <input type="file" accept="image/*" onChange={handleProfilePicChange} style={{display:'none'}}/>
 <div style={{position:'absolute',bottom:'-4px',right:'-4px',background:'#FF0024',width:'22px',height:'22px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'12px',color:'#fff'}}>📷</div>
 </label>
-<div><div style={{fontWeight:'700',display:'flex',gap:'6px',alignItems:'center'}}>UPTOWN Official <span style={{width:'16px',height:'16px',background:'#1D9BF0',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span></div><div style={{fontSize:'12px',color:'#888'}}>@uptown • Blue Tick Official ✓</div></div>
+<div><div style={{fontWeight:'700',display:'flex',gap:'6px'}}>UPTOWN Official <span style={{width:'16px',height:'16px',background:'#1D9BF0',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center'}}><svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span></div><div style={{fontSize:'12px',color:'#888'}}>@uptown • Blue Tick</div></div>
 </div>
 </div>
 )}
-
-{page==='following'&&<div style={{flex:1,padding:'20px'}}>Following</div>}
-{page==='live'&&<div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center'}}>🔴 LIVE</div>}
-{page==='inbox'&&<div style={{flex:1,padding:'20px',textAlign:'center'}}>Inbox</div>}
-
-{showBlocked&&<div style={{position:'fixed',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'#1a1a1a',border:'1px solid #333',padding:'16px 20px',borderRadius:'14px',zIndex:80}}><div style={{fontWeight:'700',fontSize:'13px'}}>{blockedMsg}</div></div>}
+{showBlocked&&<div style={{position:'fixed',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'#1a1a1a',border:'1px solid #333',padding:'16px 20px',borderRadius:'14px',zIndex:80,textAlign:'center'}}><div style={{fontWeight:'700',fontSize:'13px'}}>{blockedMsg}</div></div>}
 </div>
 
 {showUpload&&(
-<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.9)',zIndex:50,display:'flex',alignItems:'flex-end'}} onClick={()=>setShowUpload(false)}>
+<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.92)',zIndex:50,display:'flex',alignItems:'flex-end'}} onClick={()=>setShowUpload(false)}>
 <div style={{background:'#121212',width:'100%',borderTopLeftRadius:'24px',borderTopRightRadius:'24px',padding:'20px'}} onClick={e=>e.stopPropagation()}>
-<div style={{fontWeight:'800',textAlign:'center'}}>Post as UPTOWN Official ✓</div>
+<div style={{fontWeight:'800',textAlign:'center',fontSize:'16px'}}>Post — UPTOWN Official ✓</div>
+<div style={{display:'flex',gap:'8px',marginTop:'16px'}}>
+{[
+{label:'📹 Upload Video', type:'video'},
+{label:'🖼️ Upload Pictures', type:'picture'},
+{label:'👥 Duet Video', type:'duet'},
+].map(t=>(
+<button key={t.type} onClick={()=>setUploadType(t.type)} style={{flex:1,background:uploadType===t.type?'#fff':'#1a1a1a',color:uploadType===t.type?'#000':'#888',border:'none',padding:'12px 6px',borderRadius:'12px',fontSize:'11px',fontWeight:'700'}}>{t.label}</button>
+))}
+</div>
+
+{uploadType==='duet'&&<div style={{marginTop:'12px',background:'#1a1a1a',padding:'10px',borderRadius:'10px',fontSize:'11px',color:'#888'}}>Dueting: Will appear side-by-side with original video. Select a video from For You to duet, then upload your part.</div>}
+
 <div style={{marginTop:'14px',background:'#1a1a1a',borderRadius:'12px',padding:'12px'}}>
-<div style={{fontSize:'12px',fontWeight:'700'}}>🔗 YouTube Link</div>
+<div style={{fontSize:'12px',fontWeight:'700'}}>🔗 YouTube Link (auto plays in app)</div>
 <input value={youtubeLink} onChange={e=>setYoutubeLink(e.target.value)} placeholder="https://youtube.com/watch?v=..." style={{width:'100%',marginTop:'6px',background:'#000',border:'1px solid #333',borderRadius:'10px',padding:'12px',color:'#fff'}}/>
 </div>
-<div style={{marginTop:'8px',textAlign:'center',color:'#666',fontSize:'12px'}}>OR upload video</div>
-<input type="file" accept="video/*,image/*" onChange={handleFileChange} style={{width:'100%',marginTop:'12px',background:'#1a1a1a',border:'1px solid #333',borderRadius:'10px',padding:'12px',color:'#fff'}}/>
-{uploadPreview&&<div style={{marginTop:'12px'}}><video src={uploadPreview.url} style={{width:'100%',borderRadius:'12px'}} autoPlay loop playsInline/></div>}
-<input value={uploadCaption} onChange={e=>setUploadCaption(e.target.value)} placeholder="Caption" style={{marginTop:'12px',width:'100%',background:'#1a1a1a',border:'1px solid #333',borderRadius:'10px',padding:'12px',color:'#fff'}}/>
-<button onClick={handlePostNow} style={{marginTop:'14px',width:'100%',background:'#FF0024',color:'#fff',border:'none',padding:'14px',borderRadius:'12px',fontWeight:'900'}}>POST AS UPTOWN OFFICIAL ✓</button>
+<div style={{marginTop:'8px',textAlign:'center',color:'#666',fontSize:'12px'}}>OR</div>
+<input type="file" accept={uploadType==='picture'?'image/*':'video/*,image/*'} onChange={handleFileChange} style={{width:'100%',marginTop:'12px',background:'#1a1a1a',border:'1px solid #333',borderRadius:'10px',padding:'12px',color:'#fff'}}/>
+{uploadPreview&&<div style={{marginTop:'12px'}}>{uploadPreview.type.startsWith('video')?<video src={uploadPreview.url} style={{width:'100%',borderRadius:'12px'}} autoPlay loop playsInline/>:<img src={uploadPreview.url} style={{width:'100%',borderRadius:'12px'}}/>}{uploadType==='duet'&&<div style={{fontSize:'11px',color:'#FF0024',marginTop:'6px'}}>✓ Duet ready — Will post as side-by-side duet</div>}</div>}
+<input value={uploadCaption} onChange={e=>setUploadCaption(e.target.value)} placeholder={uploadType==='duet'?'Duet caption...':'Caption'} style={{marginTop:'12px',width:'100%',background:'#1a1a1a',border:'1px solid #333',borderRadius:'10px',padding:'12px',color:'#fff'}}/>
+<button onClick={handlePostNow} style={{marginTop:'14px',width:'100%',background:'#FF0024',color:'#fff',border:'none',padding:'14px',borderRadius:'12px',fontWeight:'900'}}>{uploadType==='duet'?'POST DUET VIDEO ✓':uploadType==='picture'?'POST PICTURES ✓':'POST VIDEO ✓'}</button>
+<div style={{fontSize:'10px',color:'#666',marginTop:'8px',textAlign:'center'}}>All downloads will have UPTOWN logo at end</div>
 </div>
 </div>
 )}
@@ -290,7 +377,7 @@ return(
 <div style={{display:'flex',justifyContent:'space-around',padding:'10px 0',borderTop:'1px solid #1a1a1a',background:'#000'}}>
 <button onClick={()=>{Object.values(videoRefs.current).forEach(v=>{if(v) v.pause()}); setPage('foryou')}} style={{background:'none',border:'none',color:page==='foryou'?'#fff':'#666',fontSize:'10px'}}>⌂<br/>For You</button>
 <button onClick={()=>setPage('following')} style={{background:'none',border:'none',color:'#666',fontSize:'10px'}}>👥<br/>People</button>
-<button onClick={()=>setShowUpload(true)} style={{background:'#FF0024',border:'none',width:'52px',height:'36px',borderRadius:'12px',color:'#fff',fontSize:'22px'}}>+</button>
+<button onClick={()=>{setUploadType('video'); setShowUpload(true)}} style={{background:'#FF0024',border:'none',width:'52px',height:'36px',borderRadius:'12px',color:'#fff',fontSize:'22px'}}>+</button>
 <button onClick={()=>setPage('inbox')} style={{background:'none',border:'none',color:'#666',fontSize:'10px'}}>✉<br/>Inbox</button>
 <button onClick={()=>setPage('you')} style={{background:'none',border:'none',color:'#666',fontSize:'10px'}}>○<br/>You</button>
 </div>
