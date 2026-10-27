@@ -195,10 +195,10 @@ localStorage.setItem('uptown_notifications_final_verified',JSON.stringify(newNot
 }, 10000)
 return()=>clearInterval(interval)
 },[posts, user, notifications])
-  useEffect(()=>{
+ useEffect(()=>{
     if(page!=="foryou" && page!=="muzika" && page!=="following" && page!=="live") return
     posts.forEach(p=>{
-      const vid=document.getElementById(`vid-${p.id}`) as HTMLVideoElement
+      const vid=document.getElementById(`vid-${p.id}`)
       if(vid){
         vid.muted=true
         if(!pausedMap[p.id]) vid.play().catch(()=>{})
