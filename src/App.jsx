@@ -196,22 +196,15 @@ localStorage.setItem('uptown_notifications_final_verified',JSON.stringify(newNot
 return()=>clearInterval(interval)
 },[posts, user, notifications])
   useEffect(()=>{
-if(page!=="foryou" && page!=="muzika" && page!=="following" && page!=="live") return
-const observer=new IntersectionObserver((entries)=>{
-entries.forEach(entry=>{
-const id=entry.target.getAttribute('data-video-id')
-const video=videoRefs.current[id]
-if(!video) return
-if(entry.isIntersecting){
-Object.keys(videoRefs.current).forEach(k=>{if(k!==id && videoRefs.current[k]) videoRefs.current[k].pause()})
-if(!pausedMap[id]) video.play().catch(()=>{})
-}else video.pause()
-})
-},{threshold:0.5})
-const els=document.querySelectorAll('[data-video-id]')
-els.forEach(el=>observer.observe(el))
-return()=>observer.disconnect()
-},[page,posts,pausedMap])
+    if(page!=="foryou" && page!=="muzika" && page!=="following" && page!=="live") return
+    posts.forEach(p=>{
+      const vid=document.getElementById(`vid-${p.id}`) as HTMLVideoElement
+      if(vid){
+        vid.muted=true
+        if(!pausedMap[p.id]) vid.play().catch(()=>{})
+      }
+    })
+  },[page,posts,pausedMap])
 
 const parseUniversalLink=(url)=>{
 if(!url) return null
