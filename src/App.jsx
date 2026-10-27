@@ -209,15 +209,15 @@ useEffect(()=>{
   },[page,posts,pausedMap])
 
 const parseUniversalLink=(url)=>{
-if(!url) return null
-url=url.trim()
-const lower=url.toLowerCase()
-const ytReg=/(?:youtube\.com\/(?:.*v=|.*\/|.*embed\/|.*shorts\/)|youtu\.be\/)([^"&?\/\s]{11})/
-const ytMatch=url.match(ytReg)
-if(ytMatch) return {type:'youtube', id:ytMatch[1], embed:`https://www.youtube.com/embed/${ytMatch[1]}?autoplay=0&controls=1&playsinline=1&rel=0`, original:url, platform:'YouTube'}
-if(lower.match(/\.(mp4|mov|webm|m3u8)(\?|$)/)) return {type:'direct', embed:url, original:url, platform:'Direct'}
-if(lower.startsWith('http')) return {type:'iframe', embed:url, original:url, platform:'Link'}
-return null
+  if(!url) return null
+  url=url.trim()
+  const lower=url.toLowerCase()
+  const ytReg=/(?:youtube\.com\/(?:.*v=|.*\/.*embed\/|.*shorts\/)|youtu\.be\/)([^&?\s]{11})/
+  const ytMatch=url.match(ytReg)
+  if(ytMatch) return {type:'youtube', id:ytMatch[1], embed:`https://www.youtube.com/embed/${ytMatch[1]}?rel=0&modestbranding=1&playsinline=1&enablejsapi=1`}
+  if(lower.match(/\.(mp4|mov|webm|m3u8)(\?|\/|$)/)) return {type:'direct', embed:url, original:url, platform:'Direct'}
+  if(lower.startsWith('http')) return {type:'iframe', embed:url, original:url, platform:'Link'}
+  return null
 }
 
 const isPornContent=(text, url)=>{
