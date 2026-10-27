@@ -196,8 +196,7 @@ localStorage.setItem('uptown_notifications_final_verified',JSON.stringify(newNot
 return()=>clearInterval(interval)
 },[posts, user, notifications])
 
-useEffect(()=>{
-if(page!=='foryou' && page!=='muzika' && page!=='live') return
+if(page!=="foryou" && page!=="muzika" && page!=="following" && page!=="live") return
 const observer=new IntersectionObserver((entries)=>{
 entries.forEach(entry=>{
 const id=entry.target.getAttribute('data-video-id')
