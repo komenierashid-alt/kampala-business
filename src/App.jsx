@@ -27,7 +27,6 @@ const [blueTickRequests,setBlueTickRequests]=useState([])
 const [inboxTab,setInboxTab]=useState('notifications')
 const [showDeleteModal,setShowDeleteModal]=useState(null)
 const [longPressTimer,setLongPressTimer]=useState(null)
-const [viewProfile,setViewProfile]=useState(null)
 const [profilePic,setProfilePic]=useState(null)
 const [editName,setEditName]=useState('')
 const [editBio,setEditBio]=useState('')
@@ -81,7 +80,7 @@ if(sFav) setFavorites(JSON.parse(sFav))
 if(sReq) setBlueTickRequests(JSON.parse(sReq))
 if(sPic) setProfilePic(sPic)
 if(sNot) setNotifications(JSON.parse(sNot))
-else setNotifications([{id:1,from:'UPTOWN Official',verified:true,type:'welcome',forEmail:null,title:'Welcome ✓ UPTOWN Official',message:'Welcome ✓ Touch & hold video to Delete / Hide — Edit profile pic, Bio, Name — Favorites — Viewers per video',time:'now',read:false}])
+else setNotifications([{id:1,from:'UPTOWN Official',verified:true,type:'welcome',forEmail:null,title:'Welcome ✓ UPTOWN Official',message:'Welcome ✓ Touch & hold video to Delete / Hide — Edit profile — Favorites',time:'now',read:false}])
 fetchPostsFromDB()
 if(!su) setShowAuth(true)
 else{
@@ -104,8 +103,7 @@ localStorage.setItem(key,'sent')
 }
 
 const pauseAllVideos=()=>{Object.values(videoRefs.current).forEach(v=>{if(v) v.pause()})}
-useEffect(()=>{pauseAllVideos()},[page,showUpload,showComments,viewProfile,showDeleteModal])
-
+useEffect(()=>{pauseAllVideos()},[page,showUpload,showComments,showDeleteModal])
 useEffect(()=>{
 const obs=new IntersectionObserver((entries)=>{
 entries.forEach(e=>{
@@ -114,7 +112,6 @@ const v=videoRefs.current[id]
 if(!v) return
 if(e.isIntersecting){
 Object.keys(videoRefs.current).forEach(k=>{if(k!==id && videoRefs.current[k]) videoRefs.current[k].pause()})
-// VIEWERS COUNT — INCREASE WHEN VIEWED
 setPosts(prev=>prev.map(p=> p.id.toString()===id ? {...p, views:(p.views||0)+1} : p))
 v.play().catch(()=>{})
 }else v.pause()
@@ -124,7 +121,6 @@ document.querySelectorAll('[data-video-id]').forEach(el=>obs.observe(el))
 return()=>obs.disconnect()
 },[page,posts,searchQuery])
 
-// TOUCH & HOLD — DELETE / HIDE
 const handleTouchStart=(videoId)=>{
 const timer=setTimeout(()=>{setShowDeleteModal(videoId)}, 700)
 setLongPressTimer(timer)
@@ -182,7 +178,7 @@ db=db.map(u=> u.email===user.email ? {...u, name:editName, username:editUsername
 localStorage.setItem('uptown_users_db',JSON.stringify(db))
 const newUser={...user, name:editName, username:editUsername, bio:editBio, profilePic:profilePic}
 setUser(newUser); localStorage.setItem('uptown_user',JSON.stringify(newUser)); localStorage.setItem('uptown_bio',editBio)
-setIsEditing(false); setBlockedMsg('✓ Profile saved — Bio, Name, Pic'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),800)
+setIsEditing(false); setBlockedMsg('✓ Profile saved'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),800)
 }
 const handleRequestBlueTick=(notif)=>{
 const req={id:Date.now(), email:user.email, name:'UPTOWN Official', username:user.username, status:'pending', requestedAt:Date.now()}
@@ -233,7 +229,6 @@ return(
 <div style={{display:'flex',gap:'8px',flex:1}}>
 {[{label:'For You',key:'foryou'},{label:'Muzika',key:'muzika'},{label:'Following',key:'following'}].map(t=><button key={t.key} onClick={()=>{pauseAllVideos(); setPage(t.key)}} style={{background:page===t.key?'#fff':'#222',color:page===t.key?'#000':'#888',border:'none',padding:'8px 16px',borderRadius:'20px',fontSize:'13px',fontWeight:'700',height:'34px'}}>{t.label}</button>)}
 </div>
-<button onClick={()=>{pauseAllVideos(); setPage('search')}} style={{background:'#1a1a1a',border:'1px solid #333',color:'#fff',width:'38px',height:'34px',borderRadius:'20px'}}>🔍</button>
 <button onClick={()=>{pauseAllVideos(); setPage('live')}} style={{background:'#1a1a1a',border:'1px solid #FF0024',color:'#FF0024',padding:'6px 12px',borderRadius:'20px',fontSize:'12px',fontWeight:'800',height:'34px'}}>● Live</button>
 </div>
 
@@ -253,8 +248,7 @@ onMouseUp={handleTouchEnd}
 style={{width:'100%',height:'100%',scrollSnapAlign:'start',position:'relative',background:'#000',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
 <div style={{position:'absolute',inset:0,zIndex:1}} onClick={()=>handleTapVideo(v.id)}></div>
 <div style={{position:'absolute',inset:0}}>{renderMedia(v)}</div>
-
-{v.hidden && <div style={{position:'absolute',top:'12px',left:'12px',zIndex:4,background:'rgba(255,0,36,0.8)',color:'#fff',padding:'4px 8px',borderRadius:'12px',fontSize:'10px',fontWeight:'700'}}>🙈 Hidden — Only you see — Touch & hold to unhide</div>}
+{v.hidden && <div style={{position:'absolute',top:'12px',left:'12px',zIndex:4,background:'rgba(255,0,36,0.8)',color:'#fff',padding:'4px 8px',borderRadius:'12px',fontSize:'10px',fontWeight:'700'}}>🙈 Hidden</div>}
 
 <div style={{position:'absolute',right:'12px',bottom:'90px',zIndex:3,display:'flex',flexDirection:'column',gap:'16px',alignItems:'center'}} onClick={e=>e.stopPropagation()}>
 <div style={{display:'flex',flexDirection:'column',alignItems:'center'}}>
@@ -277,7 +271,6 @@ style={{width:'100%',height:'100%',scrollSnapAlign:'start',position:'relative',b
 <span style={{fontSize:'13px',color:'#ddd'}}>{v.username}</span>
 </div>
 <div style={{fontSize:'14px',color:'#fff',lineHeight:'1.3'}}>{v.caption}</div>
-<div style={{fontSize:'11px',color:'#aaa'}}>{v.hidden?'🙈 Hidden':'Touch & hold video to Delete / Hide'}</div>
 </div>
 </div>
 )})}
@@ -293,14 +286,14 @@ style={{width:'100%',height:'100%',scrollSnapAlign:'start',position:'relative',b
 <div style={{flex:1,overflowY:'auto',padding:'10px'}}>
 {!searchQuery ? (
 <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
-<div style={{fontWeight:'800',fontSize:'13px'}}>Auto Pages — DB — Touch & hold to Delete/Hide</div>
+<div style={{fontWeight:'800',fontSize:'13px'}}>Auto Pages — DB — Smart grid</div>
 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px'}}>
 {AUTO_PAGES.map(p=><button key={p.username} onClick={()=>setSearchQuery(p.category||p.name)} style={{background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'12px',color:'#fff',textAlign:'left'}}><div style={{fontWeight:'800',fontSize:'12px'}}>UPTOWN Official</div><div style={{fontSize:'11px',color:'#aaa'}}>{p.username} • {p.category}</div></button>)}
 </div>
 </div>
 ) : (
 <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px'}}>
-{searchFiltered.map(v=><div key={v.id} style={{background:'#111',borderRadius:'12px',overflow:'hidden'}}><div style={{height:'160px'}}>{renderMedia(v)}</div><div style={{padding:'8px'}}><div style={{fontSize:'11px',fontWeight:'700'}}>UPTOWN Official</div><div style={{fontSize:'10px',color:'#888'}}>{v.username} • 👁 {v.views||0} viewers</div></div></div>)}
+{searchFiltered.map(v=><div key={v.id} style={{background:'#111',borderRadius:'12px',overflow:'hidden'}}><div style={{height:'160px'}}>{renderMedia(v)}</div><div style={{padding:'8px'}}><div style={{fontSize:'11px',fontWeight:'700'}}>UPTOWN Official</div><div style={{fontSize:'10px',color:'#888'}}>{v.username}</div></div></div>)}
 </div>
 )}
 </div>
@@ -354,7 +347,7 @@ myNotifications.map(n=>(
 {isEditing && (
 <div style={{marginTop:'12px',background:'#121212',borderRadius:'12px',padding:'12px'}}>
 <div style={{fontSize:'11px',fontWeight:'700',marginBottom:'8px'}}>Edit Profile — Picture, Bio, Names — Every account can edit</div>
-<input value={editName} onChange={e=>setEditName(e.target.value)} placeholder="Change Name — UPTOWN Official only public" style={{width:'100%',background:'#000',border:'1px solid #333',borderRadius:'8px',padding:'8px',color:'#fff',marginBottom:'8px'}}/>
+<input value={editName} onChange={e=>setEditName(e.target.value)} placeholder="Change Name" style={{width:'100%',background:'#000',border:'1px solid #333',borderRadius:'8px',padding:'8px',color:'#fff',marginBottom:'8px'}}/>
 <input value={editUsername} onChange={e=>setEditUsername(e.target.value)} placeholder="Change Username" style={{width:'100%',background:'#000',border:'1px solid #333',borderRadius:'8px',padding:'8px',color:'#fff',marginBottom:'8px'}}/>
 <input value={editBio} onChange={e=>setEditBio(e.target.value)} placeholder="Change Bio" style={{width:'100%',background:'#000',border:'1px solid #333',borderRadius:'8px',padding:'8px',color:'#fff',marginBottom:'8px'}}/>
 <button onClick={handleSaveProfile} style={{width:'100%',background:'#00D632',color:'#000',border:'none',padding:'10px',borderRadius:'20px',fontWeight:'900'}}>Save Profile</button>
@@ -362,83 +355,57 @@ myNotifications.map(n=>(
 )}
 
 <div style={{display:'flex',gap:'8px',marginTop:'14px'}}>
-<button onClick={()=>setYouTab('videos')} style={{flex:1,background:youTab==='videos'?'#fff':'#1a1a1a',color:youTab==='videos'?'#000':'#888',border:'none',padding:'8px',borderRadius:'20px',fontSize:'11px',fontWeight:'700'}}>Videos — Edit & Viewers</button>
+<button onClick={()=>setYouTab('videos')} style={{flex:1,background:youTab==='videos'?'#fff':'#1a1a1a',color:youTab==='videos'?'#000':'#888',border:'none',padding:'8px',borderRadius:'20px',fontSize:'11px',fontWeight:'700'}}>Videos</button>
 <button onClick={()=>setYouTab('favorites')} style={{flex:1,background:youTab==='favorites'?'#FFD700':'#1a1a1a',color:youTab==='favorites'?'#000':'#888',border:'none',padding:'8px',borderRadius:'20px',fontSize:'11px',fontWeight:'700'}}>★ Favorites</button>
 </div>
 
 <div style={{marginTop:'12px'}}>
 {youTab==='videos' && (
-<div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'4px'}}>
+<div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'6px'}}>
 {myVideos.map(v=>(
-<div key={v.id} style={{aspectRatio:'9/12',background:'#111',borderRadius:'8px',overflow:'hidden',position:'relative'}}>
+<div key={v.id} 
+onTouchStart={()=>handleTouchStart(v.id)}
+onTouchEnd={handleTouchEnd}
+onMouseDown={()=>handleTouchStart(v.id)}
+onMouseUp={handleTouchEnd}
+style={{aspectRatio:'9/14',background:'#111',borderRadius:'12px',overflow:'hidden',position:'relative'}}>
 {renderMedia(v)}
-<div style={{position:'absolute',bottom:'4px',left:'4px',right:'4px',background:'rgba(0,0,0,0.7)',borderRadius:'8px',padding:'4px'}}>
-<div style={{fontSize:'8px',color:'#fff',fontWeight:'700'}}>👁 {v.views||0} viewers</div>
-<div style={{fontSize:'7px',color:'#aaa'}}>{v.hidden?'🙈 Hidden':'Touch & hold to Delete/Hide'}</div>
-</div>
+{v.hidden && <div style={{position:'absolute',top:'6px',left:'6px',background:'rgba(255,0,36,0.8)',color:'#fff',padding:'3px 6px',borderRadius:'8px',fontSize:'8px',fontWeight:'700'}}>🙈 Hidden</div>}
 </div>
 ))}
 </div>
 )}
 {youTab==='favorites' && (
-<div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'4px'}}>
+<div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'6px'}}>
 {favVideos.map(v=>(
-<div key={v.id} style={{aspectRatio:'9/12',background:'#111',borderRadius:'8px',overflow:'hidden',position:'relative'}}>
+<div key={v.id} style={{aspectRatio:'9/14',background:'#111',borderRadius:'12px',overflow:'hidden',position:'relative'}}>
 {renderMedia(v)}
-<div style={{position:'absolute',bottom:'4px',left:'4px',background:'rgba(0,0,0,0.7)',borderRadius:'8px',padding:'4px'}}><div style={{fontSize:'8px',color:'#FFD700'}}>★ Fav</div><div style={{fontSize:'7px',color:'#fff'}}>👁 {v.views||0}</div></div>
 </div>
 ))}
-{favVideos.length===0 && <div style={{gridColumn:'1 / -1',textAlign:'center',color:'#666',fontSize:'12px',marginTop:'20px'}}>No favorites yet — Tap ★ Fav on any video — Check here — Viewers per video shown</div>}
+{favVideos.length===0 && <div style={{gridColumn:'1 / -1',textAlign:'center',color:'#666',fontSize:'12px',marginTop:'20px'}}>No favorites yet — Tap ★ Fav</div>}
 </div>
 )}
 </div>
 </div>
 )}
 
-{page==='viewprofile'&& viewProfile &&(
-<div style={{flex:1,overflowY:'auto',background:'#000',padding:'16px'}}>
-<button onClick={()=>{pauseAllVideos(); setPage('foryou')}} style={{background:'#1a1a1a',border:'none',color:'#fff',width:'32px',height:'32px',borderRadius:'50%',marginBottom:'12px'}}>‹</button>
-<div style={{display:'flex',gap:'14px',alignItems:'center'}}>
-<div style={{width:'72px',height:'72px',borderRadius:'50%',background:viewProfile.profilePic?`url(${viewProfile.profilePic})`:'#fff',backgroundSize:'cover',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'900',border:'2px solid #333'}}>{!viewProfile.profilePic && <><span style={{color:'#FF0024'}}>UP</span><span style={{color:'#000'}}>TOWN</span></>}</div>
-<div>
-<div style={{fontWeight:'800',fontSize:'18px',display:'flex',alignItems:'center',gap:'6px'}}>{viewProfile.name||viewProfile.username} {viewProfile.verified&&'✓'}</div>
-<div style={{fontSize:'12px',color:'#888'}}>{viewProfile.username}</div>
-<div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>{viewProfile.bio||'User of UPTOWN — Edit profile pic, Bio, Name — Favorites — Viewers'}</div>
-</div>
-</div>
-<div style={{marginTop:'16px'}}>
-<div style={{fontWeight:'700',fontSize:'13px',marginBottom:'8px'}}>Good arrangement — Viewers per video — Favorites</div>
-<div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'4px'}}>
-{allVideos.filter(v=>v.username===viewProfile.username).map(v=>(
-<div key={v.id} style={{aspectRatio:'9/12',background:'#111',borderRadius:'8px',overflow:'hidden',position:'relative'}}>
-{renderMedia(v)}
-<div style={{position:'absolute',bottom:'4px',left:'4px',background:'rgba(0,0,0,0.7)',borderRadius:'6px',padding:'3px 5px'}}><div style={{fontSize:'8px',color:'#fff'}}>👁 {v.views||0}</div></div>
-</div>
-))}
-</div>
-</div>
-</div>
-)}
-
-{/* TOUCH & HOLD DELETE / HIDE MODAL — ONE BUTTON */}
 {showDeleteModal!==null && (
 <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',zIndex:70,display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}} onClick={()=>setShowDeleteModal(null)}>
 <div style={{background:'#121212',border:'1px solid #333',borderRadius:'20px',padding:'16px',width:'100%',maxWidth:'320px'}} onClick={e=>e.stopPropagation()}>
 <div style={{width:'36px',height:'4px',background:'#333',borderRadius:'2px',margin:'0 auto 12px'}}></div>
-<div style={{fontWeight:'800',fontSize:'14px',textAlign:'center',marginBottom:'12px'}}>Touch & Hold — UPTOWN Official — Delete / Hide</div>
+<div style={{fontWeight:'800',fontSize:'14px',textAlign:'center',marginBottom:'12px'}}>Touch & Hold — Delete / Hide</div>
 <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
-<button onClick={()=>handleDeleteVideo(showDeleteModal)} style={{background:'#FF0024',color:'#fff',border:'none',padding:'14px',borderRadius:'12px',fontWeight:'900'}}>🗑️ Delete Video — Permanent</button>
+<button onClick={()=>handleDeleteVideo(showDeleteModal)} style={{background:'#FF0024',color:'#fff',border:'none',padding:'14px',borderRadius:'12px',fontWeight:'900'}}>🗑️ Delete Video</button>
 <button onClick={()=>handleHideVideo(showDeleteModal)} style={{background:'#1a1a1a',border:'1px solid #333',color:'#fff',padding:'14px',borderRadius:'12px',fontWeight:'800'}}>
 {posts.find(p=>p.id===showDeleteModal)?.hidden ? '👁️ Unhide — Show to public' : '🙈 Hide from public — Only you see'}
 </button>
 <button onClick={()=>setShowDeleteModal(null)} style={{background:'#222',color:'#888',border:'none',padding:'12px',borderRadius:'12px',fontWeight:'700'}}>Cancel</button>
 </div>
-<div style={{fontSize:'9px',color:'#666',textAlign:'center',marginTop:'10px'}}>Touch & hold video to bring this — Edit profile pic, Bio, Names in You — Favorites — Viewers per video</div>
 </div>
 </div>
 )}
 
-{showComments!==null&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',zIndex:60,display:'flex',alignItems:'flex-end'}} onClick={()=>setShowComments(null)}><div style={{background:'#121212',width:'100%',borderTopLeftRadius:'20px',borderTopRightRadius:'20px',padding:'14px',maxHeight:'60vh'}} onClick={e=>e.stopPropagation()}><div style={{display:'flex',justifyContent:'space-between'}}><div style={{fontWeight:'700'}}>Comments — Viewers: {allVideos.find(v=>v.id===showComments)?.views||0}</div><button onClick={()=>setShowComments(null)} style={{background:'none',border:'none',color:'#fff',fontSize:'20px'}}>×</button></div><div style={{display:'flex',gap:'8px',marginTop:'10px'}}><input placeholder="Add comment" style={{flex:1,background:'#1a1a1a',border:'1px solid #333',borderRadius:'20px',padding:'8px 12px',color:'#fff'}}/><button style={{background:'#FF0024',color:'#fff',border:'none',padding:'8px 14px',borderRadius:'20px'}}>Post</button></div></div></div>}
+{showComments!==null&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',zIndex:60,display:'flex',alignItems:'flex-end'}} onClick={()=>setShowComments(null)}><div style={{background:'#121212',width:'100%',borderTopLeftRadius:'20px',borderTopRightRadius:'20px',padding:'14px',maxHeight:'60vh'}} onClick={e=>e.stopPropagation()}><div style={{display:'flex',justifyContent:'space-between'}}><div style={{fontWeight:'700'}}>Comments</div><button onClick={()=>setShowComments(null)} style={{background:'none',border:'none',color:'#fff',fontSize:'20px'}}>×</button></div><div style={{display:'flex',gap:'8px',marginTop:'10px'}}><input placeholder="Add comment" style={{flex:1,background:'#1a1a1a',border:'1px solid #333',borderRadius:'20px',padding:'8px 12px',color:'#fff'}}/><button style={{background:'#FF0024',color:'#fff',border:'none',padding:'8px 14px',borderRadius:'20px'}}>Post</button></div></div></div>}
 {showBlocked&&<div style={{position:'fixed',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'#1a1a1a',border:'1px solid #333',padding:'14px 18px',borderRadius:'14px',zIndex:80}}><div style={{fontWeight:'700',fontSize:'12px'}}>{blockedMsg}</div></div>}
 </div>
 
@@ -446,8 +413,8 @@ myNotifications.map(n=>(
 <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.92)',zIndex:50,display:'flex',alignItems:'flex-end'}} onClick={()=>{pauseAllVideos(); setShowUpload(false)}}>
 <div style={{background:'#121212',width:'100%',borderTopLeftRadius:'20px',borderTopRightRadius:'20px',padding:'16px'}} onClick={e=>e.stopPropagation()}>
 <div style={{width:'36px',height:'4px',background:'#333',borderRadius:'2px',margin:'0 auto 12px'}}></div>
-<div style={{fontWeight:'800',textAlign:'center',fontSize:'15px',marginBottom:'12px'}}>Post — UPTOWN Official — Automatic DB</div>
-<textarea value={uploadText} onChange={e=>setUploadText(e.target.value)} placeholder="Write text message — Post on For You" style={{width:'100%',height:'80px',background:'#000',border:'1px solid #333',borderRadius:'12px',padding:'12px',color:'#fff',marginBottom:'10px'}}/>
+<div style={{fontWeight:'800',textAlign:'center',fontSize:'15px',marginBottom:'12px'}}>Post — UPTOWN Official</div>
+<textarea value={uploadText} onChange={e=>setUploadText(e.target.value)} placeholder="Write text message" style={{width:'100%',height:'80px',background:'#000',border:'1px solid #333',borderRadius:'12px',padding:'12px',color:'#fff',marginBottom:'10px'}}/>
 <input type="file" accept="video/*" onChange={handleFileChange} style={{width:'100%',background:'#1a1a1a',border:'1px solid #333',borderRadius:'12px',padding:'12px',color:'#fff',marginBottom:'10px'}}/>
 {uploadPreview&&<video src={uploadPreview.url} style={{width:'100%',maxHeight:'180px',borderRadius:'12px',marginBottom:'10px'}} autoPlay loop muted playsInline/>}
 <input value={uploadCaption} onChange={e=>setUploadCaption(e.target.value)} placeholder="Caption — UPTOWN Official only" style={{width:'100%',background:'#000',border:'1px solid #333',borderRadius:'10px',padding:'10px',color:'#fff',marginBottom:'12px'}}/>
