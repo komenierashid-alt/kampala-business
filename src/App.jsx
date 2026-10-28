@@ -43,8 +43,8 @@ const [isLive,setIsLive]=useState(false)
 const videoRefs=useRef({})
 
 const officialVideos=[
-{id:9001,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓ 978+ Family', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', mediaType:'video', likes:15600, fires:520, comments:978, views:45200, isOfficial:true},
-{id:9002,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', mediaType:'video', likes:12400, fires:340, comments:0, views:32100, isOfficial:true},
+{id:9001,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓ 978+ Family — Everyone on For You!', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', mediaType:'video', likes:15600, fires:520, comments:978, views:45200, isOfficial:true},
+{id:9002,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓ Muzika — Only Official posts!', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', mediaType:'video', likes:12400, fires:340, comments:0, views:32100, isOfficial:true},
 ]
 
 const fetchPostsFromDB=async()=>{
@@ -124,9 +124,9 @@ if(!url) return null
 url=url.trim()
 const ytReg=/(?:youtube\.com\/.*v=|youtu\.be\/)([^"&?\/\s]{11})/
 const ytMatch=url.match(ytReg)
-if(ytMatch) return {type:'youtube', embed:`https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&mute=1&playsinline=1&rel=0`, platform:'YouTube'}
-if(url.match(/\.(mp4|mov|webm)(\?|$)/i)) return {type:'direct', embed:url, platform:'Direct'}
-if(url.startsWith('http')) return {type:'iframe', embed:url, platform:'Link'}
+if(ytMatch) return {type:'youtube', embed:`https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&mute=1&playsinline=1&rel=0`}
+if(url.match(/\.(mp4|mov|webm)(\?|$)/i)) return {type:'direct', embed:url}
+if(url.startsWith('http')) return {type:'iframe', embed:url}
 return null
 }
 const handleAuth=()=>{
@@ -242,7 +242,7 @@ return(
 <div style={{flex:1,minHeight:0,overflow:'hidden',display:'flex',flexDirection:'column',background:'#000'}}>
 {page==='foryou'&&(
 <div style={{flex:1,overflowY:'auto',scrollSnapType:'y mandatory'}}>
-<div style={{height:'32px',background:'#0a0a0a',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:'11px',color:'#00D632',fontWeight:'700'}}>● For You — 978+ Family — Database — Everyone same!</span></div>
+<div style={{height:'32px',background:'#0a0a0a',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:'11px',color:'#00D632',fontWeight:'700'}}>● For You — 978+ Family — Database!</span></div>
 {forYouFeed.map(v=>{
 const isFollowing=follows[v.username]==='following'
 const isLiked=likes[v.id]
@@ -253,7 +253,7 @@ return(
 <div style={{position:'absolute',inset:0}}>{renderUniversal(v)}</div>
 <div style={{position:'absolute',top:'12px',right:'12px',zIndex:4}}><button onClick={()=>{const m=prompt('1=Report 2=Block'); if(m==='1') handleReportVideo(v); if(m==='2') handleBlockUser(v.username)}} style={{background:'rgba(0,0,0,0.6)',border:'1px solid #333',color:'#fff',width:'28px',height:'28px',borderRadius:'50%'}}>⋯</button></div>
 
-{/* RIGHT SIDE - FIRE WHERE YOU CIRCLED - SEARCH REMOVED */}
+{/* RIGHT SIDE - FIRE WHERE YOU CIRCLED */}
 <div style={{position:'absolute',right:'10px',top:'42%',transform:'translateY(-50%)',zIndex:3,display:'flex',flexDirection:'column',gap:'14px',alignItems:'center'}} onClick={e=>e.stopPropagation()}>
 <div style={{position:'relative',width:'54px',height:'62px',display:'flex',flexDirection:'column',alignItems:'center'}}>
 <div style={{width:'50px',height:'50px',borderRadius:'50%',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',border:'2px solid #fff'}}><span style={{fontWeight:'900',fontSize:'11px'}}><span style={{color:'#FF0024'}}>UP</span><span style={{color:'#000'}}>TOWN</span></span></div>
@@ -264,14 +264,32 @@ return(
 <button onClick={()=>handleComment(v.id)} style={{background:'none',border:'none',color:'#fff',display:'flex',flexDirection:'column',alignItems:'center'}}><div style={{width:'28px',height:'28px',borderRadius:'50%',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center'}}>💬</div><div style={{fontSize:'11px',fontWeight:'700'}}>{commentCounts[v.id]||978}</div></button>
 <button onClick={()=>handleShare(v)} style={{background:'none',border:'none',color:'#fff',display:'flex',flexDirection:'column',alignItems:'center'}}><div>→</div><div style={{fontSize:'11px'}}>Share</div></button>
 <button onClick={()=>handleFavorite(v.id)} style={{background:'none',border:'none',color:'#FF0024',display:'flex',flexDirection:'column',alignItems:'center'}}><div style={{fontSize:'20px'}}>★</div><div style={{fontSize:'10px'}}>Fav</div></button>
-{/* FIRE BUTTON - WHERE YOU PUT CIRCLE */}
-<button onClick={()=>handleFire(v.id)} style={{background:isFired?'#FF6A00':'#1a1a1a',border:isFired?'1px solid #FF6A00':'1px solid #333',width:'38px',height:'38px',borderRadius:'50%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'#fff',boxShadow:isFired?'0 0 10px #FF6A00':''}}>
+<button onClick={()=>handleFire(v.id)} style={{background:isFired?'#FF6A00':'#1a1a1a',border:isFired?'1px solid #FF6A00':'1px solid #333',width:'38px',height:'38px',borderRadius:'50%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'#fff'}}>
 <span style={{fontSize:'20px'}}>🔥</span>
-<div style={{fontSize:'8px',fontWeight:'800',marginTop:'-2px'}}>{isFired? (v.fires+1) : 520}</div>
+<div style={{fontSize:'8px',fontWeight:'800'}}>{isFired? (v.fires+1) : 520}</div>
 </button>
 </div>
 
-<div style={{position:'absolute',left:'12px',right:'76px',bottom:'22px',zIndex:2,pointerEvents:'none'}}><div style={{fontWeight:'800',fontSize:'15px'}}>{v.user} ✓</div><div style={{fontSize:'12px',marginTop:'4px'}}>{v.caption}</div></div>
+{/* LEFT SIDE EXTENDED + BLUE TICK - AS YOU ASKED */}
+<div style={{position:'absolute',left:'12px',right:'78px',bottom:'28px',zIndex:2,pointerEvents:'none',display:'flex',flexDirection:'column',gap:'5px',maxWidth:'78%'}}>
+<div style={{display:'flex',alignItems:'center',gap:'6px',flexWrap:'wrap'}}>
+<span style={{fontWeight:'900',fontSize:'16px',color:'#fff',textShadow:'0 1px 4px rgba(0,0,0,0.9)',letterSpacing:'0.2px'}}>{v.user}</span>
+{v.verified && (
+<span style={{width:'18px',height:'18px',background:'#1D9BF0',borderRadius:'50%',display:'inline-flex',alignItems:'center',justifyContent:'center',boxShadow:'0 1px 3px rgba(0,0,0,0.6)',flexShrink:0}}>
+<svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg>
+</span>
+)}
+<span style={{fontSize:'11px',color:'#ddd',textShadow:'0 1px 2px rgba(0,0,0,0.8)'}}>{v.username}</span>
+</div>
+<div style={{fontSize:'13px',color:'#fff',lineHeight:'1.35',fontWeight:'500',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden',textShadow:'0 1px 3px rgba(0,0,0,0.9)'}}>
+{v.caption}
+</div>
+<div style={{display:'flex',alignItems:'center',gap:'6px',marginTop:'2px'}}>
+<span style={{fontSize:'12px'}}>♪</span>
+<span style={{fontSize:'11px',color:'#fff',opacity:0.95,textShadow:'0 1px 2px rgba(0,0,0,0.8)'}}>UPTOWN Official ✓ • 978+ Family • Original sound</span>
+</div>
+</div>
+
 </div>
 )})}
 </div>
@@ -288,7 +306,14 @@ return(
 <div key={v.id} data-video-id={v.id} style={{width:'100%',height:'100%',scrollSnapAlign:'start',position:'relative',background:'#111',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
 <div style={{position:'absolute',inset:0,zIndex:1}} onClick={()=>handleTapVideo(v.id)}></div>
 <div style={{position:'absolute',inset:0}}>{renderUniversal(v)}</div>
-<div style={{position:'absolute',left:'12px',bottom:'22px',zIndex:2}}><div style={{fontWeight:'700',fontSize:'13px'}}>UPTOWN Official ✓</div></div>
+<div style={{position:'absolute',left:'12px',right:'78px',bottom:'28px',zIndex:2,pointerEvents:'none',display:'flex',flexDirection:'column',gap:'4px'}}>
+<div style={{display:'flex',alignItems:'center',gap:'6px'}}>
+<span style={{fontWeight:'900',fontSize:'15px',color:'#fff',textShadow:'0 1px 4px rgba(0,0,0,0.9)'}}>UPTOWN Official</span>
+<span style={{width:'18px',height:'18px',background:'#1D9BF0',borderRadius:'50%',display:'inline-flex',alignItems:'center',justifyContent:'center'}}><svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>
+<span style={{background:'#FF0024',color:'#fff',fontSize:'9px',padding:'2px 6px',borderRadius:'10px',fontWeight:'800'}}>Muzika</span>
+</div>
+<div style={{fontSize:'12px',color:'#fff',textShadow:'0 1px 3px rgba(0,0,0,0.8)'}}>{v.caption}</div>
+</div>
 </div>
 ))}
 </div>
@@ -303,7 +328,7 @@ return(
 </div>
 <div style={{flex:1,overflowY:'auto',padding:'12px'}}>
 {liveFeed.length===0? <div style={{textAlign:'center',marginTop:'60px'}}><div style={{fontSize:'40px'}}>🔴</div><div style={{fontWeight:'700',marginTop:'10px'}}>No Live Now — Be first!</div><button onClick={()=>{setIsLive(true); setShowUpload(true)}} style={{marginTop:'12px',background:'#FF0024',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'20px'}}>Start Live</button></div> :
-<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>{liveFeed.map(v=><div key={v.id} style={{background:'#121212',border:'1px solid #FF0024',borderRadius:'12px',overflow:'hidden'}}><div style={{height:'160px',background:'#000'}}>{renderUniversal(v)}</div><div style={{padding:'8px',fontSize:'11px'}}>{v.user} 🔴 LIVE</div></div>)}</div>
+<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>{liveFeed.map(v=><div key={v.id} style={{background:'#121212',border:'1px solid #FF0024',borderRadius:'12px',overflow:'hidden'}}><div style={{height:'160px',background:'#000'}}>{renderUniversal(v)}</div><div style={{padding:'8px',fontSize:'11px',display:'flex',alignItems:'center',gap:'4px'}}>{v.user} <span style={{width:'14px',height:'14px',background:'#1D9BF0',borderRadius:'50%',display:'inline-flex',alignItems:'center',justifyContent:'center'}}><svg width="8" height="8" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span> 🔴 LIVE</div></div>)}</div>
 }
 </div>
 </div>
@@ -329,7 +354,7 @@ posts.filter(p=>follows[p.username]==='following').map(v=>(
 <div style={{flex:1,overflowY:'auto',padding:'10px'}}>
 {notifications.map(n=>(
 <div key={n.id} style={{background:'#1a1a1a',border:'1px solid #222',borderRadius:'12px',padding:'12px',marginBottom:'10px'}}>
-<div style={{fontWeight:'700',fontSize:'11px'}}>{n.from} ✓</div>
+<div style={{fontWeight:'700',fontSize:'11px',display:'flex',alignItems:'center',gap:'4px'}}>{n.from} {n.verified && <span style={{width:'14px',height:'14px',background:'#1D9BF0',borderRadius:'50%',display:'inline-flex',alignItems:'center',justifyContent:'center'}}><svg width="8" height="8" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>}</div>
 <div style={{fontSize:'12px',marginTop:'4px'}}>{n.title}</div>
 <div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>{n.message}</div>
 </div>
@@ -342,10 +367,9 @@ posts.filter(p=>follows[p.username]==='following').map(v=>(
 <div style={{flex:1,overflowY:'auto',padding:'16px',background:'#000'}}>
 <div style={{display:'flex',gap:'14px',alignItems:'center'}}>
 <div style={{width:'72px',height:'72px',borderRadius:'50%',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'900',fontSize:'14px'}}><span style={{color:'#FF0024'}}>UP</span><span style={{color:'#000'}}>TOWN</span></div>
-<div><div style={{fontWeight:'800',fontSize:'16px'}}>{user?.name||'Guest'} — 978+</div><div style={{fontSize:'12px',color:'#888'}}>{user?.username||'@user'}</div></div>
+<div><div style={{fontWeight:'800',fontSize:'16px',display:'flex',alignItems:'center',gap:'6px'}}>{user?.name||'Guest'} — 978+ {user?.verified && <span style={{width:'16px',height:'16px',background:'#1D9BF0',borderRadius:'50%',display:'inline-flex',alignItems:'center',justifyContent:'center'}}><svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>}</div><div style={{fontSize:'12px',color:'#888'}}>{user?.username||'@user'}</div></div>
 </div>
 {isOwner&&<div style={{marginTop:'16px',background:'linear-gradient(135deg,#FF0024 0%,#00D632 100%)',borderRadius:'16px',padding:'2px'}}><div style={{background:'#000',borderRadius:'14px',padding:'14px'}}><div style={{fontWeight:'900',fontSize:'13px'}}>🚀 One Button Engine — Android + iPhone</div><button onClick={handleOneButtonStoreEngine} style={{width:'100%',marginTop:'10px',background:isInstallable?'#00D632':'#fff',color:'#000',border:'none',padding:'14px',borderRadius:'12px',fontWeight:'900',fontSize:'13px'}}>{isInstalled?'✓ Installed!':isInstallable?'📲 INSTALL NOW!':'🚀 ENGINE'}</button></div></div>}
-<div style={{marginTop:'16px',display:'flex',gap:'10px'}}><div style={{flex:1,background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'10px',textAlign:'center'}}><div style={{fontWeight:'800'}}>{myVideos.length}</div><div style={{fontSize:'10px',color:'#888'}}>Videos</div></div><div style={{flex:1,background:'#121212',border:'1px solid #00D632',borderRadius:'12px',padding:'10px',textAlign:'center'}}><div style={{fontWeight:'800',color:'#00D632'}}>{followCounts[user?.username]||0}</div><div style={{fontSize:'10px',color:'#888'}}>Followers</div></div></div>
 </div>
 )}
 
@@ -383,7 +407,6 @@ posts.filter(p=>follows[p.username]==='following').map(v=>(
 </div>
 )}
 
-{/* BOTTOM BAR - INBOX INSTEAD OF SEARCH - AS YOU ASKED */}
 <div style={{height:'64px',display:'flex',justifyContent:'space-around',alignItems:'center',borderTop:'1px solid #1a1a1a',background:'#000',flexShrink:0}}>
 <button onClick={()=>{pauseAllVideos(); setPage('foryou')}} style={{background:'none',border:'none',color:page==='foryou'?'#fff':'#666',display:'flex',flexDirection:'column',alignItems:'center',flex:1}}><span style={{fontSize:'20px'}}>⌂</span><span style={{fontSize:'10px'}}>Home</span></button>
 <button onClick={()=>{pauseAllVideos(); setPage('inbox'); const u=notifications.map(n=>({...n,read:true})); setNotifications(u); localStorage.setItem('uptown_notifications_final_verified',JSON.stringify(u))}} style={{background:'none',border:'none',color:page==='inbox'?'#fff':'#666',display:'flex',flexDirection:'column',alignItems:'center',flex:1,position:'relative'}}><span style={{fontSize:'18px'}}>✉</span><span style={{fontSize:'10px'}}>Inbox</span>{unread>0&&<span style={{position:'absolute',top:'0px',right:'12px',background:'#FF0024',color:'#fff',fontSize:'8px',padding:'2px 4px',borderRadius:'8px',fontWeight:'800'}}>{unread}</span>}</button>
