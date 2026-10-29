@@ -33,20 +33,19 @@ const [editBio,setEditBio]=useState('')
 const [editUsername,setEditUsername]=useState('')
 const [isEditing,setIsEditing]=useState(false)
 const [youTab,setYouTab]=useState('videos')
-const [globalMuted,setGlobalMuted]=useState(false)
 const videoRefs=useRef({})
 
 const AUTO_PAGES=[
-{name:'AI Soaps', username:'@aisoaps', caption:'AI Soaps ✓ Trending AI drama — Sound ON', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', category:'AI Soaps'},
-{name:'AI Movies', username:'@aimovies', caption:'AI Movies ✓ Best AI movies — Sound ON', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', category:'AI Movies'},
-{name:'Drake', username:'@drake', caption:'Drake ✓ America — Sound ON', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', category:'America'},
-{name:'Beyoncé', username:'@beyonce', caption:'Beyoncé ✓ America — Sound ON', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4', category:'America'},
-{name:'Burna Boy', username:'@burnaboy', caption:'Burna Boy ✓ Africa — Sound ON', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4', category:'Africa'},
-{name:'Diamond Platnumz', username:'@diamondplatnumz', caption:'Diamond Platnumz ✓ Africa — Sound ON', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4', category:'Africa'},
-{name:'Ed Sheeran', username:'@edsheeran', caption:'Ed Sheeran ✓ Europe — Sound ON', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4', category:'Europe'},
-{name:'Adele', username:'@adele', caption:'Adele ✓ Europe — Sound ON', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4', category:'Europe'},
-{name:'Historical Africa', username:'@historyafrica', caption:'Historical Pages ✓ Africa — Sound ON', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4', category:'Historical'},
-{name:'Historical World', username:'@historyworld', caption:'Historical Pages ✓ World — Sound ON', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4', category:'Historical'},
+{name:'AI Soaps', username:'@aisoaps', caption:'AI Soaps ✓ Trending AI drama', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', category:'AI Soaps'},
+{name:'AI Movies', username:'@aimovies', caption:'AI Movies ✓ Best AI movies', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', category:'AI Movies'},
+{name:'Drake', username:'@drake', caption:'Drake ✓ America', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', category:'America'},
+{name:'Beyoncé', username:'@beyonce', caption:'Beyoncé ✓ America', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4', category:'America'},
+{name:'Burna Boy', username:'@burnaboy', caption:'Burna Boy ✓ Africa', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4', category:'Africa'},
+{name:'Diamond Platnumz', username:'@diamondplatnumz', caption:'Diamond Platnumz ✓ Africa', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4', category:'Africa'},
+{name:'Ed Sheeran', username:'@edsheeran', caption:'Ed Sheeran ✓ Europe', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4', category:'Europe'},
+{name:'Adele', username:'@adele', caption:'Adele ✓ Europe', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4', category:'Europe'},
+{name:'Historical Africa', username:'@historyafrica', caption:'Historical Pages ✓ Africa', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4', category:'Historical'},
+{name:'Historical World', username:'@historyworld', caption:'Historical Pages ✓ World', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4', category:'Historical'},
 ]
 
 const fetchPostsFromDB=async()=>{
@@ -81,7 +80,7 @@ if(sFav) setFavorites(JSON.parse(sFav))
 if(sReq) setBlueTickRequests(JSON.parse(sReq))
 if(sPic) setProfilePic(sPic)
 if(sNot) setNotifications(JSON.parse(sNot))
-else setNotifications([{id:1,from:'UPTOWN Official',verified:true,type:'welcome',forEmail:null,title:'Welcome ✓ UPTOWN Official',message:'Welcome ✓ Sound ON — Tap video for sound — Touch & hold to Delete/Hide',time:'now',read:false}])
+else setNotifications([{id:1,from:'UPTOWN Official',verified:true,type:'welcome',forEmail:null,title:'Welcome ✓ UPTOWN Official',message:'Welcome ✓ Tap video for sound — Touch & hold to Delete/Hide',time:'now',read:false}])
 fetchPostsFromDB()
 if(!su) setShowAuth(true)
 else{
@@ -115,14 +114,19 @@ if(!v) return
 if(e.isIntersecting){
 Object.keys(videoRefs.current).forEach(k=>{if(k!==id && videoRefs.current[k]) videoRefs.current[k].pause()})
 setPosts(prev=>prev.map(p=> p.id.toString()===id ? {...p, views:(p.views||0)+1} : p))
-v.muted = globalMuted
+// SOUND ON — Try to play with sound
+v.muted=false
+v.play().catch(()=>{
+// If browser blocks sound autoplay, play muted then unmute on next tap
+v.muted=true
 v.play().catch(()=>{})
+})
 }else v.pause()
 })
 },{threshold:0.6})
 document.querySelectorAll('[data-video-id]').forEach(el=>obs.observe(el))
 return()=>obs.disconnect()
-},[page,posts,searchQuery,globalMuted])
+},[page,posts,searchQuery])
 
 const handleTouchStart=(videoId)=>{
 const timer=setTimeout(()=>{setShowDeleteModal(videoId)}, 700)
@@ -174,14 +178,10 @@ const handleShare=async(v)=>{try{await navigator.clipboard.writeText(v.mediaUrl|
 const handleTapVideo=(id)=>{
 const v=videoRefs.current[id]; 
 if(!v) return; 
-if(v.muted){v.muted=false; setGlobalMuted(false); setBlockedMsg('🔊 Sound ON'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),600)}
-if(v.paused) v.play(); else v.pause()
-}
-const toggleGlobalSound=()=>{
-const newMuted=!globalMuted
-setGlobalMuted(newMuted)
-Object.values(videoRefs.current).forEach(v=>{if(v) v.muted=newMuted})
-setBlockedMsg(newMuted?'🔇 Muted':'🔊 Sound ON'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),600)
+// ALWAYS ENSURE SOUND ON WHEN TAP
+v.muted=false
+v.volume=1
+if(v.paused) v.play().catch(()=>{}); else v.pause()
 }
 const handleFileChange=(e)=>{const f=e.target.files?.[0]; if(!f) return; const u=URL.createObjectURL(f); setUploadPreview({url:u}); const r=new FileReader(); r.onload=(ev)=>setUploadBase64(ev.target.result); r.readAsDataURL(f)}
 const handleProfilePicChange=(e)=>{const f=e.target.files?.[0]; if(!f) return; const r=new FileReader(); r.onload=(ev)=>{setProfilePic(ev.target.result); localStorage.setItem('uptown_profile_pic',ev.target.result); let db=JSON.parse(localStorage.getItem('uptown_users_db')||'[]'); db=db.map(u=> u.email===user?.email ? {...u, profilePic:ev.target.result} : u); localStorage.setItem('uptown_users_db',JSON.stringify(db)); setBlockedMsg('✓ Profile picture updated'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),800)}; r.readAsDataURL(f)}
@@ -229,7 +229,7 @@ const allVideos=[...posts].filter(p=>!p.hidden || p.postedBy===user?.email || is
 const searchFiltered=allVideos.filter(v=>{ if(!searchQuery) return false; const q=searchQuery.toLowerCase(); return (v.username?.toLowerCase().includes(q) || v.caption?.toLowerCase().includes(q) || v.category?.toLowerCase().includes(q)) })
 const renderMedia=(v)=>{
 if(v.type==='text'){return <div style={{width:'100%',height:'100%',background:'#111',display:'flex',alignItems:'center',justifyContent:'center',padding:'20px'}}><div style={{background:'#1a1a1a',borderRadius:'16px',padding:'18px',maxWidth:'85%',fontSize:'15px',textAlign:'center'}}>{v.text||v.caption}</div></div>}
-return <video ref={el=>{if(el){videoRefs.current[v.id]=el; el.muted=globalMuted}}} src={v.mediaUrl} loop playsInline autoPlay muted={globalMuted} style={{width:'100%',height:'100%',objectFit:'cover',background:'#000'}}/>
+return <video ref={el=>{if(el) videoRefs.current[v.id]=el}} src={v.mediaUrl} loop playsInline autoPlay style={{width:'100%',height:'100%',objectFit:'cover',background:'#000'}}/>
 }
 const myNotifications=notifications.filter(n=> !n.forEmail || n.forEmail===user?.email || (isOwner && n.forEmail===OWNER_EMAIL))
 const ownerRequests=blueTickRequests.filter(r=> r.status==='pending')
@@ -243,7 +243,6 @@ return(
 <div style={{display:'flex',gap:'8px',flex:1}}>
 {[{label:'For You',key:'foryou'},{label:'Muzika',key:'muzika'},{label:'Following',key:'following'}].map(t=><button key={t.key} onClick={()=>{pauseAllVideos(); setPage(t.key)}} style={{background:page===t.key?'#fff':'#222',color:page===t.key?'#000':'#888',border:'none',padding:'8px 16px',borderRadius:'20px',fontSize:'13px',fontWeight:'700',height:'34px'}}>{t.label}</button>)}
 </div>
-<button onClick={toggleGlobalSound} style={{background:'#1a1a1a',border:'1px solid #333',color:'#fff',padding:'6px 12px',borderRadius:'20px',fontSize:'12px',fontWeight:'800',height:'34px'}}>{globalMuted?'🔇':'🔊'}</button>
 <button onClick={()=>{pauseAllVideos(); setPage('live')}} style={{background:'#1a1a1a',border:'1px solid #FF0024',color:'#FF0024',padding:'6px 12px',borderRadius:'20px',fontSize:'12px',fontWeight:'800',height:'34px'}}>● Live</button>
 </div>
 
@@ -264,9 +263,6 @@ style={{width:'100%',height:'100%',scrollSnapAlign:'start',position:'relative',b
 <div style={{position:'absolute',inset:0,zIndex:1}} onClick={()=>handleTapVideo(v.id)}></div>
 <div style={{position:'absolute',inset:0}}>{renderMedia(v)}</div>
 {v.hidden && <div style={{position:'absolute',top:'12px',left:'12px',zIndex:4,background:'rgba(255,0,36,0.8)',color:'#fff',padding:'4px 8px',borderRadius:'12px',fontSize:'10px',fontWeight:'700'}}>🙈 Hidden</div>}
-<div style={{position:'absolute',top:'12px',right:'12px',zIndex:4,display:'flex',gap:'6px'}}>
-<button onClick={(e)=>{e.stopPropagation(); toggleGlobalSound()}} style={{background:'rgba(0,0,0,0.6)',border:'1px solid #333',color:'#fff',padding:'6px 10px',borderRadius:'20px',fontSize:'12px',fontWeight:'800'}}>{globalMuted?'🔇 Tap for Sound':'🔊'}</button>
-</div>
 
 <div style={{position:'absolute',right:'12px',bottom:'90px',zIndex:3,display:'flex',flexDirection:'column',gap:'16px',alignItems:'center'}} onClick={e=>e.stopPropagation()}>
 <div style={{display:'flex',flexDirection:'column',alignItems:'center'}}>
@@ -434,7 +430,7 @@ style={{aspectRatio:'9/14',background:'#111',borderRadius:'12px',overflow:'hidde
 <div style={{fontWeight:'800',textAlign:'center',fontSize:'15px',marginBottom:'12px'}}>Post — UPTOWN Official</div>
 <textarea value={uploadText} onChange={e=>setUploadText(e.target.value)} placeholder="Write text message" style={{width:'100%',height:'80px',background:'#000',border:'1px solid #333',borderRadius:'12px',padding:'12px',color:'#fff',marginBottom:'10px'}}/>
 <input type="file" accept="video/*" onChange={handleFileChange} style={{width:'100%',background:'#1a1a1a',border:'1px solid #333',borderRadius:'12px',padding:'12px',color:'#fff',marginBottom:'10px'}}/>
-{uploadPreview&&<video src={uploadPreview.url} controls style={{width:'100%',maxHeight:'180px',borderRadius:'12px',marginBottom:'10px'}} autoPlay loop muted={false}/>}
+{uploadPreview&&<video src={uploadPreview.url} controls style={{width:'100%',maxHeight:'180px',borderRadius:'12px',marginBottom:'10px'}} autoPlay loop/>}
 <input value={uploadCaption} onChange={e=>setUploadCaption(e.target.value)} placeholder="Caption — UPTOWN Official only" style={{width:'100%',background:'#000',border:'1px solid #333',borderRadius:'10px',padding:'10px',color:'#fff',marginBottom:'12px'}}/>
 <button onClick={handlePostNow} style={{width:'100%',background:'#00D632',color:'#000',border:'none',padding:'14px',borderRadius:'12px',fontWeight:'900'}}>🟢 POST NOW</button>
 </div>
