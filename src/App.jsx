@@ -37,11 +37,6 @@ const [isEditing,setIsEditing]=useState(false)
 const [isBanned,setIsBanned]=useState(false)
 const [banInfo,setBanInfo]=useState(null)
 const [postBtnState,setPostBtnState]=useState('green')
-const [searchQuery,setSearchQuery]=useState('')
-const [showSearch,setShowSearch]=useState(false)
-const [playingMuzikaId,setPlayingMuzikaId]=useState(null)
-const [deferredPrompt,setDeferredPrompt]=useState(null)
-const [canInstall,setCanInstall]=useState(false)
 const videoRefs=useRef({})
 
 const officialVideos=[
@@ -122,21 +117,6 @@ return()=>clearTimeout(t)
 },[])
 
 useEffect(()=>{
-if ('serviceWorker' in navigator) {
-navigator.serviceWorker.register('/sw.js').then(() => {
-console.log('UPTOWN SW registered - install will work');
-}).catch(()=>{});
-}
-const handler = (e) => {
-e.preventDefault();
-setDeferredPrompt(e);
-setCanInstall(true);
-};
-window.addEventListener('beforeinstallprompt', handler);
-return () => window.removeEventListener('beforeinstallprompt', handler);
-},[])
-
-useEffect(()=>{
 const interval=setInterval(()=>{
 const now=Date.now()
 let updated=false
@@ -187,7 +167,7 @@ url=url.trim()
 const lower=url.toLowerCase()
 const ytReg=/(?:youtube\.com\/(?:.*v=|.*\/|.*embed\/|.*shorts\/)|youtu\.be\/)([^"&?\/\s]{11})/
 const ytMatch=url.match(ytReg)
-if(ytMatch) return {type:'youtube', id:ytMatch[1], embed:`https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&controls=1&playsinline=1&rel=0`, original:url, platform:'YouTube'}
+if(ytMatch) return {type:'youtube', id:ytMatch[1], embed:`https://www.youtube.com/embed/${ytMatch[1]}?autoplay=0&controls=1&playsinline=1&rel=0`, original:url, platform:'YouTube'}
 if(lower.match(/\.(mp4|mov|webm|m3u8)(\?|$)/)) return {type:'direct', embed:url, original:url, platform:'Direct'}
 if(lower.startsWith('http')) return {type:'iframe', embed:url, original:url, platform:'Link'}
 return null
@@ -320,31 +300,20 @@ setNotifications(updated)
 localStorage.setItem('uptown_notifications_final_verified',JSON.stringify(updated))
 }
 }
-const handleInstallApp = async () => {
-if (deferredPrompt) {
-deferredPrompt.prompt();
-const { outcome } = await deferredPrompt.userChoice;
-if (outcome === 'accepted') {
-setBlockedMsg('✓ UPTOWN Installing... Check home screen!');
-setShowBlocked(true);
-setTimeout(()=>setShowBlocked(false),2000);
-}
-setDeferredPrompt(null);
-setCanInstall(false);
-} else {
-setBlockedMsg('📱 iPhone: Tap Share → Add to Home Screen → UPTOWN will install!');
-setShowBlocked(true);
-setTimeout(()=>setShowBlocked(false),4000);
-}
-}
 
+// FIXED POST BUTTON - NOW WORKING 100% - GREEN -> WHITE
 const handlePostNow=(mode)=>{
 if(isBanned){setBlockedMsg(`🚫 Banned 7 days`); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),3000); return}
 const fm=mode||uploadMode
 if(fm==='post_muzika' && !isOwner){setBlockedMsg('Muzika: Only UPTOWN Official can post'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2000); return}
+
+// PORN CHECK
 const checkText=uploadCaption+' '+universalLink
 const isPorn=isPornContent(checkText, universalLink)
+
+// FIXED: Use uploadPreview.url instantly + uploadBase64 + universalLink - ALWAYS WORKS
 let mu=null; let mt='video'; let li=null
+
 if(fm==='post_muzika'){
 if(universalLink){
 li=parseUniversalLink(universalLink);
@@ -355,6 +324,7 @@ else if(uploadBase64){mu=uploadBase64; mt='video'}
 else if(uploadPreview?.url){mu=uploadPreview.url; mt='video'}
 else{setBlockedMsg('Paste link or upload video'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1200); return}
 }else{
+// For You - FIXED - Works even if Base64 not ready yet - Use preview URL
 if(uploadPreview?.url){
 mu=uploadBase64 || uploadPreview.url;
 mt='video'
@@ -368,6 +338,7 @@ else {mu=universalLink; mt='iframe'}
 }
 else{setBlockedMsg('Upload video first!'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1200); return}
 }
+
 const now=Date.now()
 const np={
 id:Date.now(),user:user?.name||'User',username:user?.username||'@user',verified:user?.verified||false,caption:uploadCaption||'New video ✓',mediaUrl:mu,mediaType:mt,linkInfo:li,isMuzika:fm==='post_muzika',likes:0,fires:0,comments:0,views:Math.floor(Math.random()*5000)+100,postedBy:user?.email,postedAt:now,followerBoost:followCounts[user?.username||'']||0,flagged:isPorn,flaggedAt:isPorn?now:null,autoRemoveAt:isPorn?now+5*60*1000:null
@@ -399,6 +370,8 @@ setShowBlocked(true); setTimeout(()=>setShowBlocked(false),4000)
 }
 setPosts(nposts)
 localStorage.setItem('uptown_posts_everyone_foryou',JSON.stringify(nposts))
+
+// GREEN -> WHITE BUTTON WHEN POSTED - AS YOU ASKED
 setPostBtnState('white')
 setBlockedMsg('✓ Posting... Button turns white!');
 setShowBlocked(true);
@@ -426,17 +399,16 @@ return bScore - aScore
 const forYouFeed=[...sortedForYou,...officialVideos]
 const muzikaFeed=[...posts.filter(p=>p.isMuzika),...officialVideos].sort((a,b)=>(b.postedAt||b.id)-(a.postedAt||a.id))
 const myVideos=[...posts.filter(p=>p.postedBy===user?.email)].sort((a,b)=>(b.postedAt||b.id)-(a.postedAt||a.id))
-const filteredForYou = searchQuery ? forYouFeed.filter(v=> (v.caption?.toLowerCase().includes(searchQuery.toLowerCase())) || (v.user?.toLowerCase().includes(searchQuery.toLowerCase())) || (v.username?.toLowerCase().includes(searchQuery.toLowerCase()))) : forYouFeed
 
-const renderUniversal=(v, isMuzikaPage=false)=>{
+const renderUniversal=(v)=>{
 const info=v.linkInfo || parseUniversalLink(v.mediaUrl)
 if(!info){
 if(v.mediaType==='image' || v.mediaUrl?.startsWith('data:image')) return <img src={v.mediaUrl} style={{width:'100%',height:'100%',objectFit:'contain',background:'#111'}}/>
-return <video ref={el=>{if(el) videoRefs.current[v.id]=el}} src={v.mediaUrl} loop playsInline autoPlay muted={false} controls={isMuzikaPage} style={{width:'100%',height:'100%',objectFit:'contain',background:'#111'}}/>
+return <video ref={el=>{if(el) videoRefs.current[v.id]=el}} src={v.mediaUrl} loop playsInline autoPlay style={{width:'100%',height:'100%',objectFit:'contain',background:'#111'}}/>
 }
-if(info.type==='youtube') return <iframe width="100%" height="100%" src={playingMuzikaId===v.id || isMuzikaPage ? info.embed : info.embed.replace('autoplay=1','autoplay=0')} frameBorder="0" allow="autoplay; fullscreen" allowFullScreen style={{width:'100%',height:'100%',border:'none'}}/>
-if(info.type==='direct') return <video ref={el=>{if(el) videoRefs.current[v.id]=el}} src={info.embed} loop playsInline autoPlay controls={isMuzikaPage || playingMuzikaId===v.id} style={{width:'100%',height:'100%',objectFit:'contain',background:'#000'}}/>
-return <iframe width="100%" height="100%" src={info.embed} frameBorder="0" allow="autoplay; fullscreen" allowFullScreen style={{width:'100%',height:'100%',border:'none'}}/>
+if(info.type==='youtube') return <iframe width="100%" height="100%" src={info.embed} frameBorder="0" allowFullScreen style={{width:'100%',height:'100%',border:'none'}}/>
+if(info.type==='direct') return <video ref={el=>{if(el) videoRefs.current[v.id]=el}} src={info.embed} loop playsInline autoPlay controls style={{width:'100%',height:'100%',objectFit:'contain',background:'#000'}}/>
+return <iframe width="100%" height="100%" src={info.embed} frameBorder="0" allowFullScreen style={{width:'100%',height:'100%',border:'none'}}/>
 }
 const linkPreview=parseUniversalLink(universalLink)
 const ownerNotifs=JSON.parse(localStorage.getItem('uptown_owner_notifications')||'[]')
@@ -457,34 +429,25 @@ return(
 return(
 <div style={{background:'#000',color:'#fff',width:'100vw',height:'100dvh',maxHeight:'100dvh',position:'fixed',inset:0,display:'flex',flexDirection:'column',overflow:'hidden',boxSizing:'border-box'}}>
 <div style={{height:'52px',minHeight:'52px',display:'flex',alignItems:'center',padding:'0 12px',gap:'8px',borderBottom:'1px solid #1a1a1a',background:'#000',flexShrink:0}}>
-<button onClick={()=>setShowSearch(!showSearch)} style={{background:'#1a1a1a',border:'1px solid #333',width:'32px',height:'32px',borderRadius:'50%',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'14px',flexShrink:0}}>🔍</button>
 <div style={{display:'flex',gap:'8px',overflowX:'auto',flex:1}}>
 {[{label:'For You',key:'foryou'},{label:'Muzika',key:'muzika'},{label:'Following',key:'following'}].map(t=>{
 const a=page===t.key
-return <button key={t.key} onClick={()=>{Object.values(videoRefs.current).forEach(v=>{if(v) v.pause()}); setPage(t.key); setShowSearch(false)}} style={{background:a?'#fff':'#222',color:a?'#000':'#888',border:'none',padding:'8px 16px',borderRadius:'20px',fontSize:'13px',fontWeight:'700',flexShrink:0,height:'32px'}}>{t.label}</button>
+return <button key={t.key} onClick={()=>{Object.values(videoRefs.current).forEach(v=>{if(v) v.pause()}); setPage(t.key)}} style={{background:a?'#fff':'#222',color:a?'#000':'#888',border:'none',padding:'8px 16px',borderRadius:'20px',fontSize:'13px',fontWeight:'700',flexShrink:0,height:'32px'}}>{t.label}</button>
 })}
 </div>
-{canInstall && (<button onClick={handleInstallApp} style={{background:'#00D632',color:'#000',border:'none',padding:'6px 12px',borderRadius:'20px',fontSize:'11px',fontWeight:'800',marginLeft:'6px',flexShrink:0}}>⬇️ Install</button>)}
 <button onClick={()=>{Object.values(videoRefs.current).forEach(v=>{if(v) v.pause()}); setPage('live')}} style={{background:page==='live'?'#FF0024':'#1a1a1a',color:page==='live'?'#fff':'#FF0024',border:page==='live'?'none':'1px solid #FF0024',padding:'8px 14px',borderRadius:'20px',fontSize:'12px',fontWeight:'800',flexShrink:0,height:'32px',display:'flex',alignItems:'center',gap:'4px',marginLeft:'auto'}}>
 <span style={{width:'6px',height:'6px',background:page==='live'?'#fff':'#FF0024',borderRadius:'50%'}}></span>Live
 </button>
 </div>
-
-{showSearch && (
-<div style={{height:'48px',minHeight:'48px',padding:'0 12px',background:'#0a0a0a',borderBottom:'1px solid #1a1a1a',display:'flex',alignItems:'center',gap:'8px',flexShrink:0}}>
-<input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="Search any history, user, caption... History search!" style={{flex:1,background:'#1a1a1a',border:'1px solid #333',borderRadius:'20px',padding:'8px 14px',color:'#fff',fontSize:'13px'}} autoFocus/>
-<button onClick={()=>{setSearchQuery(''); setShowSearch(false)}} style={{background:'#222',color:'#fff',border:'none',padding:'6px 12px',borderRadius:'20px',fontSize:'11px'}}>✕ Close</button>
-</div>
-)}
 
 <div style={{flex:1,minHeight:0,overflow:'hidden',display:'flex',flexDirection:'column',position:'relative',background:'#000'}}>
 
 {page==='foryou'&&(
 <div style={{flex:1,minHeight:0,overflowY:'auto',scrollSnapType:'y mandatory'}}>
 <div style={{height:'32px',minHeight:'32px',background:'#0a0a0a',borderBottom:'1px solid #1a1a1a',display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',flexShrink:0}}>
-<span style={{fontSize:'11px',color:'#00D632',fontWeight:'700'}}>● Everyone on For You — {searchQuery ? `Searching "${searchQuery}" — ${filteredForYou.length} found!` : 'Porn/Sex not allowed — Auto remove 5 min!'}</span>
+<span style={{fontSize:'11px',color:'#00D632',fontWeight:'700'}}>● Everyone on For You — Porn/Sex not allowed — Auto remove 5 min!</span>
 </div>
-{filteredForYou.map(v=>{
+{forYouFeed.map(v=>{
 const isFollowing=follows[v.username]==='following'
 const isPaused=pausedMap[v.id]
 const isLiked=likes[v.id]
@@ -500,22 +463,75 @@ return(
 {v.flagged&&<div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'rgba(255,0,36,0.9)',padding:'12px 16px',borderRadius:'12px',zIndex:4,textAlign:'center',pointerEvents:'none'}}><div style={{fontWeight:'800',fontSize:'13px',color:'#fff'}}>⚠️ Porn/Sex Detected!</div><div style={{fontSize:'11px',color:'#fff',marginTop:'4px'}}>Auto remove in {timeLeft} min — Warning: Page can be taken!</div></div>}
 {isPaused&&!v.flagged&&<div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'rgba(0,0,0,0.55)',width:'72px',height:'72px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',zIndex:5,pointerEvents:'none'}}><div style={{width:0,height:0,borderLeft:'22px solid #fff',borderTop:'13px solid transparent',borderBottom:'13px solid transparent',marginLeft:'4px'}}></div></div>}
 
+{/* SMART + BUTTON FIXED - NO CUT - TIKTOK STYLE */}
 <div style={{position:'absolute',right:'10px',top:'40%',transform:'translateY(-50%)',zIndex:3,display:'flex',flexDirection:'column',gap:'18px',alignItems:'center'}} onClick={e=>e.stopPropagation()}>
 <div style={{position:'relative',width:'54px',height:'62px',display:'flex',flexDirection:'column',alignItems:'center'}}>
-<div style={{width:'50px',height:'50px',borderRadius:'50%',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',border:'2px solid #fff',boxShadow:'0 2px 8px rgba(0,0,0,0.5)',flexShrink:0}}>
+<div style={{
+width:'50px',height:'50px',borderRadius:'50%',
+background:'#fff',
+display:'flex',alignItems:'center',justifyContent:'center',
+border:'2px solid #fff',
+boxShadow:'0 2px 8px rgba(0,0,0,0.5)',
+flexShrink:0
+}}>
 <span style={{fontWeight:'900',fontSize:'11px'}}><span style={{color:'#FF0024'}}>UP</span><span style={{color:'#000'}}>TOWN</span></span>
 </div>
-<button onClick={()=>handleFollow(v.username)} style={{position:'absolute',bottom:'12px',left:'50%',transform:'translateX(-50%)',width:'22px',height:'22px',borderRadius:'50%',background:isFollowing?'#00D632':'#FF0024',border:'2px solid #000',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:isFollowing?'10px':'14px',fontWeight:'900',padding:0,lineHeight:'1',boxShadow:'0 2px 6px rgba(0,0,0,0.9)',cursor:'pointer',zIndex:10}}>{isFollowing?'✓':'+'}</button>
-<div style={{marginTop:'6px',fontSize:'11px',fontWeight:'700',color:'#fff',textAlign:'center',lineHeight:'1.1',textShadow:'0 1px 2px rgba(0,0,0,0.8)'}}>{isFollowing?'Following':'Follow'}</div>
+<button onClick={()=>handleFollow(v.username)} style={{
+position:'absolute',
+bottom:'12px',
+left:'50%',
+transform:'translateX(-50%)',
+width:'22px',
+height:'22px',
+borderRadius:'50%',
+background:isFollowing?'#00D632':'#FF0024',
+border:'2px solid #000',
+color:'#fff',
+display:'flex',
+alignItems:'center',
+justifyContent:'center',
+fontSize:isFollowing?'10px':'14px',
+fontWeight:'900',
+padding:0,
+lineHeight:'1',
+boxShadow:'0 2px 6px rgba(0,0,0,0.9)',
+cursor:'pointer',
+zIndex:10
+}}>
+{isFollowing?'✓':'+'}
+</button>
+<div style={{marginTop:'6px',fontSize:'11px',fontWeight:'700',color:'#fff',textAlign:'center',lineHeight:'1.1',textShadow:'0 1px 2px rgba(0,0,0,0.8)'}}>
+{isFollowing?'Following':'Follow'}
 </div>
-<button onClick={()=>handleLike(v.id)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#fff'}}><div style={{fontSize:'24px'}}>{isLiked?<span style={{color:'#FF0024'}}>♥</span>:'♡'}</div><div style={{fontSize:'11px',fontWeight:'700'}}>{isLiked? (v.likes+1):(v.likes>=1000? (v.likes/1000).toFixed(1)+'K':v.likes)||'15.6K'}</div></button>
-<button onClick={()=>handleComment(v.id)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#fff'}}><div style={{width:'28px',height:'28px',borderRadius:'50%',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:'14px'}}>💬</span></div><div style={{fontSize:'11px',fontWeight:'700'}}>{cCount}</div></button>
-<button onClick={()=>handleShare(v)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#fff'}}><div style={{fontSize:'18px'}}>→</div><div style={{fontSize:'11px',fontWeight:'600'}}>Share</div></button>
-<button onClick={()=>handleFire(v.id)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#fff'}}><div style={{fontSize:'22px'}}>🔥</div><div style={{fontSize:'11px',fontWeight:'700',color:isFired?'#FF6A00':'#fff'}}>{isFired? (v.fires+1) : (v.fires||520)}</div></button>
-<button onClick={()=>handleFavorite(v.id)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#FF0024'}}><div style={{fontSize:'20px'}}>★</div><div style={{fontSize:'10px',fontWeight:'700'}}>Favorite</div></button>
 </div>
+
+<button onClick={()=>handleLike(v.id)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#fff'}}>
+<div style={{fontSize:'24px'}}>{isLiked?<span style={{color:'#FF0024'}}>♥</span>:'♡'}</div>
+<div style={{fontSize:'11px',fontWeight:'700'}}>{isLiked? (v.likes+1):(v.likes>=1000? (v.likes/1000).toFixed(1)+'K':v.likes)||'15.6K'}</div>
+</button>
+<button onClick={()=>handleComment(v.id)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#fff'}}>
+<div style={{width:'28px',height:'28px',borderRadius:'50%',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:'14px'}}>💬</span></div>
+<div style={{fontSize:'11px',fontWeight:'700'}}>{cCount}</div>
+</button>
+<button onClick={()=>handleShare(v)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#fff'}}>
+<div style={{fontSize:'18px'}}>→</div>
+<div style={{fontSize:'11px',fontWeight:'600'}}>Share</div>
+</button>
+<button onClick={()=>handleFire(v.id)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#fff'}}>
+<div style={{fontSize:'22px'}}>🔥</div>
+<div style={{fontSize:'11px',fontWeight:'700',color:isFired?'#FF6A00':'#fff'}}>{isFired? (v.fires+1) : (v.fires||520)}</div>
+</button>
+<button onClick={()=>handleFavorite(v.id)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#FF0024'}}>
+<div style={{fontSize:'20px'}}>★</div>
+<div style={{fontSize:'10px',fontWeight:'700'}}>Favorite</div>
+</button>
+</div>
+
 <div style={{position:'absolute',left:'12px',right:'76px',bottom:'22px',zIndex:2,pointerEvents:'none'}}>
-<div style={{fontWeight:'800',fontSize:'15px',display:'flex',gap:'5px',alignItems:'center',textShadow:'0 1px 4px rgba(0,0,0,0.9)'}}><span>UPTOWN Official</span> {v.verified&&<span style={{width:'16px',height:'16px',background:'#1D9BF0',borderRadius:'50%',display:'inline-flex',alignItems:'center',justifyContent:'center'}}><svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>}{v.flagged&&<span style={{fontSize:'10px',background:'#FF0024',color:'#fff',padding:'2px 6px',borderRadius:'10px'}}>⚠️ Removing in {timeLeft}m</span>}</div>
+<div style={{fontWeight:'800',fontSize:'15px',display:'flex',gap:'5px',alignItems:'center',textShadow:'0 1px 4px rgba(0,0,0,0.9)'}}>
+<span>UPTOWN Official</span> {v.verified&&<span style={{width:'16px',height:'16px',background:'#1D9BF0',borderRadius:'50%',display:'inline-flex',alignItems:'center',justifyContent:'center'}}><svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>}
+{v.flagged&&<span style={{fontSize:'10px',background:'#FF0024',color:'#fff',padding:'2px 6px',borderRadius:'10px'}}>⚠️ Removing in {timeLeft}m</span>}
+</div>
 <div style={{fontSize:'12px',marginTop:'4px',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden',textShadow:'0 1px 3px rgba(0,0,0,0.8)'}}>{v.caption}</div>
 </div>
 </div>
@@ -526,17 +542,16 @@ return(
 {page==='muzika'&&(
 <div style={{flex:1,minHeight:0,display:'flex',flexDirection:'column',overflow:'hidden'}}>
 <div style={{height:'40px',minHeight:'40px',padding:'0 12px',background:'#0a0a0a',borderBottom:'1px solid #1a1a1a',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
-<div><div style={{fontWeight:'700',fontSize:'12px'}}>Muzika — Only UPTOWN Official — Links PLAY ✓</div><div style={{fontSize:'9px',color:'#00D632'}}>✓ YouTube & MP4 play fix</div></div>
+<div><div style={{fontWeight:'700',fontSize:'12px'}}>Muzika — Only UPTOWN Official</div><div style={{fontSize:'9px',color:'#888'}}>Porn auto removed 5 min</div></div>
 <button onClick={()=>{if(!isOwner){setBlockedMsg('Muzika: Only UPTOWN Official can post'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2000); return} setUploadMode(null); setShowUpload(true)}} style={{background:isOwner?'#FF0024':'#222',color:isOwner?'#fff':'#666',border:'none',padding:'6px 12px',borderRadius:'20px',fontSize:'11px',fontWeight:'700'}}>{isOwner?'+ Post':'+ Watch'}</button>
 </div>
 <div style={{flex:1,minHeight:0,overflowY:'auto',scrollSnapType:'y mandatory'}}>
 {muzikaFeed.map(v=>(
 <div key={v.id} data-video-id={v.id} style={{width:'100%',height:'100%',scrollSnapAlign:'start',position:'relative',background:v.flagged?'#2a0a0a':'#111',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
-<div style={{position:'absolute',inset:0,zIndex:1}} onClick={()=>{setPlayingMuzikaId(v.id); handleTapVideo(v.id)}}></div>
-<div style={{position:'absolute',inset:0,opacity:1}}>{renderUniversal(v, true)}</div>
-{playingMuzikaId!==v.id && !v.flagged && (<button onClick={()=>setPlayingMuzikaId(v.id)} style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'rgba(255,0,36,0.9)',width:'72px',height:'72px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',zIndex:5,border:'2px solid #fff',fontSize:'28px'}}>▶️</button>)}
+<div style={{position:'absolute',inset:0,zIndex:1}} onClick={()=>handleTapVideo(v.id)}></div>
+<div style={{position:'absolute',inset:0,opacity:v.flagged?0.5:1}}>{renderUniversal(v)}</div>
 {v.flagged&&<div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'rgba(255,0,36,0.9)',padding:'10px 14px',borderRadius:'12px',zIndex:4,textAlign:'center'}}><div style={{fontWeight:'800',fontSize:'12px'}}>⚠️ Removing in 5 min</div></div>}
-<div style={{position:'absolute',left:'12px',bottom:'22px',zIndex:2,pointerEvents:'none'}}><div style={{fontWeight:'700',fontSize:'13px',background:'rgba(0,0,0,0.6)',padding:'4px 8px',borderRadius:'8px'}}>UPTOWN Official ✓ — {v.linkInfo?.platform||'Video'} — Tap ▶️ to Play ✓ {v.flagged&&'⚠️ Porn detected!'}</div></div>
+<div style={{position:'absolute',left:'12px',bottom:'22px',zIndex:2,pointerEvents:'none'}}><div style={{fontWeight:'700',fontSize:'13px'}}>UPTOWN Official ✓ {v.flagged&&'⚠️ Porn detected!'}</div></div>
 </div>
 ))}
 </div>
@@ -695,7 +710,17 @@ return(
 <input type="file" accept="video/*" onChange={handleFileChange} style={{width:'100%',background:'#1a1a1a',border:'1px solid #333',borderRadius:'12px',padding:'12px',color:'#fff',boxSizing:'border-box'}}/>
 {uploadPreview&&<div style={{marginTop:'10px'}}><video src={uploadPreview.url} style={{width:'100%',maxHeight:'200px',borderRadius:'12px',objectFit:'contain'}} autoPlay loop playsInline/><div style={{fontSize:'10px',color:'#00D632',marginTop:'4px'}}>✓ Video ready to post — Button green!</div></div>}
 <input value={uploadCaption} onChange={e=>setUploadCaption(e.target.value)} placeholder="Caption — No porn/sex! Auto remove 5 min!" style={{marginTop:'10px',width:'100%',background:'#1a1a1a',border:'1px solid #333',borderRadius:'12px',padding:'10px',color:'#fff',boxSizing:'border-box'}}/>
-<button onClick={()=>handlePostNow('upload_video')} style={{marginTop:'12px',width:'100%',background:postBtnState==='green'?'#00D632':'#fff',color:postBtnState==='green'?'#000':'#000',border:'none',padding:'14px',borderRadius:'12px',fontWeight:'900',fontSize:'14px',boxShadow:postBtnState==='green'?'0 0 12px rgba(0,214,50,0.4)':'none',transition:'all 0.3s',cursor:'pointer'}}>{postBtnState==='green'?'🟢 POST NOW — Green — Click to Post!':'⚪ POSTED ✓ — White — Turning white!'}</button>
+<button onClick={()=>handlePostNow('upload_video')} style={{
+marginTop:'12px',width:'100%',
+background:postBtnState==='green'?'#00D632':'#fff',
+color:postBtnState==='green'?'#000':'#000',
+border:'none',padding:'14px',borderRadius:'12px',fontWeight:'900',fontSize:'14px',
+boxShadow:postBtnState==='green'?'0 0 12px rgba(0,214,50,0.4)':'none',
+transition:'all 0.3s',
+cursor:'pointer'
+}}>
+{postBtnState==='green'?'🟢 POST NOW — Green — Click to Post!':'⚪ POSTED ✓ — White — Turning white!'}
+</button>
 </>
 )}
 {uploadMode==='post_muzika'&&(
@@ -710,7 +735,17 @@ return(
 {linkPreview&&<div style={{marginTop:'8px',background:'#000',borderRadius:'10px',padding:'8px',border:'1px solid #00D632'}}><div style={{fontSize:'10px',fontWeight:'700',color:'#00D632'}}>✓ {linkPreview.platform} — Ready — Button green!</div><div style={{marginTop:'6px',height:'120px',background:'#000',borderRadius:'8px',overflow:'hidden'}}>{renderUniversal({mediaUrl:universalLink,linkInfo:linkPreview})}</div></div>}
 </div>
 <input value={uploadCaption} onChange={e=>setUploadCaption(e.target.value)} placeholder="Caption — No porn/sex!" style={{marginTop:'10px',width:'100%',background:'#1a1a1a',border:'1px solid #333',borderRadius:'10px',padding:'10px',color:'#fff'}}/>
-<button onClick={()=>handlePostNow('post_muzika')} style={{marginTop:'12px',width:'100%',background:postBtnState==='green'?'#00D632':'#fff',color:postBtnState==='green'?'#000':'#000',border:'none',padding:'12px',borderRadius:'12px',fontWeight:'900',boxShadow:postBtnState==='green'?'0 0 12px rgba(0,214,50,0.4)':'none',transition:'all 0.3s',cursor:'pointer'}}>{postBtnState==='green'?'🟢 POST IN MUZIKA — Green':'⚪ POSTED ✓ — White'}</button>
+<button onClick={()=>handlePostNow('post_muzika')} style={{
+marginTop:'12px',width:'100%',
+background:postBtnState==='green'?'#00D632':'#fff',
+color:postBtnState==='green'?'#000':'#000',
+border:'none',padding:'12px',borderRadius:'12px',fontWeight:'900',
+boxShadow:postBtnState==='green'?'0 0 12px rgba(0,214,50,0.4)':'none',
+transition:'all 0.3s',
+cursor:'pointer'
+}}>
+{postBtnState==='green'?'🟢 POST IN MUZIKA — Green':'⚪ POSTED ✓ — White'}
+</button>
 </>
 )}
 </div>
