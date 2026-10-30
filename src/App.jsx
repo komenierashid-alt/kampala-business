@@ -37,10 +37,11 @@ const [isEditing,setIsEditing]=useState(false)
 const [isBanned,setIsBanned]=useState(false)
 const [banInfo,setBanInfo]=useState(null)
 const [postBtnState,setPostBtnState]=useState('green')
-// ADDED ONLY - SEARCH + MUZIKA PLAY FIX - NOT REMOVING ANYTHING
 const [searchQuery,setSearchQuery]=useState('')
 const [showSearch,setShowSearch]=useState(false)
 const [playingMuzikaId,setPlayingMuzikaId]=useState(null)
+const [deferredPrompt,setDeferredPrompt]=useState(null)
+const [canInstall,setCanInstall]=useState(false)
 const videoRefs=useRef({})
 
 const officialVideos=[
@@ -118,6 +119,21 @@ localStorage.setItem('uptown_notifications_final_verified',JSON.stringify(nots))
 }
 },1800)
 return()=>clearTimeout(t)
+},[])
+
+useEffect(()=>{
+if ('serviceWorker' in navigator) {
+navigator.serviceWorker.register('/sw.js').then(() => {
+console.log('UPTOWN SW registered - install will work');
+}).catch(()=>{});
+}
+const handler = (e) => {
+e.preventDefault();
+setDeferredPrompt(e);
+setCanInstall(true);
+};
+window.addEventListener('beforeinstallprompt', handler);
+return () => window.removeEventListener('beforeinstallprompt', handler);
 },[])
 
 useEffect(()=>{
@@ -304,6 +320,23 @@ setNotifications(updated)
 localStorage.setItem('uptown_notifications_final_verified',JSON.stringify(updated))
 }
 }
+const handleInstallApp = async () => {
+if (deferredPrompt) {
+deferredPrompt.prompt();
+const { outcome } = await deferredPrompt.userChoice;
+if (outcome === 'accepted') {
+setBlockedMsg('✓ UPTOWN Installing... Check home screen!');
+setShowBlocked(true);
+setTimeout(()=>setShowBlocked(false),2000);
+}
+setDeferredPrompt(null);
+setCanInstall(false);
+} else {
+setBlockedMsg('📱 iPhone: Tap Share → Add to Home Screen → UPTOWN will install!');
+setShowBlocked(true);
+setTimeout(()=>setShowBlocked(false),4000);
+}
+}
 
 const handlePostNow=(mode)=>{
 if(isBanned){setBlockedMsg(`🚫 Banned 7 days`); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),3000); return}
@@ -393,8 +426,6 @@ return bScore - aScore
 const forYouFeed=[...sortedForYou,...officialVideos]
 const muzikaFeed=[...posts.filter(p=>p.isMuzika),...officialVideos].sort((a,b)=>(b.postedAt||b.id)-(a.postedAt||a.id))
 const myVideos=[...posts.filter(p=>p.postedBy===user?.email)].sort((a,b)=>(b.postedAt||b.id)-(a.postedAt||a.id))
-
-// ADDED SEARCH FILTER ONLY
 const filteredForYou = searchQuery ? forYouFeed.filter(v=> (v.caption?.toLowerCase().includes(searchQuery.toLowerCase())) || (v.user?.toLowerCase().includes(searchQuery.toLowerCase())) || (v.username?.toLowerCase().includes(searchQuery.toLowerCase()))) : forYouFeed
 
 const renderUniversal=(v, isMuzikaPage=false)=>{
@@ -433,6 +464,7 @@ const a=page===t.key
 return <button key={t.key} onClick={()=>{Object.values(videoRefs.current).forEach(v=>{if(v) v.pause()}); setPage(t.key); setShowSearch(false)}} style={{background:a?'#fff':'#222',color:a?'#000':'#888',border:'none',padding:'8px 16px',borderRadius:'20px',fontSize:'13px',fontWeight:'700',flexShrink:0,height:'32px'}}>{t.label}</button>
 })}
 </div>
+{canInstall && (<button onClick={handleInstallApp} style={{background:'#00D632',color:'#000',border:'none',padding:'6px 12px',borderRadius:'20px',fontSize:'11px',fontWeight:'800',marginLeft:'6px',flexShrink:0}}>⬇️ Install</button>)}
 <button onClick={()=>{Object.values(videoRefs.current).forEach(v=>{if(v) v.pause()}); setPage('live')}} style={{background:page==='live'?'#FF0024':'#1a1a1a',color:page==='live'?'#fff':'#FF0024',border:page==='live'?'none':'1px solid #FF0024',padding:'8px 14px',borderRadius:'20px',fontSize:'12px',fontWeight:'800',flexShrink:0,height:'32px',display:'flex',alignItems:'center',gap:'4px',marginLeft:'auto'}}>
 <span style={{width:'6px',height:'6px',background:page==='live'?'#fff':'#FF0024',borderRadius:'50%'}}></span>Live
 </button>
@@ -470,72 +502,20 @@ return(
 
 <div style={{position:'absolute',right:'10px',top:'40%',transform:'translateY(-50%)',zIndex:3,display:'flex',flexDirection:'column',gap:'18px',alignItems:'center'}} onClick={e=>e.stopPropagation()}>
 <div style={{position:'relative',width:'54px',height:'62px',display:'flex',flexDirection:'column',alignItems:'center'}}>
-<div style={{
-width:'50px',height:'50px',borderRadius:'50%',
-background:'#fff',
-display:'flex',alignItems:'center',justifyContent:'center',
-border:'2px solid #fff',
-boxShadow:'0 2px 8px rgba(0,0,0,0.5)',
-flexShrink:0
-}}>
+<div style={{width:'50px',height:'50px',borderRadius:'50%',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',border:'2px solid #fff',boxShadow:'0 2px 8px rgba(0,0,0,0.5)',flexShrink:0}}>
 <span style={{fontWeight:'900',fontSize:'11px'}}><span style={{color:'#FF0024'}}>UP</span><span style={{color:'#000'}}>TOWN</span></span>
 </div>
-<button onClick={()=>handleFollow(v.username)} style={{
-position:'absolute',
-bottom:'12px',
-left:'50%',
-transform:'translateX(-50%)',
-width:'22px',
-height:'22px',
-borderRadius:'50%',
-background:isFollowing?'#00D632':'#FF0024',
-border:'2px solid #000',
-color:'#fff',
-display:'flex',
-alignItems:'center',
-justifyContent:'center',
-fontSize:isFollowing?'10px':'14px',
-fontWeight:'900',
-padding:0,
-lineHeight:'1',
-boxShadow:'0 2px 6px rgba(0,0,0,0.9)',
-cursor:'pointer',
-zIndex:10
-}}>
-{isFollowing?'✓':'+'}
-</button>
-<div style={{marginTop:'6px',fontSize:'11px',fontWeight:'700',color:'#fff',textAlign:'center',lineHeight:'1.1',textShadow:'0 1px 2px rgba(0,0,0,0.8)'}}>
-{isFollowing?'Following':'Follow'}
+<button onClick={()=>handleFollow(v.username)} style={{position:'absolute',bottom:'12px',left:'50%',transform:'translateX(-50%)',width:'22px',height:'22px',borderRadius:'50%',background:isFollowing?'#00D632':'#FF0024',border:'2px solid #000',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:isFollowing?'10px':'14px',fontWeight:'900',padding:0,lineHeight:'1',boxShadow:'0 2px 6px rgba(0,0,0,0.9)',cursor:'pointer',zIndex:10}}>{isFollowing?'✓':'+'}</button>
+<div style={{marginTop:'6px',fontSize:'11px',fontWeight:'700',color:'#fff',textAlign:'center',lineHeight:'1.1',textShadow:'0 1px 2px rgba(0,0,0,0.8)'}}>{isFollowing?'Following':'Follow'}</div>
 </div>
+<button onClick={()=>handleLike(v.id)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#fff'}}><div style={{fontSize:'24px'}}>{isLiked?<span style={{color:'#FF0024'}}>♥</span>:'♡'}</div><div style={{fontSize:'11px',fontWeight:'700'}}>{isLiked? (v.likes+1):(v.likes>=1000? (v.likes/1000).toFixed(1)+'K':v.likes)||'15.6K'}</div></button>
+<button onClick={()=>handleComment(v.id)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#fff'}}><div style={{width:'28px',height:'28px',borderRadius:'50%',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:'14px'}}>💬</span></div><div style={{fontSize:'11px',fontWeight:'700'}}>{cCount}</div></button>
+<button onClick={()=>handleShare(v)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#fff'}}><div style={{fontSize:'18px'}}>→</div><div style={{fontSize:'11px',fontWeight:'600'}}>Share</div></button>
+<button onClick={()=>handleFire(v.id)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#fff'}}><div style={{fontSize:'22px'}}>🔥</div><div style={{fontSize:'11px',fontWeight:'700',color:isFired?'#FF6A00':'#fff'}}>{isFired? (v.fires+1) : (v.fires||520)}</div></button>
+<button onClick={()=>handleFavorite(v.id)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#FF0024'}}><div style={{fontSize:'20px'}}>★</div><div style={{fontSize:'10px',fontWeight:'700'}}>Favorite</div></button>
 </div>
-
-<button onClick={()=>handleLike(v.id)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#fff'}}>
-<div style={{fontSize:'24px'}}>{isLiked?<span style={{color:'#FF0024'}}>♥</span>:'♡'}</div>
-<div style={{fontSize:'11px',fontWeight:'700'}}>{isLiked? (v.likes+1):(v.likes>=1000? (v.likes/1000).toFixed(1)+'K':v.likes)||'15.6K'}</div>
-</button>
-<button onClick={()=>handleComment(v.id)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#fff'}}>
-<div style={{width:'28px',height:'28px',borderRadius:'50%',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:'14px'}}>💬</span></div>
-<div style={{fontSize:'11px',fontWeight:'700'}}>{cCount}</div>
-</button>
-<button onClick={()=>handleShare(v)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#fff'}}>
-<div style={{fontSize:'18px'}}>→</div>
-<div style={{fontSize:'11px',fontWeight:'600'}}>Share</div>
-</button>
-<button onClick={()=>handleFire(v.id)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#fff'}}>
-<div style={{fontSize:'22px'}}>🔥</div>
-<div style={{fontSize:'11px',fontWeight:'700',color:isFired?'#FF6A00':'#fff'}}>{isFired? (v.fires+1) : (v.fires||520)}</div>
-</button>
-<button onClick={()=>handleFavorite(v.id)} style={{background:'none',border:'none',display:'flex',flexDirection:'column',alignItems:'center',gap:'2px',color:'#FF0024'}}>
-<div style={{fontSize:'20px'}}>★</div>
-<div style={{fontSize:'10px',fontWeight:'700'}}>Favorite</div>
-</button>
-</div>
-
 <div style={{position:'absolute',left:'12px',right:'76px',bottom:'22px',zIndex:2,pointerEvents:'none'}}>
-<div style={{fontWeight:'800',fontSize:'15px',display:'flex',gap:'5px',alignItems:'center',textShadow:'0 1px 4px rgba(0,0,0,0.9)'}}>
-<span>UPTOWN Official</span> {v.verified&&<span style={{width:'16px',height:'16px',background:'#1D9BF0',borderRadius:'50%',display:'inline-flex',alignItems:'center',justifyContent:'center'}}><svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>}
-{v.flagged&&<span style={{fontSize:'10px',background:'#FF0024',color:'#fff',padding:'2px 6px',borderRadius:'10px'}}>⚠️ Removing in {timeLeft}m</span>}
-</div>
+<div style={{fontWeight:'800',fontSize:'15px',display:'flex',gap:'5px',alignItems:'center',textShadow:'0 1px 4px rgba(0,0,0,0.9)'}}><span>UPTOWN Official</span> {v.verified&&<span style={{width:'16px',height:'16px',background:'#1D9BF0',borderRadius:'50%',display:'inline-flex',alignItems:'center',justifyContent:'center'}}><svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/></svg></span>}{v.flagged&&<span style={{fontSize:'10px',background:'#FF0024',color:'#fff',padding:'2px 6px',borderRadius:'10px'}}>⚠️ Removing in {timeLeft}m</span>}</div>
 <div style={{fontSize:'12px',marginTop:'4px',display:'-webkit-box',WebkitLineClamp:2,WebkitBoxOrient:'vertical',overflow:'hidden',textShadow:'0 1px 3px rgba(0,0,0,0.8)'}}>{v.caption}</div>
 </div>
 </div>
@@ -715,17 +695,7 @@ return(
 <input type="file" accept="video/*" onChange={handleFileChange} style={{width:'100%',background:'#1a1a1a',border:'1px solid #333',borderRadius:'12px',padding:'12px',color:'#fff',boxSizing:'border-box'}}/>
 {uploadPreview&&<div style={{marginTop:'10px'}}><video src={uploadPreview.url} style={{width:'100%',maxHeight:'200px',borderRadius:'12px',objectFit:'contain'}} autoPlay loop playsInline/><div style={{fontSize:'10px',color:'#00D632',marginTop:'4px'}}>✓ Video ready to post — Button green!</div></div>}
 <input value={uploadCaption} onChange={e=>setUploadCaption(e.target.value)} placeholder="Caption — No porn/sex! Auto remove 5 min!" style={{marginTop:'10px',width:'100%',background:'#1a1a1a',border:'1px solid #333',borderRadius:'12px',padding:'10px',color:'#fff',boxSizing:'border-box'}}/>
-<button onClick={()=>handlePostNow('upload_video')} style={{
-marginTop:'12px',width:'100%',
-background:postBtnState==='green'?'#00D632':'#fff',
-color:postBtnState==='green'?'#000':'#000',
-border:'none',padding:'14px',borderRadius:'12px',fontWeight:'900',fontSize:'14px',
-boxShadow:postBtnState==='green'?'0 0 12px rgba(0,214,50,0.4)':'none',
-transition:'all 0.3s',
-cursor:'pointer'
-}}>
-{postBtnState==='green'?'🟢 POST NOW — Green — Click to Post!':'⚪ POSTED ✓ — White — Turning white!'}
-</button>
+<button onClick={()=>handlePostNow('upload_video')} style={{marginTop:'12px',width:'100%',background:postBtnState==='green'?'#00D632':'#fff',color:postBtnState==='green'?'#000':'#000',border:'none',padding:'14px',borderRadius:'12px',fontWeight:'900',fontSize:'14px',boxShadow:postBtnState==='green'?'0 0 12px rgba(0,214,50,0.4)':'none',transition:'all 0.3s',cursor:'pointer'}}>{postBtnState==='green'?'🟢 POST NOW — Green — Click to Post!':'⚪ POSTED ✓ — White — Turning white!'}</button>
 </>
 )}
 {uploadMode==='post_muzika'&&(
@@ -740,17 +710,7 @@ cursor:'pointer'
 {linkPreview&&<div style={{marginTop:'8px',background:'#000',borderRadius:'10px',padding:'8px',border:'1px solid #00D632'}}><div style={{fontSize:'10px',fontWeight:'700',color:'#00D632'}}>✓ {linkPreview.platform} — Ready — Button green!</div><div style={{marginTop:'6px',height:'120px',background:'#000',borderRadius:'8px',overflow:'hidden'}}>{renderUniversal({mediaUrl:universalLink,linkInfo:linkPreview})}</div></div>}
 </div>
 <input value={uploadCaption} onChange={e=>setUploadCaption(e.target.value)} placeholder="Caption — No porn/sex!" style={{marginTop:'10px',width:'100%',background:'#1a1a1a',border:'1px solid #333',borderRadius:'10px',padding:'10px',color:'#fff'}}/>
-<button onClick={()=>handlePostNow('post_muzika')} style={{
-marginTop:'12px',width:'100%',
-background:postBtnState==='green'?'#00D632':'#fff',
-color:postBtnState==='green'?'#000':'#000',
-border:'none',padding:'12px',borderRadius:'12px',fontWeight:'900',
-boxShadow:postBtnState==='green'?'0 0 12px rgba(0,214,50,0.4)':'none',
-transition:'all 0.3s',
-cursor:'pointer'
-}}>
-{postBtnState==='green'?'🟢 POST IN MUZIKA — Green':'⚪ POSTED ✓ — White'}
-</button>
+<button onClick={()=>handlePostNow('post_muzika')} style={{marginTop:'12px',width:'100%',background:postBtnState==='green'?'#00D632':'#fff',color:postBtnState==='green'?'#000':'#000',border:'none',padding:'12px',borderRadius:'12px',fontWeight:'900',boxShadow:postBtnState==='green'?'0 0 12px rgba(0,214,50,0.4)':'none',transition:'all 0.3s',cursor:'pointer'}}>{postBtnState==='green'?'🟢 POST IN MUZIKA — Green':'⚪ POSTED ✓ — White'}</button>
 </>
 )}
 </div>
