@@ -37,7 +37,7 @@ const [isEditing,setIsEditing]=useState(false)
 const [isBanned,setIsBanned]=useState(false)
 const [banInfo,setBanInfo]=useState(null)
 const [postBtnState,setPostBtnState]=useState('green')
-// ADDED FOR SEARCH AND MUZIKA PLAY FIX
+// ADDED ONLY - SEARCH + MUZIKA PLAY FIX - NOT REMOVING ANYTHING
 const [searchQuery,setSearchQuery]=useState('')
 const [showSearch,setShowSearch]=useState(false)
 const [playingMuzikaId,setPlayingMuzikaId]=useState(null)
@@ -48,7 +48,6 @@ const officialVideos=[
 {id:9002,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', mediaType:'video', likes:12400, fires:340, comments:0, views:32100, isOfficial:true},
 ]
 
-// ... KEEP ALL YOUR useEffect EXACT SAME AS BEFORE ...
 useEffect(()=>{
 const t=setTimeout(()=>{
 setSplash(false)
@@ -172,7 +171,7 @@ url=url.trim()
 const lower=url.toLowerCase()
 const ytReg=/(?:youtube\.com\/(?:.*v=|.*\/|.*embed\/|.*shorts\/)|youtu\.be\/)([^"&?\/\s]{11})/
 const ytMatch=url.match(ytReg)
-if(ytMatch) return {type:'youtube', id:ytMatch[1], embed:`https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&controls=1&playsinline=1&rel=0&enablejsapi=1`, original:url, platform:'YouTube'}
+if(ytMatch) return {type:'youtube', id:ytMatch[1], embed:`https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&controls=1&playsinline=1&rel=0`, original:url, platform:'YouTube'}
 if(lower.match(/\.(mp4|mov|webm|m3u8)(\?|$)/)) return {type:'direct', embed:url, original:url, platform:'Direct'}
 if(lower.startsWith('http')) return {type:'iframe', embed:url, original:url, platform:'Link'}
 return null
@@ -185,7 +184,6 @@ const pornKeywords=['porn','sex video','xxx','nude','naked','pornhub','xvideos',
 return pornKeywords.some(k=>combined.includes(k))
 }
 
-// KEEP ALL YOUR HANDLERS EXACT SAME ...
 const handleAuth=()=>{
 if(!authForm.email||!authForm.password) return
 const email=authForm.email.toLowerCase().trim()
@@ -396,12 +394,8 @@ const forYouFeed=[...sortedForYou,...officialVideos]
 const muzikaFeed=[...posts.filter(p=>p.isMuzika),...officialVideos].sort((a,b)=>(b.postedAt||b.id)-(a.postedAt||a.id))
 const myVideos=[...posts.filter(p=>p.postedBy===user?.email)].sort((a,b)=>(b.postedAt||b.id)-(a.postedAt||a.id))
 
-// ADDED SEARCH FILTER
-const filteredForYou = searchQuery ? forYouFeed.filter(v=> 
- (v.caption?.toLowerCase().includes(searchQuery.toLowerCase())) || 
- (v.user?.toLowerCase().includes(searchQuery.toLowerCase())) ||
- (v.username?.toLowerCase().includes(searchQuery.toLowerCase()))
-) : forYouFeed
+// ADDED SEARCH FILTER ONLY
+const filteredForYou = searchQuery ? forYouFeed.filter(v=> (v.caption?.toLowerCase().includes(searchQuery.toLowerCase())) || (v.user?.toLowerCase().includes(searchQuery.toLowerCase())) || (v.username?.toLowerCase().includes(searchQuery.toLowerCase()))) : forYouFeed
 
 const renderUniversal=(v, isMuzikaPage=false)=>{
 const info=v.linkInfo || parseUniversalLink(v.mediaUrl)
@@ -409,7 +403,6 @@ if(!info){
 if(v.mediaType==='image' || v.mediaUrl?.startsWith('data:image')) return <img src={v.mediaUrl} style={{width:'100%',height:'100%',objectFit:'contain',background:'#111'}}/>
 return <video ref={el=>{if(el) videoRefs.current[v.id]=el}} src={v.mediaUrl} loop playsInline autoPlay muted={false} controls={isMuzikaPage} style={{width:'100%',height:'100%',objectFit:'contain',background:'#111'}}/>
 }
-// FIXED MUZIKA PLAY - YouTube now autoplays and has controls
 if(info.type==='youtube') return <iframe width="100%" height="100%" src={playingMuzikaId===v.id || isMuzikaPage ? info.embed : info.embed.replace('autoplay=1','autoplay=0')} frameBorder="0" allow="autoplay; fullscreen" allowFullScreen style={{width:'100%',height:'100%',border:'none'}}/>
 if(info.type==='direct') return <video ref={el=>{if(el) videoRefs.current[v.id]=el}} src={info.embed} loop playsInline autoPlay controls={isMuzikaPage || playingMuzikaId===v.id} style={{width:'100%',height:'100%',objectFit:'contain',background:'#000'}}/>
 return <iframe width="100%" height="100%" src={info.embed} frameBorder="0" allow="autoplay; fullscreen" allowFullScreen style={{width:'100%',height:'100%',border:'none'}}/>
@@ -433,7 +426,6 @@ return(
 return(
 <div style={{background:'#000',color:'#fff',width:'100vw',height:'100dvh',maxHeight:'100dvh',position:'fixed',inset:0,display:'flex',flexDirection:'column',overflow:'hidden',boxSizing:'border-box'}}>
 <div style={{height:'52px',minHeight:'52px',display:'flex',alignItems:'center',padding:'0 12px',gap:'8px',borderBottom:'1px solid #1a1a1a',background:'#000',flexShrink:0}}>
-{/* ADDED SEARCH BUTTON HERE - NOT REMOVING ANYTHING */}
 <button onClick={()=>setShowSearch(!showSearch)} style={{background:'#1a1a1a',border:'1px solid #333',width:'32px',height:'32px',borderRadius:'50%',color:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontSize:'14px',flexShrink:0}}>🔍</button>
 <div style={{display:'flex',gap:'8px',overflowX:'auto',flex:1}}>
 {[{label:'For You',key:'foryou'},{label:'Muzika',key:'muzika'},{label:'Following',key:'following'}].map(t=>{
@@ -446,10 +438,9 @@ return <button key={t.key} onClick={()=>{Object.values(videoRefs.current).forEac
 </button>
 </div>
 
-{/* ADDED SEARCH BAR - HISTORY SEARCH - ONLY SHOWS WHEN YOU CLICK SEARCH */}
 {showSearch && (
 <div style={{height:'48px',minHeight:'48px',padding:'0 12px',background:'#0a0a0a',borderBottom:'1px solid #1a1a1a',display:'flex',alignItems:'center',gap:'8px',flexShrink:0}}>
-<input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="Search any history, user, caption... History search as you asked!" style={{flex:1,background:'#1a1a1a',border:'1px solid #333',borderRadius:'20px',padding:'8px 14px',color:'#fff',fontSize:'13px'}} autoFocus/>
+<input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} placeholder="Search any history, user, caption... History search!" style={{flex:1,background:'#1a1a1a',border:'1px solid #333',borderRadius:'20px',padding:'8px 14px',color:'#fff',fontSize:'13px'}} autoFocus/>
 <button onClick={()=>{setSearchQuery(''); setShowSearch(false)}} style={{background:'#222',color:'#fff',border:'none',padding:'6px 12px',borderRadius:'20px',fontSize:'11px'}}>✕ Close</button>
 </div>
 )}
@@ -459,7 +450,7 @@ return <button key={t.key} onClick={()=>{Object.values(videoRefs.current).forEac
 {page==='foryou'&&(
 <div style={{flex:1,minHeight:0,overflowY:'auto',scrollSnapType:'y mandatory'}}>
 <div style={{height:'32px',minHeight:'32px',background:'#0a0a0a',borderBottom:'1px solid #1a1a1a',display:'flex',alignItems:'center',justifyContent:'center',gap:'6px',flexShrink:0}}>
-<span style={{fontSize:'11px',color:'#00D632',fontWeight:'700'}}>● Everyone on For You — {searchQuery ? `Searching "${searchQuery}" — ${filteredForYou.length} found — History search!` : 'Porn/Sex not allowed — Auto remove 5 min!'}</span>
+<span style={{fontSize:'11px',color:'#00D632',fontWeight:'700'}}>● Everyone on For You — {searchQuery ? `Searching "${searchQuery}" — ${filteredForYou.length} found!` : 'Porn/Sex not allowed — Auto remove 5 min!'}</span>
 </div>
 {filteredForYou.map(v=>{
 const isFollowing=follows[v.username]==='following'
@@ -555,18 +546,15 @@ zIndex:10
 {page==='muzika'&&(
 <div style={{flex:1,minHeight:0,display:'flex',flexDirection:'column',overflow:'hidden'}}>
 <div style={{height:'40px',minHeight:'40px',padding:'0 12px',background:'#0a0a0a',borderBottom:'1px solid #1a1a1a',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}>
-<div><div style={{fontWeight:'700',fontSize:'12px'}}>Muzika — Only UPTOWN Official — Links now PLAY ✓</div><div style={{fontSize:'9px',color:'#00D632'}}>✓ YouTube & MP4 play fix added!</div></div>
+<div><div style={{fontWeight:'700',fontSize:'12px'}}>Muzika — Only UPTOWN Official — Links PLAY ✓</div><div style={{fontSize:'9px',color:'#00D632'}}>✓ YouTube & MP4 play fix</div></div>
 <button onClick={()=>{if(!isOwner){setBlockedMsg('Muzika: Only UPTOWN Official can post'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),2000); return} setUploadMode(null); setShowUpload(true)}} style={{background:isOwner?'#FF0024':'#222',color:isOwner?'#fff':'#666',border:'none',padding:'6px 12px',borderRadius:'20px',fontSize:'11px',fontWeight:'700'}}>{isOwner?'+ Post':'+ Watch'}</button>
 </div>
 <div style={{flex:1,minHeight:0,overflowY:'auto',scrollSnapType:'y mandatory'}}>
 {muzikaFeed.map(v=>(
 <div key={v.id} data-video-id={v.id} style={{width:'100%',height:'100%',scrollSnapAlign:'start',position:'relative',background:v.flagged?'#2a0a0a':'#111',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
-{/* ADDED PLAY BUTTON FOR MUZIKA LINKS - FIXES PLAY ISSUE */}
 <div style={{position:'absolute',inset:0,zIndex:1}} onClick={()=>{setPlayingMuzikaId(v.id); handleTapVideo(v.id)}}></div>
 <div style={{position:'absolute',inset:0,opacity:1}}>{renderUniversal(v, true)}</div>
-{playingMuzikaId!==v.id && !v.flagged && (
-<button onClick={()=>setPlayingMuzikaId(v.id)} style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'rgba(255,0,36,0.9)',width:'72px',height:'72px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',zIndex:5,border:'2px solid #fff',fontSize:'28px'}}>▶️</button>
-)}
+{playingMuzikaId!==v.id && !v.flagged && (<button onClick={()=>setPlayingMuzikaId(v.id)} style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'rgba(255,0,36,0.9)',width:'72px',height:'72px',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',zIndex:5,border:'2px solid #fff',fontSize:'28px'}}>▶️</button>)}
 {v.flagged&&<div style={{position:'absolute',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'rgba(255,0,36,0.9)',padding:'10px 14px',borderRadius:'12px',zIndex:4,textAlign:'center'}}><div style={{fontWeight:'800',fontSize:'12px'}}>⚠️ Removing in 5 min</div></div>}
 <div style={{position:'absolute',left:'12px',bottom:'22px',zIndex:2,pointerEvents:'none'}}><div style={{fontWeight:'700',fontSize:'13px',background:'rgba(0,0,0,0.6)',padding:'4px 8px',borderRadius:'8px'}}>UPTOWN Official ✓ — {v.linkInfo?.platform||'Video'} — Tap ▶️ to Play ✓ {v.flagged&&'⚠️ Porn detected!'}</div></div>
 </div>
@@ -582,7 +570,6 @@ zIndex:10
 </div>
 )}
 
-{/* KEEP ALL OTHER PAGES EXACT SAME - INBOX, YOU, FOLLOWING, COMMENTS, BLOCKED, UPLOAD, BOTTOM NAV, AUTH */}
 {page==='inbox'&&(
 <div style={{flex:1,minHeight:0,display:'flex',flexDirection:'column',overflow:'hidden'}}>
 <div style={{height:'48px',minHeight:'48px',padding:'0 12px',borderBottom:'1px solid #1a1a1a',display:'flex',justifyContent:'space-between',alignItems:'center',flexShrink:0}}><div style={{fontWeight:'800',fontSize:'13px'}}>{isOwner?'Inbox — Bans + Verification':'Inbox — From UPTOWN Official'}</div><div style={{background:'#FF0024',color:'#fff',padding:'3px 8px',borderRadius:'12px',fontSize:'10px'}}>{unread} new</div></div>
