@@ -1,86 +1,114 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
-function App() {
-  const [followed, setFollowed] = useState([])
+export default function Dashboard() {
+  const [activeTab, setActiveTab] = useState('For You')
+  const [user, setUser] = useState(null)
+  const [businesses, setBusinesses] = useState([])
 
-  const businesses = [
-    { id: 1, name: "MATOVU Electronics", location: "Kampala - Nasser Rd", category: "Electronics", icon: "📱" },
-    { id: 2, name: "Swadaka Fashion", location: "Kawempe - Ttula", category: "Fashion", icon: "👗" },
-    { id: 3, name: "Kampala Business Center", location: "Downtown - Kikuubo", category: "General", icon: "🏪" },
-    { id: 4, name: "Rashid Tech Solutions", location: "Makerere - Kikoni", category: "Tech Services", icon: "💻" },
-  ]
-
-  const toggleFollow = (id) => {
-    if (followed.includes(id)) {
-      setFollowed(followed.filter(f => f !== id))
-    } else {
-      setFollowed([...followed, id])
+  // Load user from localStorage - user creates own profile
+  useEffect(() => {
+    const savedUser = localStorage.getItem('kba_user')
+    if (savedUser) {
+      setUser(JSON.parse(savedUser))
     }
+    const savedBiz = localStorage.getItem('kba_businesses')
+    if (savedBiz) {
+      setBusinesses(JSON.parse(savedBiz))
+    }
+  }, [])
+
+  // First time - create profile
+  const createProfile = (e) => {
+    e.preventDefault()
+    const form = e.target
+    const newUser = {
+      name: form.name.value,
+      businessName: form.businessName.value,
+      location: form.location.value,
+      phone: form.phone.value,
+      avatar: `https://ui-avatars.com/api/?name=${form.name.value}&background=16a34a&color=fff`,
+      joined: new Date().toLocaleDateString()
+    }
+    localStorage.setItem('kba_user', JSON.stringify(newUser))
+    setUser(newUser)
+  }
+
+  const tabs = ['LIVE', 'EM', 'Community', 'Following', 'For You']
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-white p-4 flex items-center justify-center">
+        <form onSubmit={createProfile} className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 space-y-4">
+          <img src="/logo.png" className="w-20 h-20 mx-auto rounded-full" />
+          <h2 className="text-xl font-bold text-center">Create Your Business Profile</h2>
+          <p className="text-sm text-gray-500 text-center">This replaces Matovu - it's YOUR profile</p>
+          
+          <input name="name" placeholder="Your Name (e.g. Rashid)" required className="w-full p-3 border rounded-xl" />
+          <input name="businessName" placeholder="Business Name" required className="w-full p-3 border rounded-xl" />
+          <input name="location" placeholder="Location (e.g. Kikoni, Makerere)" required className="w-full p-3 border rounded-xl" />
+          <input name="phone" placeholder="WhatsApp Number" required className="w-full p-3 border rounded-xl" />
+          
+          <button className="w-full bg-green-600 text-white p-3 rounded-xl font-bold">Join Kampala Business App</button>
+        </form>
+      </div>
+    )
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f0f4ff', fontFamily: 'Arial' }}>
-      {/* HEADER - Like real app */}
-      <div style={{ background: '#1a56ff', padding: '20px', color: 'white', textAlign: 'center', position: 'sticky', top: 0 }}>
-        <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 'bold' }}>KAMPALA BUSINESS</h1>
-        <p style={{ margin: '5px 0 0 0', opacity: 0.9 }}>Discover • Follow • Connect</p>
-        <div style={{ background: 'rgba(255,255,255,0.2)', marginTop: '15px', padding: '10px', borderRadius: '20px' }}>
-          👋 Welcome Rashid! Following {followed.length}
+    <div className="min-h-screen bg-gray-50">
+      {/* TikTok-style top tabs - like your screenshot */}
+      <div className="sticky top-0 z-50 bg-white border-b">
+        <div className="flex items-center justify-between px-4 py-3 overflow-x-auto">
+          <div className="flex gap-5">
+            {tabs.map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`whitespace-nowrap text-[15px] font-semibold pb-1 border-b-2 transition ${
+                  activeTab === tab 
+                    ? 'border-black text-black' 
+                    : 'border-transparent text-gray-500'
+                }`}
+              >
+                {tab === 'LIVE' ? '🔴 LIVE' : tab}
+              </button>
+            ))}
+          </div>
+          <button className="ml-3">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          </button>
         </div>
       </div>
 
-      {/* BUSINESS CARDS - Beautiful */}
-      <div style={{ padding: '15px', maxWidth: '500px', margin: '0 auto' }}>
-        {businesses.map(biz => {
-          const isFollowing = followed.includes(biz.id)
-          return (
-            <div key={biz.id} style={{ background: 'white', borderRadius: '16px', padding: '18px', marginBottom: '15px', boxShadow: '0 2px 10px rgba(0,0,0,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <div style={{ fontSize: '40px', background: '#eef2ff', width: '60px', height: '60px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{biz.icon}</div>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '16px', color: '#111' }}>{biz.name}</h3>
-                  <p style={{ margin: '4px 0', color: '#666', fontSize: '13px' }}>📍 {biz.location}</p>
-                  <span style={{ background: '#eef2ff', color: '#1a56ff', fontSize: '11px', padding: '3px 8px', borderRadius: '10px' }}>{biz.category}</span>
+      {/* User Profile Header - DYNAMIC, not Matovu */}
+      <div className="bg-white p-4 flex items-center gap-3">
+        <img src={user.avatar} className="w-12 h-12 rounded-full" />
+        <div className="flex-1">
+          <h3 className="font-bold">{user.name}</h3>
+          <p className="text-sm text-gray-500">{user.businessName} • {user.location}</p>
+        </div>
+        <button onClick={() => { localStorage.clear(); setUser(null)}} className="text-xs text-gray-400">Logout</button>
+      </div>
+
+      {/* For You Feed */}
+      <div className="p-4">
+        {activeTab === 'For You' && (
+          <div className="space-y-3">
+            <h4 className="font-bold">For You in Kampala</h4>
+            <div className="grid gap-3">
+              {businesses.length === 0 ? (
+                <div className="bg-white p-8 rounded-2xl text-center text-gray-500">
+                  No businesses yet - Add your first business!
                 </div>
-              </div>
-              <button
-                onClick={() => toggleFollow(biz.id)}
-                style={{
-                  background: isFollowing ? '#00b050' : '#1a56ff',
-                  color: 'white',
-                  border: 'none',
-                  padding: '10px 18px',
-                  borderRadius: '20px',
-                  fontWeight: 'bold',
-                  fontSize: '13px',
-                  cursor: 'pointer'
-                }}
-              >
-                {isFollowing ? '✓ Following' : '+ Follow'}
-              </button>
+              ) : businesses.map(b => (
+                <div key={b.id} className="bg-white p-4 rounded-2xl shadow-sm">{b.name}</div>
+              ))}
             </div>
-          )
-        })}
-
-        <div style={{ background: '#d1fadf', color: '#065f46', padding: '15px', borderRadius: '12px', textAlign: 'center', fontWeight: 'bold', marginTop: '10px' }}>
-          ✅ App is Working! {followed.length} Following
-        </div>
-
-        {/* DOWNLOAD SECTION */}
-        <div style={{ background: 'white', marginTop: '20px', padding: '20px', borderRadius: '16px', textAlign: 'center', boxShadow: '0 2px 10px rgba(0,0,0,0.08)' }}>
-          <h3 style={{ margin: '0 0 10px 0' }}>📲 Download App</h3>
-          <p style={{ fontSize: '13px', color: '#666', margin: '0 0 15px 0' }}>Install on your phone like real app!</p>
-          <div style={{ background: '#f0f4ff', padding: '12px', borderRadius: '10px', fontSize: '12px', textAlign: 'left' }}>
-            <b>On Chrome:</b><br/>
-            1. Tap 3 dots ⋮ (top right)<br/>
-            2. Tap "Add to Home screen"<br/>
-            3. Tap "Install"<br/>
-            → App icon will appear on phone!
           </div>
-        </div>
+        )}
+        {activeTab === 'Following' && <div className="p-8 text-center text-gray-500">Follow businesses to see them here</div>}
+        {activeTab === 'Community' && <div className="p-8 text-center text-gray-500">Kikoni • Makerere • Wandegeya Community</div>}
       </div>
     </div>
   )
 }
-
-export default App
