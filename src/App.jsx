@@ -1,406 +1,412 @@
-import React, { useState, useRef, useEffect } from 'react';
+"use client"
+import { useState, useEffect, useRef } from "react"
+export default function UptownApp(){
+const [splash,setSplash]=useState(true)
+const [authMode,setAuthMode]=useState('signup')
+const [showAuth,setShowAuth]=useState(false)
+const [user,setUser]=useState(null)
+const [isOwner,setIsOwner]=useState(false)
+const [page,setPage]=useState('foryou')
+const [showUpload,setShowUpload]=useState(false)
+const [uploadMode,setUploadMode]=useState(null)
+const [uploadCaption,setUploadCaption]=useState('')
+const [universalLink,setUniversalLink]=useState('')
+const [uploadPreview,setUploadPreview]=useState(null)
+const [uploadBase64,setUploadBase64]=useState(null)
+const [follows,setFollows]=useState({})
+const [followCounts,setFollowCounts]=useState({})
+const [likes,setLikes]=useState({})
+const [favorites,setFavorites]=useState({})
+const [comments,setComments]=useState({})
+const [commentCounts,setCommentCounts]=useState({})
+const [showComments,setShowComments]=useState(null)
+const [commentInput,setCommentInput]=useState('')
+const [posts,setPosts]=useState([])
+const [pausedMap,setPausedMap]=useState({})
+const [authForm,setAuthForm]=useState({name:'',username:'',email:'',password:''})
+const [showBlocked,setShowBlocked]=useState(false)
+const [blockedMsg,setBlockedMsg]=useState('')
+const [notifications,setNotifications]=useState([{id:1,type:'general',from:'UPTOWN Official',username:'@uptown',verified:true,time:'2m ago',title:'Welcome ✓',message:'Welcome to UPTOWN ✓ 978+ Family',read:false}])
+const [profilePic,setProfilePic]=useState(null)
+const [editName,setEditName]=useState('')
+const [editBio,setEditBio]=useState('')
+const [editUsername,setEditUsername]=useState('')
+const [isEditing,setIsEditing]=useState(false)
+const [postBtnState,setPostBtnState]=useState('green')
+const [deferredPrompt,setDeferredPrompt]=useState(null)
+const [isInstallable,setIsInstallable]=useState(false)
+const [isInstalled,setIsInstalled]=useState(false)
+const [showStorePanel,setShowStorePanel]=useState(false)
+const [blockedUsers,setBlockedUsers]=useState({})
+const [reportedVideos,setReportedVideos]=useState({})
+const [isLive,setIsLive]=useState(false)
+const videoRefs=useRef({})
 
-function App() {
-  const APP_VERSION = "1.0.0";
-  const LATEST_VERSION = "1.0.0"; // Change to 1.0.1 when you update - people must update
-  
-  const [screen, setScreen] = useState(() => localStorage.getItem('kb_screen') || 'login');
-  const [needsUpdate, setNeedsUpdate] = useState(() => {
-    const saved = localStorage.getItem('kb_version');
-    return saved && saved !== LATEST_VERSION;
-  });
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [bio, setBio] = useState('');
-  const [business, setBusiness] = useState('');
-  const [search, setSearch] = useState('');
-  const [activeTab, setActiveTab] = useState('For You');
-  const [selectedProfile, setSelectedProfile] = useState(null);
-  const [showUpload, setShowUpload] = useState(false);
-  const [showEdit, setShowEdit] = useState(false);
-  const [showChat, setShowChat] = useState(false);
-  const [chatWith, setChatWith] = useState(null);
-  const [chatText, setChatText] = useState('');
-  const [showLive, setShowLive] = useState(false);
-  const [isLive, setIsLive] = useState(false);
-  const [liveViewers, setLiveViewers] = useState(0);
-  const [liveRequests, setLiveRequests] = useState([]);
-  const [liveChats, setLiveChats] = useState([]);
-  const [liveComment, setLiveComment] = useState('');
-  const [postText, setPostText] = useState('');
-  
-  const [users, setUsers] = useState(() => JSON.parse(localStorage.getItem('kb_users') || '[]'));
-  const [currentUser, setCurrentUser] = useState(() => JSON.parse(localStorage.getItem('kb_current') || 'null'));
-  const [videos, setVideos] = useState(() => JSON.parse(localStorage.getItem('kb_allvideos') || '[]'));
-  const [chats, setChats] = useState(() => JSON.parse(localStorage.getItem('kb_chats') || '{}'));
-  const [following, setFollowing] = useState(() => JSON.parse(localStorage.getItem('kb_following') || '[]'));
-  const [blocked, setBlocked] = useState(() => JSON.parse(localStorage.getItem('kb_blocked') || '[]'));
-  const [editName, setEditName] = useState('');
-  const [editBio, setEditBio] = useState('');
-  const [editBusiness, setEditBusiness] = useState('');
-  
-  const videoRefs = useRef({});
-  const currentPlayingRef = useRef(null);
-  const picRef = useRef(null);
-  const uploadRef = useRef(null);
-  const cameraRef = useRef(null);
-  const liveVideoRef = useRef(null);
-  const streamRef = useRef(null);
+const officialVideos=[
+{id:9001,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓ 978+ Family', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', mediaType:'video', likes:15600, fires:520, comments:978, views:45200, isOfficial:true},
+{id:9002,user:'UPTOWN Official',username:'@uptown',verified:true,caption:'UPTOWN Official ✓', mediaUrl:'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4', mediaType:'video', likes:12400, fires:340, comments:0, views:32100, isOfficial:true},
+]
 
-  const isCEO = currentUser && currentUser.name.toLowerCase().includes('katongole rashid');
-
-  useEffect(() => {
-    if (videos.length === 0) {
-      const demo = [
-        { id: 1, owner: 'Katongole Rashid', name: 'Katongole Rashid', business: 'CEO & Owner', bio: 'Founder - Kampala Business', verified: true, isBoss: true, cat: 'For You', video: 'https://www.w3schools.com/html/mov_bbb.mp4', type: 'video', likes: 15400, views: 15400, isImage: false, hidden: false, followers: 120 },
-        { id: 2, owner: 'Bobi Wine', name: 'Bobi Wine', business: 'Ghetto President', bio: 'Kyarenga!', verified: true, cat: 'Music', video: 'https://www.w3schools.com/html/movie.mp4', type: 'video', likes: 45000, views: 120000, isImage: false, hidden: false, followers: 92000 },
-      ];
-      setVideos(demo);
-      localStorage.setItem('kb_allvideos', JSON.stringify(demo));
-    }
-    localStorage.setItem('kb_version', APP_VERSION);
-    // PWA install prompt
-    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js').catch(()=>{}); }
-  }, []);
-
-  // Auto play with audio mute logic
-  useEffect(() => {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        const vid = entry.target;
-        const id = vid.dataset.id;
-        if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
-          if (currentPlayingRef.current && currentPlayingRef.current !== vid) currentPlayingRef.current.muted = true;
-          vid.muted = false;
-          vid.play().catch(() => { vid.muted = true; vid.play().catch(()=>{}); });
-          currentPlayingRef.current = vid;
-          setVideos(prev => {
-            const upd = prev.map(v => v.id == id ? { ...v, views: (v.views||0)+1 } : v);
-            localStorage.setItem('kb_allvideos', JSON.stringify(upd));
-            return upd;
-          });
-        } else if (entry.intersectionRatio < 0.3) vid.muted = true;
-      });
-    }, { threshold: [0.3, 0.6] });
-    Object.values(videoRefs.current).forEach(v => { if (v) observer.observe(v); });
-    return () => observer.disconnect();
-  }, [activeTab, search, videos]);
-
-  useEffect(() => {
-    if (!isLive) return;
-    const interval = setInterval(() => {
-      setLiveViewers(v => v + Math.floor(Math.random()*3));
-      if (Math.random() > 0.7) setLiveRequests(r => [...r.slice(-4), { id: Date.now(), name: ['Bobi Wine','Mesach'][Math.floor(Math.random()*2)], text: 'Request to join!' }]);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [isLive]);
-
-  const handleSignUp = () => {
-    if (username.length < 2 || password.length < 3 || !email.includes('@')) { alert('Fill name, email, password'); return; }
-    if (users.find(u => u.email === email)) { alert('Email exists - Login'); return; }
-    const newUser = { id: Date.now(), name: username, email, password, bio: bio || 'Kampala Business User', business: business || 'Business User', pic: null, verified: username.toLowerCase().includes('katongole'), isBoss: username.toLowerCase().includes('katongole'), followers: 0, isCEO: username.toLowerCase().includes('katongole rashid') };
-    const upd = [...users, newUser];
-    setUsers(upd); setCurrentUser(newUser);
-    localStorage.setItem('kb_users', JSON.stringify(upd));
-    localStorage.setItem('kb_current', JSON.stringify(newUser));
-    localStorage.setItem('kb_screen', 'app');
-    setScreen('app');
-  };
-  const handleLogin = () => {
-    const found = users.find(u => u.email === email && u.password === password);
-    if (!found) { alert('Wrong - Sign up first'); return; }
-    setCurrentUser(found);
-    localStorage.setItem('kb_current', JSON.stringify(found));
-    localStorage.setItem('kb_screen', 'app');
-    setScreen('app');
-  };
-  const startLive = async () => {
-    const myFollowerCount = videos.filter(v => v.owner === currentUser.name).reduce((s,v)=> s + (v.followers||0), 0) + (currentUser.followers||0) + following.length*5;
-    const canGoLive = isCEO || myFollowerCount >= 20 || users.length < 5; // 20 followers rule
-    if (!canGoLive) { alert(`Need 20 followers to go live! You have ${myFollowerCount}. Get more followers first.`); return; }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: true });
-      streamRef.current = stream;
-      if (liveVideoRef.current) liveVideoRef.current.srcObject = stream;
-      setIsLive(true); setLiveViewers(1);
-      setLiveChats([{ name: 'System', text: `🔴 ${currentUser.name} is live!` }]);
-      setShowLive(true);
-    } catch { alert('Allow camera for live'); }
-  };
-  const stopLive = () => { if (streamRef.current) streamRef.current.getTracks().forEach(t => t.stop()); setIsLive(false); setShowLive(false); setLiveViewers(0); };
-  const handleEditSave = () => {
-    const updUser = { ...currentUser, name: editName || currentUser.name, bio: editBio || currentUser.bio, business: editBusiness || currentUser.business };
-    const updUsers = users.map(u => u.id === currentUser.id ? updUser : u);
-    setUsers(updUsers); setCurrentUser(updUser);
-    localStorage.setItem('kb_users', JSON.stringify(updUsers));
-    localStorage.setItem('kb_current', JSON.stringify(updUser));
-    const updVideos = videos.map(v => v.owner === currentUser.name ? { ...v, name: updUser.name, owner: updUser.name, business: updUser.business, bio: updUser.bio } : v);
-    setVideos(updVideos); localStorage.setItem('kb_allvideos', JSON.stringify(updVideos));
-    setShowEdit(false);
-  };
-  const handlePicChange = (e) => {
-    const file = e.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const updUser = { ...currentUser, pic: ev.target.result };
-      const updUsers = users.map(u => u.id === currentUser.id ? updUser : u);
-      setUsers(updUsers); setCurrentUser(updUser);
-      localStorage.setItem('kb_users', JSON.stringify(updUsers));
-      localStorage.setItem('kb_current', JSON.stringify(updUser));
-    };
-    reader.readAsDataURL(file);
-  };
-  const handleVideoUpload = (e) => {
-    const file = e.target.files[0]; if (!file) return;
-    const isImage = file.type.startsWith('image/');
-    const url = URL.createObjectURL(file);
-    const newVideo = { id: Date.now(), owner: currentUser.name, name: currentUser.name, business: currentUser.business, bio: currentUser.bio, verified: currentUser.verified, isBoss: currentUser.isBoss, cat: 'For You', video: url, type: isImage ? 'image' : 'video', isImage, likes: 0, views: 1, pic: currentUser.pic, hidden: false, isText: false };
-    const upd = [newVideo, ...videos];
-    setVideos(upd); localStorage.setItem('kb_allvideos', JSON.stringify(upd));
-    setShowUpload(false); setActiveTab('My Account');
-  };
-  const handleTextPost = () => {
-    if (!postText.trim()) return;
-    const newPost = { id: Date.now(), owner: currentUser.name, name: currentUser.name, business: currentUser.business, bio: postText, verified: currentUser.verified, isBoss: currentUser.isBoss, cat: 'For You', video: null, type: 'text', isImage: false, isText: true, likes: 0, views: 1, pic: currentUser.pic, hidden: false, text: postText };
-    const upd = [newPost, ...videos];
-    setVideos(upd); localStorage.setItem('kb_allvideos', JSON.stringify(upd));
-    setPostText(''); setShowUpload(false); setActiveTab('My Account');
-  };
-  const toggleFollow = (ownerName) => {
-    const upd = following.includes(ownerName) ? following.filter(f => f !== ownerName) : [...following, ownerName];
-    setFollowing(upd); localStorage.setItem('kb_following', JSON.stringify(upd));
-  };
-  const toggleBlock = (ownerName) => {
-    if (ownerName === currentUser.name) return;
-    const upd = blocked.includes(ownerName) ? blocked.filter(f => f !== ownerName) : [...blocked, ownerName];
-    setBlocked(upd); localStorage.setItem('kb_blocked', JSON.stringify(upd));
-    alert(upd.includes(ownerName) ? `Blocked ${ownerName} - won't appear again` : `Unblocked ${ownerName}`);
-  };
-  const toggleHide = (id) => {
-    const upd = videos.map(v => v.id === id ? { ...v, hidden: !v.hidden } : v);
-    setVideos(upd); localStorage.setItem('kb_allvideos', JSON.stringify(upd));
-  };
-  const deleteContent = (id) => {
-    if (!confirm('Delete? Still stays in your account trash?')) return;
-    const upd = videos.map(v => v.id === id ? { ...v, deleted: true, hidden: true } : v);
-    setVideos(upd); localStorage.setItem('kb_allvideos', JSON.stringify(upd));
-  };
-  const sendMessage = () => {
-    if (!chatText.trim() || !chatWith) return;
-    const key = [currentUser.name, chatWith].sort().join('_');
-    const newChats = { ...chats, [key]: [...(chats[key] || []), { from: currentUser.name, to: chatWith, text: chatText, time: new Date().toLocaleTimeString() }] };
-    setChats(newChats); localStorage.setItem('kb_chats', JSON.stringify(newChats)); setChatText('');
-  };
-
-  const Logo = () => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-      <div style={{ width: '26px', height: '26px', backgroundColor: 'black', border: '1.5px solid white', borderRadius: '50% 50% 50% 0', transform: 'rotate(-45deg)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ transform: 'rotate(45deg)', fontWeight: '900', fontSize: '10px' }}><span style={{ color: '#FF0000' }}>K</span><span style={{ color: 'white' }}>B</span></div>
-      </div>
-      <div style={{ lineHeight: '1' }}><div style={{ fontWeight: '900', fontSize: '9px', color: 'white' }}>KAMPALA</div><div style={{ fontWeight: '900', fontSize: '9px', color: '#888' }}>BUSINESS</div></div>
-    </div>
-  );
-  const BlueTick = () => <span style={{ backgroundColor: '#1DA1F2', color: 'white', borderRadius: '50%', width: '13px', height: '13px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '7px', marginLeft: '3px' }}>✓</span>;
-
-  // UPDATE SCREEN - Must update before using
-  if (needsUpdate) {
-    return (
-      <div style={{ backgroundColor: '#000', color: 'white', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '20px', fontFamily: 'Arial' }}>
-        <Logo />
-        <div style={{ backgroundColor: '#111', padding: '20px', borderRadius: '12px', border: '1px solid #222', maxWidth: '300px', textAlign: 'center', marginTop: '15px' }}>
-          <div style={{ fontSize: '30px' }}>🔄</div>
-          <h3 style={{ fontSize: '14px' }}>New Update Available!</h3>
-          <p style={{ fontSize: '11px', color: '#888' }}>We changed lot of things - You must update to continue. Old version won't work.</p>
-          <p style={{ fontSize: '9px', color: '#555' }}>Version {localStorage.getItem('kb_version')} → {LATEST_VERSION}</p>
-          <button onClick={() => { localStorage.setItem('kb_version', LATEST_VERSION); setNeedsUpdate(false); window.location.reload(); }} style={{ width: '100%', marginTop: '12px', padding: '10px', backgroundColor: 'white', color: 'black', border: 'none', borderRadius: '8px', fontWeight: '900', fontSize: '11px' }}>UPDATE NOW</button>
-        </div>
-      </div>
-    );
-  }
-
-  if (screen !== 'app' || !currentUser) {
-    return (
-      <div style={{ backgroundColor: '#000', color: 'white', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', padding: '15px', fontFamily: 'Arial' }}>
-        <Logo />
-        <div style={{ backgroundColor: '#111', width: '100%', maxWidth: '320px', padding: '18px', borderRadius: '12px', marginTop: '14px', border: '1px solid #222' }}>
-          <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
-            <button onClick={() => setScreen('login')} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: screen==='login' ? 'white' : '#1a1a1a', color: screen==='login' ? 'black' : '#888', fontWeight: '900', fontSize: '11px' }}>LOGIN</button>
-            <button onClick={() => setScreen('signup')} style={{ flex: 1, padding: '8px', borderRadius: '8px', border: 'none', backgroundColor: screen==='signup' ? 'white' : '#1a1a1a', color: screen==='signup' ? 'black' : '#888', fontWeight: '900', fontSize: '11px' }}>SIGN UP</button>
-          </div>
-          {screen === 'signup' && (<><input value={username} onChange={e => setUsername(e.target.value)} placeholder="Full Name" style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #333', backgroundColor: '#1a1a1a', color: 'white', marginBottom: '7px', fontSize: '11px', boxSizing: 'border-box' }} /><input value={business} onChange={e => setBusiness(e.target.value)} placeholder="Business Title" style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #333', backgroundColor: '#1a1a1a', color: 'white', marginBottom: '7px', fontSize: '11px', boxSizing: 'border-box' }} /><input value={bio} onChange={e => setBio(e.target.value)} placeholder="Bio" style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #333', backgroundColor: '#1a1a1a', color: 'white', marginBottom: '7px', fontSize: '11px', boxSizing: 'border-box' }} /></>)}
-          <input value={email} onChange={e => setEmail(e.target.value)} placeholder="Email" style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #333', backgroundColor: '#1a1a1a', color: 'white', marginBottom: '7px', fontSize: '11px', boxSizing: 'border-box' }} />
-          <input value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="Password" style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #333', backgroundColor: '#1a1a1a', color: 'white', marginBottom: '12px', fontSize: '11px', boxSizing: 'border-box' }} />
-          {screen === 'signup' ? <button onClick={handleSignUp} style={{ width: '100%', padding: '10px', backgroundColor: 'white', color: 'black', border: 'none', borderRadius: '8px', fontWeight: '900', fontSize: '11px' }}>SIGN UP</button> : <button onClick={handleLogin} style={{ width: '100%', padding: '10px', backgroundColor: 'white', color: 'black', border: 'none', borderRadius: '8px', fontWeight: '900', fontSize: '11px' }}>LOGIN</button>}
-          <div style={{ marginTop: '10px', textAlign: 'center' }}><button onClick={() => { if (confirm('Install Kampala Business App to your phone?')) alert('Tap Share button in browser → Add to Home Screen → Install'); }} style={{ backgroundColor: 'transparent', color: '#1DA1F2', border: '1px solid #1DA1F2', borderRadius: '15px', padding: '6px 12px', fontSize: '10px' }}>📲 Install App (Before Play Store)</button></div>
-        </div>
-      </div>
-    );
-  }
-
-  const filtered = videos.filter(v => {
-    if (blocked.includes(v.owner)) return false;
-    if (v.hidden && activeTab !== 'My Account') return false;
-    if (v.deleted && v.owner !== currentUser.name) return false;
-    const matchSearch = v.name.toLowerCase().includes(search.toLowerCase()) || (v.text||'').toLowerCase().includes(search.toLowerCase());
-    if (activeTab === 'Live') return false;
-    const matchCat = activeTab === 'For You' ? true : activeTab === 'My Account' ? v.owner === currentUser.name : v.cat === activeTab;
-    return matchSearch && matchCat;
-  });
-
-  return (
-    <div style={{ backgroundColor: 'black', color: 'white', minHeight: '100vh', fontFamily: 'Arial', paddingBottom: '65px' }}>
-      <div style={{ backgroundColor: 'black', padding: '8px 10px', position: 'sticky', top: 0, zIndex: 20, borderBottom: '1px solid #111' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Logo />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            {isCEO && <span style={{ fontSize: '7px', backgroundColor: '#FF0000', color: 'white', padding: '2px 5px', borderRadius: '8px' }}>CEO VIEW</span>}
-            <button onClick={() => setShowChat(true)} style={{ backgroundColor: '#111', border: '1px solid #222', color: 'white', borderRadius: '50%', width: '26px', height: '26px', fontSize: '12px' }}>💬</button>
-            <img onClick={() => { setEditName(currentUser.name); setEditBio(currentUser.bio); setEditBusiness(currentUser.business); setShowEdit(true); }} src={currentUser.pic || `https://ui-avatars.com/api/?name=${currentUser.name}&background=222&color=fff&size=100`} style={{ width: '26px', height: '26px', borderRadius: '50%', border: '1px solid #333', objectFit: 'cover', cursor: 'pointer' }} />
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: '5px', marginTop: '8px' }}>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search" style={{ width: '55px', padding: '5px 8px', borderRadius: '15px', border: '1px solid #222', backgroundColor: '#111', color: 'white', fontSize: '10px' }} />
-          <div style={{ display: 'flex', gap: '3px', overflowX: 'auto', flex: 1 }}>
-            {['For You','Music','Movies','Live','My Account'].map(tab => (
-              <button key={tab} onClick={() => { if(tab==='Live'){ setActiveTab('Live'); setShowLive(true); startLive(); } else setActiveTab(tab); }} style={{ padding: '5px 8px', borderRadius: '15px', border: 'none', backgroundColor: activeTab === tab ? 'white' : '#111', color: activeTab === tab ? 'black' : '#888', fontSize: '9px', fontWeight: '900', whiteSpace: 'nowrap' }}>{tab}{tab==='Live' ? ' 🔴' : ''}{tab==='My Account' ? ` (${videos.filter(v=>v.owner===currentUser.name && !v.deleted).length})` : ''}</button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {activeTab === 'Live' && !showLive ? (
-        <div style={{ padding: '20px', textAlign: 'center' }}>
-          <div style={{ backgroundColor: '#111', borderRadius: '12px', padding: '20px', border: '1px solid #222' }}>
-            <div style={{ fontSize: '30px' }}>🔴</div>
-            <h3 style={{ fontSize: '13px', margin: '8px 0' }}>Live Streaming - 20 Followers Needed</h3>
-            <p style={{ fontSize: '10px', color: '#666' }}>You have {following.length*5 + (currentUser.followers||0)} followers • Need 20 to go live</p>
-            <button onClick={startLive} style={{ marginTop: '12px', padding: '10px 20px', backgroundColor: '#FF0000', color: 'white', border: 'none', borderRadius: '20px', fontWeight: '900', fontSize: '11px' }}>🔴 START LIVE</button>
-            {isCEO && <p style={{ fontSize: '8px', color: '#FF0000', marginTop: '8px' }}>CEO Bypass: You can live anytime</p>}
-          </div>
-        </div>
-      ) : (
-        <div style={{ padding: '0 8px' }}>
-          {filtered.map(v => (
-            <div key={v.id} style={{ backgroundColor: '#0a0a0a', border: '1px solid #111', borderRadius: '10px', overflow: 'hidden', marginTop: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px' }}>
-                <img onClick={() => setSelectedProfile(v)} src={v.pic || `https://ui-avatars.com/api/?name=${v.name}&background=111&color=fff&size=100`} style={{ width: '32px', height: '32px', borderRadius: '50%', border: v.isBoss ? '1.5px solid #1DA1F2' : '1px solid #222', objectFit: 'cover', cursor: 'pointer' }} />
-                <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => setSelectedProfile(v)}>
-                  <div style={{ fontWeight: '700', fontSize: '11px', display: 'flex', alignItems: 'center' }}>{v.name} {v.isBoss ? <BlueTick /> : v.verified && <span style={{ color: '#1DA1F2', marginLeft: '2px', fontSize: '9px' }}>✓</span>} {v.hidden && <span style={{ fontSize: '7px', backgroundColor: '#333', padding: '1px 4px', borderRadius: '6px', marginLeft: '4px' }}>HIDDEN</span>}</div>
-                  <div style={{ fontSize: '9px', color: '#666' }}>{v.business}</div>
-                </div>
-                <button onClick={() => toggleFollow(v.owner)} style={{ backgroundColor: following.includes(v.owner) ? 'white' : 'transparent', color: following.includes(v.owner) ? 'black' : 'white', border: `1px solid ${following.includes(v.owner) ? 'white' : '#333'}`, borderRadius: '15px', padding: '4px 10px', fontSize: '9px', fontWeight: '700' }}>{following.includes(v.owner) ? 'Following' : '+ Follow'}</button>
-              </div>
-              {v.isText ? (
-                <div style={{ padding: '14px', backgroundColor: '#111', fontSize: '13px', lineHeight: '1.4' }}>{v.text}</div>
-              ) : v.isImage ? <img src={v.video} style={{ width: '100%', maxHeight: '400px', objectFit: 'contain', backgroundColor: 'black' }} /> : <video ref={el => videoRefs.current[v.id] = el} data-id={v.id} src={v.video} muted loop playsInline preload="metadata" style={{ width: '100%', maxHeight: '380px', backgroundColor: 'black', display: 'block' }} onClick={e => e.target.muted = !e.target.muted} />}
-              <div style={{ padding: '6px 10px' }}>
-                {!v.isText && <div style={{ fontSize: '10px', color: '#ccc' }}>{v.bio}</div>}
-                <div style={{ display: 'flex', gap: '10px', marginTop: '6px', fontSize: '10px', color: '#666', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <span>👁️ {v.views} views</span><span>❤️ {v.likes}</span>
-                  <button onClick={() => { setChatWith(v.owner); setShowChat(true); }} style={{ backgroundColor: 'transparent', border: 'none', color: '#1DA1F2', fontSize: '10px' }}>💬 Message</button>
-                  {v.owner === currentUser.name && (
-                    <>
-                      <button onClick={() => toggleHide(v.id)} style={{ backgroundColor: 'transparent', border: 'none', color: '#888', fontSize: '9px' }}>{v.hidden ? '👁️ Show Public' : '🙈 Hide from Public'}</button>
-                      <button onClick={() => deleteContent(v.id)} style={{ backgroundColor: 'transparent', border: 'none', color: '#FF0000', fontSize: '9px' }}>🗑️ Delete</button>
-                    </>
-                  )}
-                  {v.owner !== currentUser.name && <button onClick={() => toggleBlock(v.owner)} style={{ backgroundColor: 'transparent', border: 'none', color: '#555', fontSize: '9px' }}>🚫 Block</button>}
-                </div>
-              </div>
-            </div>
-          ))}
-          {filtered.length===0 && <div style={{ textAlign: 'center', padding: '40px 20px', color: '#666', fontSize: '11px' }}>No content - Upload video, picture or text message!</div>}
-        </div>
-      )}
-
-      {showLive && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'black', zIndex: 50, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)', position: 'absolute', top: 0, left: 0, right: 0, zIndex: 2 }}>
-            <button onClick={() => { stopLive(); setActiveTab('For You'); }} style={{ backgroundColor: '#111', color: 'white', border: '1px solid #222', borderRadius: '15px', padding: '5px 10px', fontSize: '10px' }}>← Exit</button>
-            <div style={{ display: 'flex', gap: '6px' }}><span style={{ backgroundColor: '#FF0000', padding: '3px 8px', borderRadius: '10px', fontSize: '9px', fontWeight: '900' }}>🔴 LIVE</span><span style={{ backgroundColor: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: '10px', fontSize: '9px' }}>👁️ {liveViewers}</span></div>
-            <button onClick={stopLive} style={{ backgroundColor: '#FF0000', color: 'white', border: 'none', borderRadius: '15px', padding: '5px 10px', fontSize: '10px', fontWeight: '900' }}>End</button>
-          </div>
-          <video ref={liveVideoRef} autoPlay muted playsInline style={{ flex: 1, objectFit: 'cover', backgroundColor: '#111' }} />
-          <div style={{ position: 'absolute', bottom: '70px', left: '8px', right: '8px' }}>
-            <div style={{ maxHeight: '100px', overflowY: 'auto', marginBottom: '6px' }}>
-              {liveRequests.map(r => <div key={r.id} style={{ backgroundColor: 'rgba(29,161,242,0.9)', padding: '5px 8px', borderRadius: '8px', fontSize: '9px', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}><span>{r.name}: {r.text}</span><button onClick={() => setLiveRequests(req => req.filter(x=>x.id!==r.id))} style={{ backgroundColor: 'white', color: 'black', border: 'none', borderRadius: '10px', padding: '2px 6px', fontSize: '8px' }}>Accept</button></div>)}
-              {liveChats.slice(-3).map((c,i) => <div key={i} style={{ backgroundColor: 'rgba(0,0,0,0.6)', padding: '4px 8px', borderRadius: '8px', fontSize: '9px', marginBottom: '3px' }}><b>{c.name}:</b> {c.text}</div>)}
-            </div>
-            <div style={{ display: 'flex', gap: '6px' }}><input value={liveComment} onChange={e => setLiveComment(e.target.value)} placeholder="Chat live..." style={{ flex: 1, padding: '8px 10px', borderRadius: '20px', border: '1px solid #333', backgroundColor: 'rgba(20,20,20,0.9)', color: 'white', fontSize: '11px' }} /><button onClick={() => { if(liveComment.trim()){ setLiveChats([...liveChats, { name: currentUser.name, text: liveComment }]); setLiveComment(''); } }} style={{ backgroundColor: '#1DA1F2', color: 'white', border: 'none', borderRadius: '20px', padding: '8px 14px', fontSize: '11px' }}>Send</button></div>
-          </div>
-        </div>
-      )}
-
-      {showChat && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'black', zIndex: 40, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '10px', borderBottom: '1px solid #111', display: 'flex', gap: '8px', alignItems: 'center' }}><button onClick={() => setShowChat(false)} style={{ backgroundColor: '#111', color: 'white', border: '1px solid #222', borderRadius: '50%', width: '28px', height: '28px' }}>←</button><Logo /><span style={{ fontSize: '11px', flex: 1, textAlign: 'center' }}>{chatWith ? `Chat ${chatWith}` : 'Messages'}</span></div>
-          {!chatWith ? (
-            <div style={{ padding: '10px', overflowY: 'auto', flex: 1 }}>{users.filter(u => u.name !== currentUser.name && !blocked.includes(u.name)).map(u => { const key = [currentUser.name, u.name].sort().join('_'); const last = chats[key]?.slice(-1)[0]; return (<div key={u.id} onClick={() => setChatWith(u.name)} style={{ display: 'flex', gap: '10px', padding: '10px', backgroundColor: '#0a0a0a', borderRadius: '8px', marginBottom: '6px', border: '1px solid #111', cursor: 'pointer' }}><img src={u.pic || `https://ui-avatars.com/api/?name=${u.name}&background=111&color=fff&size=100`} style={{ width: '36px', height: '36px', borderRadius: '50%' }} /><div style={{ flex: 1 }}><div style={{ fontSize: '11px', fontWeight: '700' }}>{u.name}</div><div style={{ fontSize: '9px', color: '#666' }}>{last ? last.text.slice(0,30) : u.business}</div></div></div>); })}</div>
-          ) : (
-            <><div style={{ flex: 1, overflowY: 'auto', padding: '10px' }}>{(chats[[currentUser.name, chatWith].sort().join('_')] || []).map((m,i) => (<div key={i} style={{ display: 'flex', justifyContent: m.from===currentUser.name ? 'flex-end' : 'flex-start', marginBottom: '6px' }}><div style={{ backgroundColor: m.from===currentUser.name ? 'white' : '#111', color: m.from===currentUser.name ? 'black' : 'white', padding: '6px 10px', borderRadius: '12px', fontSize: '11px', maxWidth: '70%', border: '1px solid #222' }}>{m.text}<div style={{ fontSize: '7px', color: '#666', marginTop: '2px' }}>{m.time}</div></div></div>))}</div><div style={{ padding: '8px', borderTop: '1px solid #111', display: 'flex', gap: '6px' }}><button onClick={() => setChatWith(null)} style={{ backgroundColor: '#111', color: '#888', border: '1px solid #222', borderRadius: '15px', padding: '8px 10px', fontSize: '10px' }}>Back</button><input value={chatText} onChange={e => setChatText(e.target.value)} placeholder={`Message ${chatWith}...`} style={{ flex: 1, padding: '8px 12px', borderRadius: '20px', border: '1px solid #222', backgroundColor: '#111', color: 'white', fontSize: '11px' }} onKeyDown={e => e.key==='Enter' && sendMessage()} /><button onClick={sendMessage} style={{ backgroundColor: 'white', color: 'black', border: 'none', borderRadius: '20px', padding: '8px 14px', fontSize: '11px', fontWeight: '900' }}>Send</button></div></>
-          )}
-        </div>
-      )}
-
-      {showUpload && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.95)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '15px' }}>
-          <div style={{ backgroundColor: '#111', width: '100%', maxWidth: '320px', padding: '16px', borderRadius: '12px', border: '1px solid #222' }}>
-            <h3 style={{ margin: '0 0 12px 0', fontSize: '12px', textAlign: 'center' }}>Upload - Video, Picture or Text</h3>
-            <textarea value={postText} onChange={e => setPostText(e.target.value)} placeholder="Write text message post..." style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #333', backgroundColor: '#1a1a1a', color: 'white', fontSize: '11px', minHeight: '60px', boxSizing: 'border-box', marginBottom: '8px' }} />
-            <button onClick={handleTextPost} style={{ width: '100%', padding: '10px', backgroundColor: '#1DA1F2', color: 'white', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: '900', marginBottom: '8px' }}>📝 Post Written Message</button>
-            <button onClick={() => cameraRef.current.click()} style={{ width: '100%', padding: '12px', backgroundColor: '#1a1a1a', color: 'white', border: '1px solid #333', borderRadius: '8px', fontSize: '11px', marginBottom: '8px' }}>📷 Camera - Video/Picture</button>
-            <input ref={cameraRef} type="file" accept="video/*,image/*" capture="environment" onChange={handleVideoUpload} style={{ display: 'none' }} />
-            <button onClick={() => uploadRef.current.click()} style={{ width: '100%', padding: '12px', backgroundColor: 'white', color: 'black', border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: '900', marginBottom: '8px' }}>📁 Gallery - Video/Picture</button>
-            <input ref={uploadRef} type="file" accept="video/*,image/*" onChange={handleVideoUpload} style={{ display: 'none' }} />
-            <button onClick={() => setShowUpload(false)} style={{ width: '100%', padding: '8px', backgroundColor: 'transparent', color: '#666', border: 'none', fontSize: '11px' }}>Cancel</button>
-          </div>
-        </div>
-      )}
-
-      {showEdit && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.95)', zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '15px' }}>
-          <div style={{ backgroundColor: '#111', width: '100%', maxWidth: '320px', padding: '16px', borderRadius: '12px', border: '1px solid #222' }}>
-            <h3 style={{ margin: '0 0 12px 0', fontSize: '12px', textAlign: 'center' }}>Edit Account</h3>
-            <img onClick={() => picRef.current.click()} src={currentUser.pic || `https://ui-avatars.com/api/?name=${currentUser.name}&background=222&color=fff&size=200`} style={{ width: '60px', height: '60px', borderRadius: '50%', margin: '0 auto 10px', display: 'block', border: '2px solid #333', cursor: 'pointer', objectFit: 'cover' }} />
-            <input ref={picRef} type="file" accept="image/*" onChange={handlePicChange} style={{ display: 'none' }} />
-            <input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Name" style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #333', backgroundColor: '#1a1a1a', color: 'white', marginBottom: '7px', fontSize: '11px', boxSizing: 'border-box' }} />
-            <input value={editBusiness} onChange={e => setEditBusiness(e.target.value)} placeholder="Business" style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #333', backgroundColor: '#1a1a1a', color: 'white', marginBottom: '7px', fontSize: '11px', boxSizing: 'border-box' }} />
-            <input value={editBio} onChange={e => setEditBio(e.target.value)} placeholder="Bio" style={{ width: '100%', padding: '9px', borderRadius: '8px', border: '1px solid #333', backgroundColor: '#1a1a1a', color: 'white', marginBottom: '10px', fontSize: '11px', boxSizing: 'border-box' }} />
-            {isCEO && <div style={{ backgroundColor: '#FF0000', color: 'white', padding: '6px', borderRadius: '6px', fontSize: '8px', marginBottom: '8px', textAlign: 'center' }}>CEO MODE: You see builder info - Others don't see</div>}
-            <button onClick={handleEditSave} style={{ width: '100%', padding: '9px', backgroundColor: 'white', color: 'black', border: 'none', borderRadius: '8px', fontWeight: '900', fontSize: '11px' }}>SAVE</button>
-            <button onClick={() => setShowEdit(false)} style={{ width: '100%', padding: '7px', backgroundColor: 'transparent', color: '#666', border: 'none', fontSize: '11px', marginTop: '4px' }}>Cancel</button>
-            <button onClick={() => { localStorage.removeItem('kb_current'); localStorage.removeItem('kb_screen'); setScreen('login'); setCurrentUser(null); }} style={{ width: '100%', padding: '7px', backgroundColor: '#1a1a1a', color: '#FF0000', border: '1px solid #222', borderRadius: '8px', fontSize: '10px', marginTop: '8px' }}>Logout</button>
-          </div>
-        </div>
-      )}
-
-      {selectedProfile && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'black', zIndex: 30, overflowY: 'auto' }}>
-          <div style={{ padding: '10px', display: 'flex', gap: '8px', alignItems: 'center', borderBottom: '1px solid #111' }}><button onClick={() => setSelectedProfile(null)} style={{ backgroundColor: '#111', color: 'white', border: '1px solid #222', borderRadius: '50%', width: '28px', height: '28px' }}>←</button><Logo /></div>
-          <div style={{ padding: '12px', textAlign: 'center' }}>
-            <img src={selectedProfile.pic || `https://ui-avatars.com/api/?name=${selectedProfile.name}&background=111&color=fff&size=200`} style={{ width: '70px', height: '70px', borderRadius: '50%', objectFit: 'cover' }} />
-            <div style={{ fontSize: '14px', fontWeight: '700', marginTop: '8px' }}>{selectedProfile.name} {selectedProfile.isBoss && <BlueTick />}</div>
-            <div style={{ fontSize: '10px', color: '#666' }}>{selectedProfile.business}</div>
-            <div style={{ fontSize: '9px', color: '#888', marginTop: '4px' }}>{selectedProfile.bio}</div>
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '10px' }}>
-              <button onClick={() => toggleFollow(selectedProfile.owner)} style={{ backgroundColor: following.includes(selectedProfile.owner) ? 'white' : 'transparent', color: following.includes(selectedProfile.owner) ? 'black' : 'white', border: `1px solid ${following.includes(selectedProfile.owner) ? 'white' : '#333'}`, borderRadius: '15px', padding: '6px 14px', fontSize: '10px', fontWeight: '700' }}>{following.includes(selectedProfile.owner) ? 'Following ✓' : '+ Follow'}</button>
-              <button onClick={() => { setChatWith(selectedProfile.owner); setSelectedProfile(null); setShowChat(true); }} style={{ backgroundColor: '#111', color: 'white', border: '1px solid #222', borderRadius: '15px', padding: '6px 14px', fontSize: '10px' }}>💬 Message</button>
-              <button onClick={() => toggleBlock(selectedProfile.owner)} style={{ backgroundColor: blocked.includes(selectedProfile.owner) ? '#FF0000' : '#111', color: 'white', border: '1px solid #222', borderRadius: '15px', padding: '6px 14px', fontSize: '10px' }}>{blocked.includes(selectedProfile.owner) ? 'Unblock' : 'Block'}</button>
-            </div>
-            <div style={{ marginTop: '12px' }}>{selectedProfile.isText ? <div style={{ padding: '14px', backgroundColor: '#111', borderRadius: '10px', fontSize: '13px' }}>{selectedProfile.text}</div> : selectedProfile.isImage ? <img src={selectedProfile.video} style={{ width: '100%', borderRadius: '10px' }} /> : <video src={selectedProfile.video} autoPlay controls playsInline style={{ width: '100%', borderRadius: '10px', backgroundColor: 'black' }} />}</div>
-          </div>
-        </div>
-      )}
-
-      <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, backgroundColor: 'black', borderTop: '1px solid #111', display: 'flex', justifyContent: 'space-around', padding: '6px 0' }}>
-        <div onClick={() => setActiveTab('For You')} style={{ textAlign: 'center', color: activeTab==='For You' ? 'white' : '#666', cursor: 'pointer' }}><div style={{ fontSize: '16px' }}>🏠</div><div style={{ fontSize: '7px', fontWeight: '900' }}>For You</div></div>
-        <div onClick={() => { setActiveTab('Live'); setShowLive(true); startLive(); }} style={{ textAlign: 'center', color: '#666', cursor: 'pointer' }}><div style={{ fontSize: '16px' }}>🔴</div><div style={{ fontSize: '7px', fontWeight: '900' }}>Live</div></div>
-        <div onClick={() => setShowUpload(true)} style={{ textAlign: 'center', cursor: 'pointer' }}><div style={{ backgroundColor: 'white', color: 'black', width: '32px', height: '20px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: '900', margin: '0 auto' }}>+</div><div style={{ fontSize: '7px', fontWeight: '900', color: 'white' }}>Upload</div></div>
-        <div onClick={() => setShowChat(true)} style={{ textAlign: 'center', color: '#666', cursor: 'pointer' }}><div style={{ fontSize: '16px' }}>💬</div><div style={{ fontSize: '7px', fontWeight: '900' }}>Chat</div></div>
-        <div onClick={() => setActiveTab('My Account')} style={{ textAlign: 'center', color: activeTab==='My Account' ? 'white' : '#666', cursor: 'pointer' }}><div style={{ fontSize: '16px' }}>👤</div><div style={{ fontSize: '7px', fontWeight: '900' }}>My Account</div></div>
-      </div>
-    </div>
-  );
+const fetchPostsFromDB=async()=>{
+try{
+const res=await fetch('/api/posts').then(r=>r.json()).catch(()=>({posts:[]}))
+if(res.posts && res.posts.length>0) setPosts(res.posts)
+}catch(e){}
 }
-export default App;
+const savePostsToDB=async(newPosts)=>{
+setPosts(newPosts)
+try{ await fetch('/api/posts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({posts:newPosts})}) }catch(e){}
+}
+
+useEffect(()=>{
+const t=setTimeout(()=>{
+setSplash(false)
+const su=localStorage.getItem('uptown_user')
+const sO=localStorage.getItem('uptown_is_owner')
+const sF=localStorage.getItem('uptown_follows')
+const sFC=localStorage.getItem('uptown_follow_counts')
+const sL=localStorage.getItem('uptown_likes_v2')
+const sFav=localStorage.getItem('uptown_fav_v3')
+const sC=localStorage.getItem('uptown_comments_v1')
+const sNot=localStorage.getItem('uptown_notifications_final_verified')
+if(sF) setFollows(JSON.parse(sF))
+if(sFC) setFollowCounts(JSON.parse(sFC))
+if(sL) setLikes(JSON.parse(sL))
+if(sFav) setFavorites(JSON.parse(sFav))
+if(sC) setCommentCounts(JSON.parse(sC))
+if(sNot) setNotifications(JSON.parse(sNot))
+fetchPostsFromDB()
+if(!su) setShowAuth(true)
+else{
+const u=JSON.parse(su)
+setUser(u); setEditName(u.name||''); setEditUsername(u.username||'')
+if(sO==='true') setIsOwner(true)
+}
+},1500)
+return()=>clearTimeout(t)
+},[])
+
+const pauseAllVideos=()=>{Object.values(videoRefs.current).forEach(v=>{if(v) v.pause()})}
+useEffect(()=>{ pauseAllVideos() },[page,showUpload,showComments])
+
+useEffect(()=>{
+if(typeof window!=='undefined' && 'serviceWorker' in navigator){
+const swCode=`self.addEventListener('install',e=>{self.skipWaiting()}); self.addEventListener('activate',e=>{self.clients.claim()});`
+const blob=new Blob([swCode],{type:'application/javascript'})
+const swUrl=URL.createObjectURL(blob)
+navigator.serviceWorker.register(swUrl).catch(()=>{})
+}
+const handleBeforeInstall=(e)=>{e.preventDefault(); setDeferredPrompt(e); setIsInstallable(true)}
+window.addEventListener('beforeinstallprompt', handleBeforeInstall)
+window.addEventListener('appinstalled', ()=>{setIsInstalled(true); setIsInstallable(false)})
+return()=>window.removeEventListener('beforeinstallprompt', handleBeforeInstall)
+},[])
+
+useEffect(()=>{
+const observer=new IntersectionObserver((entries)=>{
+entries.forEach(entry=>{
+const id=entry.target.getAttribute('data-video-id')
+const video=videoRefs.current[id]
+if(!video) return
+if(entry.isIntersecting){
+Object.keys(videoRefs.current).forEach(k=>{if(k!==id && videoRefs.current[k]) videoRefs.current[k].pause()})
+video.play().catch(()=>{})
+}else video.pause()
+})
+},{threshold:0.6})
+const els=document.querySelectorAll('[data-video-id]')
+els.forEach(el=>observer.observe(el))
+return()=>observer.disconnect()
+},[page,posts])
+
+const parseUniversalLink=(url)=>{
+if(!url) return null
+url=url.trim()
+const ytReg=/(?:youtube\.com\/.*v=|youtu\.be\/)([^"&?\/\s]{11})/
+const ytMatch=url.match(ytReg)
+if(ytMatch) return {type:'youtube', embed:`https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&mute=1&playsinline=1&rel=0`, platform:'YouTube'}
+if(url.match(/\.(mp4|mov|webm)(\?|$)/i)) return {type:'direct', embed:url, platform:'Direct'}
+if(url.startsWith('http')) return {type:'iframe', embed:url, platform:'Link'}
+return null
+}
+const handleAuth=()=>{
+if(!authForm.email||!authForm.password) return
+const email=authForm.email.toLowerCase().trim()
+const isOfficial=email==='komenierashid@gmail.com'
+let db=JSON.parse(localStorage.getItem('uptown_users_db')||'[]')
+if(authMode==='signup'){
+if(!authForm.name||!authForm.username){setBlockedMsg('Fill name'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1500); return}
+if(db.find(u=>u.email===email)){setAuthMode('login'); return}
+const nu={id:Date.now(),name:isOfficial?'Katongole Rashid':authForm.name,username:isOfficial?'@uptown':'@'+authForm.username.replace('@',''),email,password:authForm.password,verified:isOfficial,isOfficial:isOfficial}
+db.push(nu); localStorage.setItem('uptown_users_db',JSON.stringify(db))
+const lu={name:nu.name,username:nu.username,email,verified:nu.verified,isOfficial:nu.isOfficial}
+localStorage.setItem('uptown_user',JSON.stringify(lu)); localStorage.setItem('uptown_is_owner',isOfficial?'true':'false')
+setUser(lu); setEditName(lu.name); setEditUsername(lu.username); setIsOwner(isOfficial); setShowAuth(false)
+}else{
+const found=db.find(u=>u.email===email&&u.password===authForm.password)
+if(!found&&!isOfficial){setBlockedMsg('No account'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1500); return}
+const lu=isOfficial?{name:'Katongole Rashid',username:'@uptown',email,verified:true,isOfficial:true}:{name:found.name,username:found.username,email:found.email,verified:found.verified||false,isOfficial:false}
+localStorage.setItem('uptown_user',JSON.stringify(lu)); localStorage.setItem('uptown_is_owner',isOfficial?'true':'false')
+setUser(lu); setEditName(lu.name); setEditUsername(lu.username); setIsOwner(isOfficial); setShowAuth(false)
+}
+}
+const handleFollow=(username)=>{
+const isFollowing=follows[username]==='following'
+const nf={...follows,[username]:isFollowing?'follow':'following'}
+setFollows(nf); localStorage.setItem('uptown_follows',JSON.stringify(nf))
+const nc={...followCounts,[username]:(followCounts[username]||0)+(isFollowing?-1:1)}
+setFollowCounts(nc); localStorage.setItem('uptown_follow_counts',JSON.stringify(nc))
+setBlockedMsg(isFollowing?'Unfollowed':'✓ Following!'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),800)
+}
+const handleLike=(id)=>{const nl={...likes,[id]:!likes[id]}; setLikes(nl); localStorage.setItem('uptown_likes_v2',JSON.stringify(nl))}
+const handleFire=(id)=>{const nl={...likes,['fire_'+id]:!likes['fire_'+id]}; setLikes(nl); localStorage.setItem('uptown_likes_v2',JSON.stringify(nl)); setBlockedMsg(nl['fire_'+id]?'🔥 Fire!':'🔥 Removed'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),800)}
+const handleFavorite=(id)=>{const nf={...favorites,[id]:!favorites[id]}; setFavorites(nf); localStorage.setItem('uptown_fav_v3',JSON.stringify(nf))}
+const handleShare=async(v)=>{try{await navigator.clipboard.writeText(v.mediaUrl); setBlockedMsg('🔗 Copied!'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),800)}catch{}}
+const handleComment=(id)=>{pauseAllVideos(); setShowComments(id)}
+const handlePostComment=(id)=>{
+if(!commentInput.trim()) return
+setComments(prev=>({...prev,[id]:[...(prev[id]||[]),{id:Date.now(),text:commentInput,user:user?.name||'User'}]}))
+setCommentCounts({...commentCounts,[id]:(commentCounts[id]||0)+1})
+localStorage.setItem('uptown_comments_v1',JSON.stringify({...commentCounts,[id]:(commentCounts[id]||0)+1}))
+setCommentInput('')
+}
+const handleTapVideo=(id)=>{const v=videoRefs.current[id]; if(!v) return; if(v.paused) v.play(); else v.pause()}
+const handleFileChange=(e)=>{
+const f=e.target.files?.[0]; if(!f) return;
+const u=URL.createObjectURL(f);
+setUploadPreview({url:u}); setPostBtnState('green');
+const r=new FileReader(); r.onload=(ev)=>setUploadBase64(ev.target.result); r.readAsDataURL(f);
+}
+const handleReportVideo=(v)=>{setReportedVideos({...reportedVideos,[v.id]:true}); setBlockedMsg('🚩 Reported!'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1200)}
+const handleBlockUser=(username)=>{setBlockedUsers({...blockedUsers,[username]:true}); setBlockedMsg(`🚫 Blocked ${username}`); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1200)}
+const handleOneButtonStoreEngine=async()=>{
+if(deferredPrompt){deferredPrompt.prompt(); const {outcome}=await deferredPrompt.userChoice; if(outcome==='accepted') setIsInstalled(true); setDeferredPrompt(null); setIsInstallable(false); return}
+setShowStorePanel(true)
+}
+const handlePostNow=(mode)=>{
+const fm=mode||uploadMode
+if(fm==='post_muzika' && !isOwner){setBlockedMsg('Muzika: Only Official'); setShowBlocked(true); setTimeout(()=>setShowBlocked(false),1200); return}
+let mu=null; let li=null
+if(fm==='post_muzika'){
+if(universalLink){ li=parseUniversalLink(universalLink); mu=universalLink } 
+else if(uploadBase64){ mu=uploadBase64 }
+else if(uploadPreview?.url){ mu=uploadPreview.url }
+else{setBlockedMsg('Paste link'); setShowBlocked(true); return}
+}else{
+if(uploadBase64) mu=uploadBase64
+else if(uploadPreview?.url) mu=uploadPreview.url
+else if(universalLink){ li=parseUniversalLink(universalLink); mu=universalLink }
+else{setBlockedMsg('Upload video!'); setShowBlocked(true); return}
+}
+setPostBtnState('white')
+const np={id:Date.now(),user:user?.name||'User',username:user?.username||'@user',verified:user?.verified||false,caption:uploadCaption||'New video ✓',mediaUrl:mu,linkInfo:li,isMuzika:fm==='post_muzika',isLive:isLive,likes:0,fires:520,views:Math.floor(Math.random()*5000)+100,postedBy:user?.email,postedAt:Date.now()}
+const nposts=[np,...posts]
+savePostsToDB(nposts)
+setUploadPreview(null); setUploadBase64(null); setUploadCaption(''); setUniversalLink(''); setShowUpload(false); setUploadMode(null); setIsLive(false);
+pauseAllVideos()
+setBlockedMsg('✓ Posted!'); setShowBlocked(true);
+setTimeout(()=>{setShowBlocked(false); setPage(fm==='post_muzika'?'muzika':'foryou'); setPostBtnState('green')},1000)
+}
+
+if(splash){
+return(<div style={{width:'100vw',height:'100dvh',background:'#000',display:'flex',alignItems:'center',justifyContent:'center',position:'fixed',inset:0,zIndex:9999}}>
+<svg width="140" height="170" viewBox="0 0 200 230"><path d="M100 12 C32 12 12 52 12 82 C12 126 100 218 100 218 C100 218 188 126 188 82 C188 52 168 12 100 12 Z" fill="none" stroke="white" strokeWidth="7"/><text x="28" y="112" fontFamily="Arial Black" fontWeight="900" fontSize="36"><tspan fill="#FF0024">UP</tspan><tspan fill="white">TOWN</tspan></text></svg>
+</div>)
+}
+
+const forYouFeed=[...posts.filter(p=>!p.isMuzika && !p.isLive && !blockedUsers[p.username]),...officialVideos.filter(v=>!blockedUsers[v.username])].sort((a,b)=>(b.postedAt||b.id)-(a.postedAt||a.id))
+const muzikaFeed=[...posts.filter(p=>p.isMuzika && !blockedUsers[p.username]),...officialVideos].sort((a,b)=>(b.postedAt||b.id)-(a.postedAt||a.id))
+const liveFeed=[...posts.filter(p=>p.isLive && !blockedUsers[p.username])].sort((a,b)=>(b.postedAt||b.id)-(a.postedAt||a.id))
+const myVideos=posts.filter(p=>p.postedBy===user?.email)
+
+const renderUniversal=(v)=>{
+const info=v.linkInfo || parseUniversalLink(v.mediaUrl)
+if(!info){
+return <video ref={el=>{if(el) videoRefs.current[v.id]=el}} src={v.mediaUrl} loop playsInline muted autoPlay style={{width:'100%',height:'100%',objectFit:'contain',background:'#111'}}/>
+}
+if(info.type==='youtube') return <iframe width="100%" height="100%" src={info.embed} frameBorder="0" style={{width:'100%',height:'100%',border:'none'}}/>
+if(info.type==='direct') return <video ref={el=>{if(el) videoRefs.current[v.id]=el}} src={info.embed} loop playsInline muted autoPlay style={{width:'100%',height:'100%',objectFit:'contain',background:'#000'}}/>
+return <iframe width="100%" height="100%" src={info.embed} frameBorder="0" style={{width:'100%',height:'100%',border:'none'}}/>
+}
+const unread=notifications.filter(n=>!n.read).length
+
+return(
+<div style={{background:'#000',color:'#fff',width:'100vw',height:'100dvh',position:'fixed',inset:0,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+<div style={{height:'52px',display:'flex',alignItems:'center',padding:'0 12px',gap:'8px',borderBottom:'1px solid #1a1a1a',flexShrink:0}}>
+<div style={{display:'flex',gap:'8px',flex:1}}>
+{[{label:'For You',key:'foryou'},{label:'Muzika',key:'muzika'},{label:'Following',key:'following'}].map(t=><button key={t.key} onClick={()=>{pauseAllVideos(); setPage(t.key)}} style={{background:page===t.key?'#fff':'#222',color:page===t.key?'#000':'#888',border:'none',padding:'8px 16px',borderRadius:'20px',fontSize:'13px',fontWeight:'700',height:'32px'}}>{t.label}</button>)}
+</div>
+<button onClick={()=>{pauseAllVideos(); setPage('live')}} style={{background:page==='live'?'#FF0024':'#1a1a1a',color:page==='live'?'#fff':'#FF0024',border:'1px solid #FF0024',padding:'8px 14px',borderRadius:'20px',fontSize:'12px',fontWeight:'800',height:'32px'}}>● Live</button>
+</div>
+
+<div style={{flex:1,minHeight:0,overflow:'hidden',display:'flex',flexDirection:'column',background:'#000'}}>
+{page==='foryou'&&(
+<div style={{flex:1,overflowY:'auto',scrollSnapType:'y mandatory'}}>
+<div style={{height:'32px',background:'#0a0a0a',display:'flex',alignItems:'center',justifyContent:'center'}}><span style={{fontSize:'11px',color:'#00D632',fontWeight:'700'}}>● For You — 978+ Family — Database — Everyone same!</span></div>
+{forYouFeed.map(v=>{
+const isFollowing=follows[v.username]==='following'
+const isLiked=likes[v.id]
+const isFired=likes['fire_'+v.id]
+return(
+<div key={v.id} data-video-id={v.id} style={{width:'100%',height:'100%',scrollSnapAlign:'start',position:'relative',background:'#111',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
+<div style={{position:'absolute',inset:0,zIndex:1}} onClick={()=>handleTapVideo(v.id)}></div>
+<div style={{position:'absolute',inset:0}}>{renderUniversal(v)}</div>
+<div style={{position:'absolute',top:'12px',right:'12px',zIndex:4}}><button onClick={()=>{const m=prompt('1=Report 2=Block'); if(m==='1') handleReportVideo(v); if(m==='2') handleBlockUser(v.username)}} style={{background:'rgba(0,0,0,0.6)',border:'1px solid #333',color:'#fff',width:'28px',height:'28px',borderRadius:'50%'}}>⋯</button></div>
+
+{/* RIGHT SIDE - FIRE WHERE YOU CIRCLED - SEARCH REMOVED */}
+<div style={{position:'absolute',right:'10px',top:'42%',transform:'translateY(-50%)',zIndex:3,display:'flex',flexDirection:'column',gap:'14px',alignItems:'center'}} onClick={e=>e.stopPropagation()}>
+<div style={{position:'relative',width:'54px',height:'62px',display:'flex',flexDirection:'column',alignItems:'center'}}>
+<div style={{width:'50px',height:'50px',borderRadius:'50%',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',border:'2px solid #fff'}}><span style={{fontWeight:'900',fontSize:'11px'}}><span style={{color:'#FF0024'}}>UP</span><span style={{color:'#000'}}>TOWN</span></span></div>
+<button onClick={()=>handleFollow(v.username)} style={{position:'absolute',bottom:'12px',left:'50%',transform:'translateX(-50%)',width:'22px',height:'22px',borderRadius:'50%',background:isFollowing?'#00D632':'#FF0024',border:'2px solid #000',color:'#fff',fontWeight:'900'}}>{isFollowing?'✓':'+'}</button>
+<div style={{marginTop:'6px',fontSize:'11px',fontWeight:'700',color:'#fff'}}>{isFollowing?'Following':'Follow'}</div>
+</div>
+<button onClick={()=>handleLike(v.id)} style={{background:'none',border:'none',color:'#fff',display:'flex',flexDirection:'column',alignItems:'center'}}><div style={{fontSize:'24px'}}>{isLiked?<span style={{color:'#FF0024'}}>♥</span>:'♡'}</div><div style={{fontSize:'11px',fontWeight:'700'}}>{isLiked? (v.likes+1) : '15600'}</div></button>
+<button onClick={()=>handleComment(v.id)} style={{background:'none',border:'none',color:'#fff',display:'flex',flexDirection:'column',alignItems:'center'}}><div style={{width:'28px',height:'28px',borderRadius:'50%',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center'}}>💬</div><div style={{fontSize:'11px',fontWeight:'700'}}>{commentCounts[v.id]||978}</div></button>
+<button onClick={()=>handleShare(v)} style={{background:'none',border:'none',color:'#fff',display:'flex',flexDirection:'column',alignItems:'center'}}><div>→</div><div style={{fontSize:'11px'}}>Share</div></button>
+<button onClick={()=>handleFavorite(v.id)} style={{background:'none',border:'none',color:'#FF0024',display:'flex',flexDirection:'column',alignItems:'center'}}><div style={{fontSize:'20px'}}>★</div><div style={{fontSize:'10px'}}>Fav</div></button>
+{/* FIRE BUTTON - WHERE YOU PUT CIRCLE */}
+<button onClick={()=>handleFire(v.id)} style={{background:isFired?'#FF6A00':'#1a1a1a',border:isFired?'1px solid #FF6A00':'1px solid #333',width:'38px',height:'38px',borderRadius:'50%',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',color:'#fff',boxShadow:isFired?'0 0 10px #FF6A00':''}}>
+<span style={{fontSize:'20px'}}>🔥</span>
+<div style={{fontSize:'8px',fontWeight:'800',marginTop:'-2px'}}>{isFired? (v.fires+1) : 520}</div>
+</button>
+</div>
+
+<div style={{position:'absolute',left:'12px',right:'76px',bottom:'22px',zIndex:2,pointerEvents:'none'}}><div style={{fontWeight:'800',fontSize:'15px'}}>{v.user} ✓</div><div style={{fontSize:'12px',marginTop:'4px'}}>{v.caption}</div></div>
+</div>
+)})}
+</div>
+)}
+
+{page==='muzika'&&(
+<div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+<div style={{height:'40px',padding:'0 12px',background:'#0a0a0a',borderBottom:'1px solid #1a1a1a',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+<div style={{fontWeight:'700',fontSize:'12px'}}>Muzika — Plays now!</div>
+<button onClick={()=>setShowUpload(true)} style={{background:'#FF0024',color:'#fff',border:'none',padding:'6px 12px',borderRadius:'20px',fontSize:'11px',fontWeight:'700'}}>+ Post</button>
+</div>
+<div style={{flex:1,overflowY:'auto',scrollSnapType:'y mandatory'}}>
+{muzikaFeed.map(v=>(
+<div key={v.id} data-video-id={v.id} style={{width:'100%',height:'100%',scrollSnapAlign:'start',position:'relative',background:'#111',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>
+<div style={{position:'absolute',inset:0,zIndex:1}} onClick={()=>handleTapVideo(v.id)}></div>
+<div style={{position:'absolute',inset:0}}>{renderUniversal(v)}</div>
+<div style={{position:'absolute',left:'12px',bottom:'22px',zIndex:2}}><div style={{fontWeight:'700',fontSize:'13px'}}>UPTOWN Official ✓</div></div>
+</div>
+))}
+</div>
+</div>
+)}
+
+{page==='live'&&(
+<div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+<div style={{height:'40px',padding:'0 12px',background:'#0a0a0a',borderBottom:'1px solid #1a1a1a',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+<div style={{fontWeight:'800',fontSize:'13px'}}>🔴 Live — Open — No Coming Soon!</div>
+<button onClick={()=>{setIsLive(true); setShowUpload(true)}} style={{background:'#FF0024',color:'#fff',border:'none',padding:'6px 12px',borderRadius:'20px',fontSize:'11px',fontWeight:'800'}}>🔴 Go Live</button>
+</div>
+<div style={{flex:1,overflowY:'auto',padding:'12px'}}>
+{liveFeed.length===0? <div style={{textAlign:'center',marginTop:'60px'}}><div style={{fontSize:'40px'}}>🔴</div><div style={{fontWeight:'700',marginTop:'10px'}}>No Live Now — Be first!</div><button onClick={()=>{setIsLive(true); setShowUpload(true)}} style={{marginTop:'12px',background:'#FF0024',color:'#fff',border:'none',padding:'8px 16px',borderRadius:'20px'}}>Start Live</button></div> :
+<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px'}}>{liveFeed.map(v=><div key={v.id} style={{background:'#121212',border:'1px solid #FF0024',borderRadius:'12px',overflow:'hidden'}}><div style={{height:'160px',background:'#000'}}>{renderUniversal(v)}</div><div style={{padding:'8px',fontSize:'11px'}}>{v.user} 🔴 LIVE</div></div>)}</div>
+}
+</div>
+</div>
+)}
+
+{page==='following'&&(
+<div style={{flex:1,padding:'16px',overflowY:'auto'}}>
+<div style={{fontWeight:'700',marginBottom:'12px'}}>Following — Works — Everyone — Boost on For You</div>
+{posts.filter(p=>follows[p.username]==='following').length===0? <div style={{color:'#666',textAlign:'center',marginTop:'40px'}}>Follow someone — Works for everyone!</div> :
+posts.filter(p=>follows[p.username]==='following').map(v=>(
+<div key={v.id} data-video-id={v.id} style={{width:'100%',height:'50vh',position:'relative',background:'#111',marginBottom:'8px',borderRadius:'12px',overflow:'hidden',display:'flex',alignItems:'center',justifyContent:'center'}}>
+<div style={{position:'absolute',inset:0,zIndex:1}} onClick={()=>handleTapVideo(v.id)}></div>
+<div style={{position:'absolute',inset:0}}>{renderUniversal(v)}</div>
+</div>
+))
+}
+</div>
+)}
+
+{page==='inbox'&&(
+<div style={{flex:1,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+<div style={{height:'48px',padding:'0 12px',borderBottom:'1px solid #1a1a1a',display:'flex',justifyContent:'space-between',alignItems:'center'}}><div style={{fontWeight:'800',fontSize:'13px'}}>Inbox — 978+ Family</div><div style={{background:'#FF0024',color:'#fff',padding:'3px 8px',borderRadius:'12px',fontSize:'10px'}}>{unread} new</div></div>
+<div style={{flex:1,overflowY:'auto',padding:'10px'}}>
+{notifications.map(n=>(
+<div key={n.id} style={{background:'#1a1a1a',border:'1px solid #222',borderRadius:'12px',padding:'12px',marginBottom:'10px'}}>
+<div style={{fontWeight:'700',fontSize:'11px'}}>{n.from} ✓</div>
+<div style={{fontSize:'12px',marginTop:'4px'}}>{n.title}</div>
+<div style={{fontSize:'11px',color:'#aaa',marginTop:'2px'}}>{n.message}</div>
+</div>
+))}
+</div>
+</div>
+)}
+
+{page==='you'&&(
+<div style={{flex:1,overflowY:'auto',padding:'16px',background:'#000'}}>
+<div style={{display:'flex',gap:'14px',alignItems:'center'}}>
+<div style={{width:'72px',height:'72px',borderRadius:'50%',background:'#fff',display:'flex',alignItems:'center',justifyContent:'center',fontWeight:'900',fontSize:'14px'}}><span style={{color:'#FF0024'}}>UP</span><span style={{color:'#000'}}>TOWN</span></div>
+<div><div style={{fontWeight:'800',fontSize:'16px'}}>{user?.name||'Guest'} — 978+</div><div style={{fontSize:'12px',color:'#888'}}>{user?.username||'@user'}</div></div>
+</div>
+{isOwner&&<div style={{marginTop:'16px',background:'linear-gradient(135deg,#FF0024 0%,#00D632 100%)',borderRadius:'16px',padding:'2px'}}><div style={{background:'#000',borderRadius:'14px',padding:'14px'}}><div style={{fontWeight:'900',fontSize:'13px'}}>🚀 One Button Engine — Android + iPhone</div><button onClick={handleOneButtonStoreEngine} style={{width:'100%',marginTop:'10px',background:isInstallable?'#00D632':'#fff',color:'#000',border:'none',padding:'14px',borderRadius:'12px',fontWeight:'900',fontSize:'13px'}}>{isInstalled?'✓ Installed!':isInstallable?'📲 INSTALL NOW!':'🚀 ENGINE'}</button></div></div>}
+<div style={{marginTop:'16px',display:'flex',gap:'10px'}}><div style={{flex:1,background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'10px',textAlign:'center'}}><div style={{fontWeight:'800'}}>{myVideos.length}</div><div style={{fontSize:'10px',color:'#888'}}>Videos</div></div><div style={{flex:1,background:'#121212',border:'1px solid #00D632',borderRadius:'12px',padding:'10px',textAlign:'center'}}><div style={{fontWeight:'800',color:'#00D632'}}>{followCounts[user?.username]||0}</div><div style={{fontSize:'10px',color:'#888'}}>Followers</div></div></div>
+</div>
+)}
+
+{showComments!==null&&<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.85)',zIndex:60,display:'flex',alignItems:'flex-end'}} onClick={()=>setShowComments(null)}><div style={{background:'#121212',width:'100%',borderTopLeftRadius:'20px',borderTopRightRadius:'20px',padding:'14px',maxHeight:'60vh',display:'flex',flexDirection:'column'}} onClick={e=>e.stopPropagation()}><div style={{display:'flex',justifyContent:'space-between',marginBottom:'10px'}}><div style={{fontWeight:'700'}}>Comments — {commentCounts[showComments]||978}</div><button onClick={()=>setShowComments(null)} style={{background:'none',border:'none',color:'#fff',fontSize:'20px'}}>×</button></div><div style={{flex:1,overflowY:'auto',display:'flex',flexDirection:'column',gap:'8px'}}>{(comments[showComments]||[]).map(c=><div key={c.id} style={{display:'flex',gap:'8px'}}><div style={{width:'28px',height:'28px',borderRadius:'50%',background:'#333',display:'flex',alignItems:'center',justifyContent:'center'}}>U</div><div><div style={{fontSize:'11px',fontWeight:'700'}}>{c.user}</div><div style={{fontSize:'12px'}}>{c.text}</div></div></div>)}</div><div style={{display:'flex',gap:'8px',marginTop:'10px',borderTop:'1px solid #222',paddingTop:'10px'}}><input value={commentInput} onChange={e=>setCommentInput(e.target.value)} placeholder="Add comment..." style={{flex:1,background:'#1a1a1a',border:'1px solid #333',borderRadius:'20px',padding:'8px 12px',color:'#fff'}}/><button onClick={()=>handlePostComment(showComments)} style={{background:'#FF0024',color:'#fff',border:'none',padding:'8px 14px',borderRadius:'20px',fontWeight:'700'}}>Post</button></div></div></div>}
+{showBlocked&&<div style={{position:'fixed',top:'50%',left:'50%',transform:'translate(-50%,-50%)',background:'#1a1a1a',border:'1px solid #333',padding:'14px 18px',borderRadius:'14px',zIndex:80,textAlign:'center'}}><div style={{fontWeight:'700',fontSize:'12px'}}>{blockedMsg}</div></div>}
+</div>
+
+{showUpload&&(
+<div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.92)',zIndex:50,display:'flex',alignItems:'flex-end'}} onClick={()=>{pauseAllVideos(); setShowUpload(false); setUploadMode(null); setPostBtnState('green')}}>
+<div style={{background:'#121212',width:'100%',borderTopLeftRadius:'20px',borderTopRightRadius:'20px',padding:'16px',maxHeight:'85vh',overflowY:'auto'}} onClick={e=>e.stopPropagation()}>
+{uploadMode===null&&<>
+<div style={{width:'36px',height:'4px',background:'#333',borderRadius:'2px',margin:'0 auto 12px'}}></div>
+<div style={{fontWeight:'800',textAlign:'center',fontSize:'16px',marginBottom:'12px'}}>Upload — 978+ see same — Database!</div>
+<button onClick={()=>{setUploadMode('upload_video'); setPostBtnState('green')}} style={{width:'100%',background:'#fff',color:'#000',border:'none',padding:'14px',borderRadius:'14px',fontWeight:'800',fontSize:'14px',marginBottom:'10px'}}>📤 Upload Videos — For You</button>
+<button onClick={()=>{setIsLive(true); setUploadMode('upload_video'); setPostBtnState('green')}} style={{width:'100%',background:'#1a1a1a',border:'1px solid #FF0024',color:'#FF0024',padding:'14px',borderRadius:'14px',fontWeight:'800',fontSize:'14px',marginBottom:'10px'}}>🔴 Go Live — Open!</button>
+<button onClick={()=>{setUploadMode('post_muzika'); setPostBtnState('green')}} style={{width:'100%',background:'#1a1a1a',border:'1px solid #00D632',color:'#fff',padding:'14px',borderRadius:'14px',fontWeight:'800',fontSize:'14px'}}>🎬 Post Muzika — Plays now!</button>
+</>}
+{uploadMode==='upload_video'&&<>
+<div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'12px'}}><button onClick={()=>{setUploadMode(null); setPostBtnState('green')}} style={{background:'#1a1a1a',border:'none',color:'#fff',width:'28px',height:'28px',borderRadius:'50%'}}>‹</button><div style={{fontWeight:'800',fontSize:'14px'}}>{isLive?'🔴 Go Live — Open':'📤 Upload — Database'}</div></div>
+<input type="file" accept="video/*" onChange={handleFileChange} style={{width:'100%',background:'#1a1a1a',border:'1px solid #333',borderRadius:'12px',padding:'12px',color:'#fff'}}/>
+{uploadPreview&&<div style={{marginTop:'10px'}}><video src={uploadPreview.url} style={{width:'100%',maxHeight:'200px',borderRadius:'12px'}} autoPlay loop muted playsInline/></div>}
+<input value={uploadCaption} onChange={e=>setUploadCaption(e.target.value)} placeholder="Caption..." style={{marginTop:'10px',width:'100%',background:'#1a1a1a',border:'1px solid #333',borderRadius:'12px',padding:'10px',color:'#fff'}}/>
+<button onClick={()=>handlePostNow('upload_video')} style={{marginTop:'12px',width:'100%',background:postBtnState==='green'?'#00D632':'#fff',color:'#000',border:'none',padding:'14px',borderRadius:'12px',fontWeight:'900',fontSize:'14px'}}>
+{postBtnState==='green'? (isLive?'🟢 GO LIVE NOW — Green':'🟢 POST NOW — Green — 1 Tap!') : '⚪ POSTED ✓ — White!'}
+</button>
+</>}
+{uploadMode==='post_muzika'&&<>
+<div style={{display:'flex',alignItems:'center',gap:'10px',marginBottom:'12px'}}><button onClick={()=>{setUploadMode(null); setPostBtnState('green')}} style={{background:'#1a1a1a',border:'none',color:'#fff',width:'28px',height:'28px',borderRadius:'50%'}}>‹</button><div style={{fontWeight:'800'}}>🎬 Muzika — Fixed!</div></div>
+<input value={universalLink} onChange={e=>{setUniversalLink(e.target.value); setPostBtnState('green')}} placeholder="Paste link" style={{width:'100%',background:'#000',border:'1px solid #333',borderRadius:'10px',padding:'10px',color:'#fff'}}/>
+<button onClick={()=>handlePostNow('post_muzika')} style={{marginTop:'12px',width:'100%',background:postBtnState==='green'?'#00D632':'#fff',color:'#000',border:'none',padding:'12px',borderRadius:'12px',fontWeight:'900'}}>
+{postBtnState==='green'?'🟢 POST IN MUZIKA — Green':'⚪ POSTED ✓ — White'}
+</button>
+</>}
+</div>
+</div>
+)}
+
+{/* BOTTOM BAR - INBOX INSTEAD OF SEARCH - AS YOU ASKED */}
+<div style={{height:'64px',display:'flex',justifyContent:'space-around',alignItems:'center',borderTop:'1px solid #1a1a1a',background:'#000',flexShrink:0}}>
+<button onClick={()=>{pauseAllVideos(); setPage('foryou')}} style={{background:'none',border:'none',color:page==='foryou'?'#fff':'#666',display:'flex',flexDirection:'column',alignItems:'center',flex:1}}><span style={{fontSize:'20px'}}>⌂</span><span style={{fontSize:'10px'}}>Home</span></button>
+<button onClick={()=>{pauseAllVideos(); setPage('inbox'); const u=notifications.map(n=>({...n,read:true})); setNotifications(u); localStorage.setItem('uptown_notifications_final_verified',JSON.stringify(u))}} style={{background:'none',border:'none',color:page==='inbox'?'#fff':'#666',display:'flex',flexDirection:'column',alignItems:'center',flex:1,position:'relative'}}><span style={{fontSize:'18px'}}>✉</span><span style={{fontSize:'10px'}}>Inbox</span>{unread>0&&<span style={{position:'absolute',top:'0px',right:'12px',background:'#FF0024',color:'#fff',fontSize:'8px',padding:'2px 4px',borderRadius:'8px',fontWeight:'800'}}>{unread}</span>}</button>
+<button onClick={()=>{pauseAllVideos(); setUploadMode(null); setShowUpload(true); setPostBtnState('green')}} style={{background:'#FF0024',border:'none',width:'52px',height:'38px',borderRadius:'12px',color:'#fff',fontSize:'24px',fontWeight:'900',display:'flex',alignItems:'center',justifyContent:'center'}}> + </button>
+<button onClick={()=>{pauseAllVideos(); setPage('live')}} style={{background:'none',border:'none',color:page==='live'?'#FF0024':'#666',display:'flex',flexDirection:'column',alignItems:'center',flex:1}}><span>🔴</span><span style={{fontSize:'10px'}}>Live</span></button>
+<button onClick={()=>{pauseAllVideos(); setPage('you')}} style={{background:'none',border:'none',color:page==='you'?'#fff':'#666',display:'flex',flexDirection:'column',alignItems:'center',flex:1}}><span>○</span><span style={{fontSize:'10px'}}>You</span></button>
+</div>
+
+{showAuth&&(
+<div style={{position:'fixed',inset:0,background:'#000',zIndex:100,display:'flex',flexDirection:'column',padding:'20px',justifyContent:'center'}}>
+<div style={{textAlign:'center',marginBottom:'16px',fontWeight:'900',fontSize:'20px'}}><span style={{color:'#FF0024'}}>UP</span><span style={{color:'#fff'}}>TOWN</span> — 978+</div>
+<div style={{display:'flex',background:'#121212',borderRadius:'20px',padding:'4px',marginBottom:'12px'}}>
+<button onClick={()=>setAuthMode('signup')} style={{flex:1,background:authMode==='signup'?'#fff':'transparent',color:authMode==='signup'?'#000':'#888',border:'none',padding:'10px',borderRadius:'16px',fontWeight:'800'}}>Sign Up</button>
+<button onClick={()=>setAuthMode('login')} style={{flex:1,background:authMode==='login'?'#fff':'transparent',color:authMode==='login'?'#000':'#888',border:'none',padding:'10px',borderRadius:'16px',fontWeight:'800'}}>Login</button>
+</div>
+<div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+{authMode==='signup'&&<><input value={authForm.name} onChange={e=>setAuthForm({...authForm,name:e.target.value})} placeholder="Your Name" style={{background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'12px',color:'#fff'}}/><input value={authForm.username} onChange={e=>setAuthForm({...authForm,username:e.target.value})} placeholder="Username" style={{background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'12px',color:'#fff'}}/></>}
+<input value={authForm.email} onChange={e=>setAuthForm({...authForm,email:e.target.value})} placeholder="Email" style={{background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'12px',color:'#fff'}}/>
+<input value={authForm.password} onChange={e=>setAuthForm({...authForm,password:e.target.value})} type="password" placeholder="Password" style={{background:'#121212',border:'1px solid #222',borderRadius:'12px',padding:'12px',color:'#fff'}}/>
+<button onClick={handleAuth} style={{background:'#fff',color:'#000',border:'none',padding:'14px',borderRadius:'12px',fontWeight:'900'}}>Continue</button>
+</div>
+</div>
+)}
+</div>
+)
+}
