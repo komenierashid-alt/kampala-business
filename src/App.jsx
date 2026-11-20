@@ -1,35 +1,20 @@
-const SAMPLE_VIDEOS = [
-  {
-    id: 1,
-    user: "Katongole Rashid",
-    business: "Kampala Business Admin",
-    phone: "+256778953685",
-    caption: "Official Admin - Verified Business Owner Kampala ✅ Call me!",
-    video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    likes: 9999,
-    category: "business",
-    verified: true
-  },
-  {
-    id: 2,
-    user: "Aisha Fashion",
-    business: "Owino Boutique",
-    phone: "0750956543",
-    caption: "Gomesi latest designs - Come to Owino! #KampalaFashion",
-    video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-    likes: 1289,
-    category: "business",
-    verified: false
-  },
-  {
-    id: 3,
-    user: "Nakawa Phones",
-    business: "Kikuubo Phone Center",
-    phone: "0701234567",
-    caption: "New iPhone 15 Pro - UGX 3.5M only! Kikuubo Plaza",
-    video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    likes: 342,
-    category: "business",
-    verified: false
-  }
-]
+];
+
+function App() {
+  return (
+    <div style={{backgroundColor: 'black', color: 'white', minHeight: '100vh', padding: '20px'}}>
+      <h1 style={{textAlign: 'center'}}>Kampala Business - Admin: Katongole Rashid +256778953685</h1>
+      {SAMPLE_VIDEOS.map(v => (
+        <div key={v.id} style={{border: '1px solid #444', margin: '15px', padding: '15px', borderRadius: '10px'}}>
+          <h2>{v.user} {v.verified ? '✅ BLUE TICK' : '⏳ Not verified'}</h2>
+          <p><b>{v.business}</b> - {v.phone}</p>
+          <p>{v.caption}</p>
+          <video src={v.video} controls width="300" style={{borderRadius: '10px'}} />
+          <p>❤️ {v.likes} Likes</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default App;
